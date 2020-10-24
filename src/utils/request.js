@@ -64,7 +64,7 @@ const request = extend({
   // credentials: 'include', // 默认请求是否带上cookie
 });
 request.interceptors.request.use(async (url, options) => {
-  console.log(options)
+
   if (options.data) {
     if (options.data.current) {
       options.data.page = options.data.current - 1;
@@ -73,42 +73,20 @@ request.interceptors.request.use(async (url, options) => {
     if (options.data.pageSize) {
       options.data.size = options.data.pageSize;
       delete options.data.pageSize;
-
     }
   }
-  let token = localStorage.getItem("token");
-  if (token) {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + token
-    };
-    console.log({
-      url: url,
-      options: {
-        ...options,
-        headers: headers
-      },
-    })
-    return ({
-      url: url,
-      options: {
-        ...options,
-        headers: headers
-      },
-    });
-  } else {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    return ({
-      url: url,
-      options: {
-        ...options,
-        headers
-      },
-    });
+  const method = options.method.toLocaleLowerCase();
+  if (method === 'delete' || method === 'put') {
+    url = url + '/' + options.data.id;
+  }
+  return {
+    url,
+    options: {
+      ...options,
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem("token")
+      }
+    },
   }
 });
 

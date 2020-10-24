@@ -8,8 +8,9 @@ export async function createDept(data) {
   });
 }
 export async function deleteDept(data) {
-  return request(`/api/resource/dept/delete/${data.id}`, {
+  return request(`/api/resource/dept/delete`, {
     method: 'DELETE',
+    data
   });
 }
 export async function getDeptList(data) {
@@ -19,9 +20,7 @@ export async function getDeptList(data) {
   });
 }
 export async function getDeptAllList() {
-  return request('/api/resource/dept/all', {
-    method: 'GET',
-  });
+  return request('/api/resource/dept/all');
 }
 export async function getDeptRoles(data) {
   return request(`/api/resource/dept/roles/${data.id}`, {
@@ -45,8 +44,9 @@ export async function createEmployee(data) {
   });
 }
 export async function deleteEmployee(data) {
-  return request(`/api/resource/employee/delete/${data.id}`, {
+  return request('/api/resource/employee/delete', {
     method: 'DELETE',
+    data
   });
 }
 export async function getEmployeeList(data) {
@@ -55,6 +55,9 @@ export async function getEmployeeList(data) {
     data,
   });
 }
+export async function getEmployeeAllList() {
+  return request('/api/resource/employee/all');
+}
 export async function getEmployeeSingle(data) {
   return request(`/api/resource/employee/single/${data.id}`, {
     method: 'GET',
@@ -62,6 +65,41 @@ export async function getEmployeeSingle(data) {
 }
 export async function updateEmployee(data) {
   return request('/api/resource/employee/update', {
+    method: 'POST',
+    data,
+  });
+}
+
+
+// 角色管理
+export async function createRole(data) {
+  return request('/api/resource/role/create', {
+    method: 'POST',
+    data,
+  });
+}
+export async function deleteRole(data) {
+  return request('/api/resource/role/delete', {
+    method: 'DELETE',
+    data
+  });
+}
+export async function getRoleList(data) {
+  return request('/api/resource/role/list', {
+    method: 'POST',
+    data,
+  });
+}
+export async function getRoleAllList() {
+  return request('/api/resource/role/allPermission');
+}
+export async function getRoleSingle(data) {
+  return request(`/api/resource/role/single/${data.id}`, {
+    method: 'GET',
+  });
+}
+export async function updateRole(data) {
+  return request('/api/resource/role/update', {
     method: 'POST',
     data,
   });

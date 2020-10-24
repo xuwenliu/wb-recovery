@@ -30,13 +30,13 @@ const Model = {
       call,
       put
     }) {
-      const response = yield call(fakeAccountLogin, payload);
-      console.log('res', response)
-      if (response.data) {
+      const token = yield call(fakeAccountLogin, payload);
+      const response = {};
+      if (token) {
         response.status = 'ok';
         response.currentAuthority = 'admin';
         response.type = payload.loginType;
-        localStorage.setItem('token', response.data);
+        localStorage.setItem('token', token);
         localStorage.setItem('username', payload.username);
       } else {
         message.error(response.msg);

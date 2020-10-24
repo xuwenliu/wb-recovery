@@ -1,76 +1,155 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select } from 'antd';
-import React, { useState, useRef } from 'react';
-import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
+import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import { getDeptList } from '../../service';
+import { getDeptList, getDeptAllList, getEmployeeAllList, getRoleAllList } from '../../service';
 import { connect, history } from 'umi';
 const FormItem = Form.Item;
-const { TextArea } = Input;
 
-const handleAdd = async () => {
-  history.push({
-    pathname: '/function/place/edit',
-  });
+
+let updateId = '';
+
+const formItemLayout = {
+  labelCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 4,
+    },
+  },
+  wrapperCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 20,
+    },
+    md: {
+      span: 24,
+    },
+  },
 };
 
-const handleUpdate = async (row) => {
-  history.push({
-    pathname: '/function/place/edit',
-    query: {
-      id: row.id,
-    },
-  });
-};
 
-const handleRemove = async (actionRef, row) => {
-  const hide = message.loading('正在删除');
-  const { dispatch } = props;
-  dispatch({
-    type: 'functionAndEmployee/remove',
-    payload: {
-      id: row.id,
-    },
-    callback: (res) => {
-      hide();
-      if (res) {
-        message.success('删除成功，即将刷新');
-        if (actionRef.current) {
-          actionRef.current.reload();
-        }
-      } else {
-        message.error('删除失败');
-      }
-    },
-  });
-};
+
 
 const Department = (props) => {
   const { submitting } = props;
   const actionRef = useRef();
   const [form] = Form.useForm();
   const [visible, setVisible] = useState(false);
+  const [deptList, setDeptList] = useState([]);//部门层级下拉
+  const [deptMangerList, setDeptMangerList] = useState([]);//部门主管下拉
+  const [roleList, setRoleList] = useState([]);//部门职位-全部角色带出 下拉
 
-  const formItemLayout = {
-    labelCol: {
-      xs: {
-        span: 24,
+
+
+
+
+  //获取部门层级
+  const queryDeptList = async () => {
+    const res = await getDeptAllList();
+    if (res) {
+      setDeptList(res);
+    }
+  }
+
+  // 获取部门主管
+  const queryDeptMangerList = async () => {
+    const res = await getEmployeeAllList();
+    if (res) {
+      setDeptMangerList(res);
+    }
+  }
+
+  // 获取部门职位
+  const queryRoleList = async () => {
+    const res = await getRoleAllList();
+    if (res) {
+      setRoleList(res);
+    }
+  }
+
+
+  useEffect(() => {
+    queryDeptList();
+    queryDeptMangerList();
+    queryRoleList();
+  }, [])
+
+  // 删除
+  const handleRemove = async (row) => {
+    const hide = message.loading('正在删除');
+    const { dispatch } = props;
+    dispatch({
+      type: 'functionAndEmployee/removeDepartment',
+      payload: {
+        id: row.id,
       },
-      sm: {
-        span: 4,
+      callback: (res) => {
+        hide();
+        if (res) {
+          message.success('删除成功，即将刷新');
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        } else {
+          message.error('删除失败');
+        }
       },
-    },
-    wrapperCol: {
-      xs: {
-        span: 24,
-      },
-      sm: {
-        span: 20,
-      },
-      md: {
-        span: 24,
-      },
-    },
+    });
+  };
+  // 编辑
+  const handleUpdate = async (row) => {
+    const { dispatch } = props;
+    updateId = row.id;
+    form.setFieldsValue(row)
+    setVisible(true);
+    // dispatch({
+    //   type: 'functionAndEmployee/getInfoDepartment',
+    //   payload: {
+    //     id: row.id,
+    //   },
+    //   callback: (data) => {
+    //     if (data) {
+    //       form.setFieldsValue(data);
+    //       setVisible(true);
+    //     }
+    //   },
+    // });
+  };
+
+  // 取消
+  const handleCancel = () => {
+    setVisible(false);
+    form.resetFields();
+    updateId = '';
+  };
+
+  // 提交
+  const handleOk = async () => {
+    const { dispatch } = props;
+    const values = await form.validateFields(); //校验
+    if (values) {
+      const getValues = form.getFieldsValue(); // 获取最新文本值
+      const postData = {
+        id: updateId,
+        ...getValues,
+      }
+      dispatch({
+        type: 'functionAndEmployee/createDepartment',
+        payload: postData,
+        callback: (res) => {
+          if (!res) return;
+          message.success(`${postData.id ? '修改' : '新增'}成功`);
+          handleCancel();
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        },
+      });
+    }
   };
 
   const columns = [
@@ -108,7 +187,7 @@ const Department = (props) => {
           </Button>
           <Popconfirm
             title="确定删除该项数据吗？"
-            onConfirm={() => handleRemove(actionRef, record)}
+            onConfirm={() => handleRemove(record)}
           >
             <Button danger size="small" type="primary">
               删除
@@ -118,41 +197,7 @@ const Department = (props) => {
       ),
     },
   ];
-  const handleOk = async () => {
-    const values = await form.validateFields(); //校验
-    if (values) {
-      const getValues = form.getFieldsValue(); // 获取最新文本值
-    }
-  };
-  const handleCancel = () => {
-    setVisible(false);
-    form.resetFields();
-  };
-  const onFinish = (values) => {
-    const { dispatch } = props;
-    const { id } = props.location.query;
-    values.editorState = values.editorState.toHTML();
-    dispatch({
-      type: 'functionAndPlace/create',
-      payload: values,
-      callback: (res) => {
-        if (res) {
-          message.success(`${id ? '修改' : '新增'}成功`);
-          history.goBack();
-        } else {
-          message.error(`${id ? '修改' : '新增'}失败`);
-        }
-      },
-    });
-  };
 
-  const reset = () => {
-    form.resetFields();
-    const { id } = props.location.query;
-    if (id) {
-      getInfo();
-    }
-  };
   return (
     <>
       <ProTable
@@ -163,7 +208,7 @@ const Department = (props) => {
         }}
         toolBarRender={() => [
           <Button key="add" type="primary" onClick={() => setVisible(true)}>
-            <PlusOutlined /> 新建
+            <PlusOutlined /> 新增
           </Button>,
         ]}
         request={(params, sorter, filter) => getDeptList({ ...params, body: params.code })}
@@ -191,16 +236,12 @@ const Department = (props) => {
           }}
           form={form}
           name="basic"
-          initialValues={{
-            public: '1',
-          }}
-          onFinish={onFinish}
         >
           <Tooltip title="注：一经确认无法修改">
             <FormItem
               {...formItemLayout}
               label="部门编号"
-              name="no"
+              name="code"
               rules={[
                 {
                   required: true,
@@ -227,60 +268,71 @@ const Department = (props) => {
 
           <FormItem
             {...formItemLayout}
-            label="部门层级"
-            name="location"
+            label="父级部门"
+            name="parentDeptId"
             rules={[
               {
                 required: true,
-                message: '请选择部门层级',
+                message: '请选择父级部门',
               },
             ]}
           >
-            <Select placeholder="请选择部门层级">
-              <Select.Option value={1}>一级部门</Select.Option>
-              <Select.Option value={2}>二级部门</Select.Option>
-              <Select.Option value={3}>三级部门</Select.Option>
+            <Select placeholder="请选择父级部门">
+              {
+                deptList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+              }
             </Select>
           </FormItem>
-          <FormItem
-            {...formItemLayout}
-            label="子部门"
-            name="location"
-            rules={[
-              {
-                required: true,
-                message: '请选择子部门',
-              },
-            ]}
-          >
-            <Select placeholder="请选择子部门" />
-          </FormItem>
-          <FormItem
-            {...formItemLayout}
-            label="部门职位"
-            name="location"
-            rules={[
-              {
-                required: true,
-                message: '请选择部门职位',
-              },
-            ]}
-          >
-            <Select placeholder="请选择部门职位" />
-          </FormItem>
-
+          {
+            updateId && (
+              <>
+                <FormItem
+                  {...formItemLayout}
+                  label="子部门"
+                  name="location"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择子部门',
+                    },
+                  ]}
+                >
+                  <Select mode="tags" placeholder="请选择子部门" />
+                </FormItem>
+                <FormItem
+                  {...formItemLayout}
+                  label="部门职位"
+                  name="location"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择部门职位',
+                    },
+                  ]}
+                >
+                  <Select placeholder="请选择部门职位" >
+                    {
+                      roleList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+                    }
+                  </Select>
+                </FormItem></>)
+          }
           <FormItem
             {...formItemLayout}
             label="部门主管"
-            name="desc"
+            name="supervisorId"
             rules={[
               {
                 required: true,
-                message: '请输入部门主管',
+                message: '请选择部门主管',
               },
             ]}
           >
-            <Input placeholder="请输入部门主管" />
+            <Select placeholder="请选择部门主管">
+              {
+                deptMangerList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+              }
+            </Select>
           </FormItem>
 
           {/* <FormItem
