@@ -1,4 +1,4 @@
-import { addRule, updateRule, getInfo, removeRule } from './service';
+import { createEmployee, updateEmployee, deleteEmployee, getEmployeeSingle, } from './service';
 
 const Model = {
   namespace: 'functionAndEmployee',
@@ -8,18 +8,18 @@ const Model = {
     *create({ payload, callback }, { call }) {
       let result = null;
       if (payload.id) {
-        result = yield call(updateRule, payload);
+        result = yield call(updateEmployee, payload);
       } else {
-        result = yield call(addRule, payload);
+        result = yield call(createEmployee, payload);
       }
       callback && callback(result);
     },
     *remove({ payload, callback }, { call }) {
-      const result = yield call(removeRule, payload);
+      const result = yield call(deleteEmployee, payload);
       callback && callback(result);
     },
-    *getInfo({ payload, callback }, { call, put }) {
-      const result = yield call(getInfo, payload);
+    *getInfo({ payload, callback }, { call }) {
+      const result = yield call(getEmployeeSingle, payload);
       callback && callback(result);
     },
   },

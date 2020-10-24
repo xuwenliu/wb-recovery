@@ -3,6 +3,7 @@ import { Button, Divider, message, Input, Drawer, Tabs, Card } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import Department from './components/department';
+import People from './components/people';
 
 const { TabPane } = Tabs;
 
@@ -16,7 +17,8 @@ const TableList = () => {
             <Department />
           </TabPane>
           <TabPane tab="人员管理" key="2">
-            Content of Tab Pane 2
+          <People />
+
           </TabPane>
           <TabPane tab="角色管理" key="3">
             Content of Tab Pane 3

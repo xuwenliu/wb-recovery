@@ -6,7 +6,8 @@ import {
   extend
 } from 'umi-request';
 import {
-  notification
+  notification,
+  message
 } from 'antd';
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
@@ -60,9 +61,21 @@ const errorHandler = (error) => {
 const request = extend({
   errorHandler,
   // 默认错误处理
-  credentials: 'include', // 默认请求是否带上cookie
+  // credentials: 'include', // 默认请求是否带上cookie
 });
 request.interceptors.request.use(async (url, options) => {
+  console.log(options)
+  if (options.data) {
+    if (options.data.current) {
+      options.data.page = options.data.current - 1;
+      delete options.data.current;
+    }
+    if (options.data.pageSize) {
+      options.data.size = options.data.pageSize;
+      delete options.data.pageSize;
+
+    }
+  }
   let token = localStorage.getItem("token");
   if (token) {
     const headers = {
@@ -70,6 +83,13 @@ request.interceptors.request.use(async (url, options) => {
       'Accept': 'application/json',
       'Authorization': 'Bearer ' + token
     };
+    console.log({
+      url: url,
+      options: {
+        ...options,
+        headers: headers
+      },
+    })
     return ({
       url: url,
       options: {
@@ -90,6 +110,23 @@ request.interceptors.request.use(async (url, options) => {
       },
     });
   }
+});
+
+request.interceptors.response.use(async (response, options) => {
+  let result;
+  const res = await response.clone().json();
+  console.log('===', res)
+  if (res.status === 200) {
+    // 界面报错处理
+    result = res.data ? res.data : res;
+  } else {
+    notification.error({
+      message: res.status,
+      description: res.msg,
+    });
+    return;
+  }
+  return result;
 });
 
 export default request;

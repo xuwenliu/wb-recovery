@@ -1,0 +1,338 @@
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, DatePicker } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
+import ProTable from '@ant-design/pro-table';
+import { getEmployeeList, getDeptAllList, getDeptRoles } from '../../service';
+import { connect, history } from 'umi';
+const FormItem = Form.Item;
+const { TextArea } = Input;
+import moment from 'moment';
+
+let updateId = '';
+
+const formItemLayout = {
+  labelCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 4,
+    },
+  },
+  wrapperCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 20,
+    },
+    md: {
+      span: 24,
+    },
+  },
+};
+
+
+
+
+
+
+const People = (props) => {
+  const { submitting } = props;
+  const actionRef = useRef();
+  const [form] = Form.useForm();
+  const [visible, setVisible] = useState(false);
+  const [deptList, setDeptList] = useState([]);
+  const [roleList, setRoleList] = useState([]);
+
+
+  //获取所属部门
+  const queryDeptList = async () => {
+    const res = await getDeptAllList();
+    if (res) {
+      setDeptList(res);
+    }
+  }
+
+  const handleDeptChange = (id) => {
+    queryDeptRoles(id);
+    form.setFields([{
+      name: 'roleIds',
+      value: []
+    }])
+  }
+
+  // 通过部门获取角色
+  const queryDeptRoles = async (id) => {
+    const res = await getDeptRoles({ id });
+    if (res) {
+      setRoleList(res);
+    }
+  }
+
+  useEffect(() => {
+    queryDeptList();
+  }, [])
+
+  const columns = [
+    {
+      title: '人员编号',
+      dataIndex: 'code',
+      formItemProps: {
+        placeholder: '请输入人员编号/名称',
+      },
+    },
+    {
+      title: '入职日期',
+      dataIndex: 'entryTime',
+      search: false,
+    },
+    {
+      title: '人员名称',
+      dataIndex: 'name',
+      search: false,
+    },
+    {
+      title: '所属部门',
+      dataIndex: 'deptName',
+      search: false,
+    },
+    {
+      title: '人员角色',
+      dataIndex: 'roleNames',
+      search: false,
+    },
+
+    {
+      title: '操作',
+      dataIndex: 'option',
+      valueType: 'option',
+      render: (_, record) => (
+        <>
+          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
+            编辑
+          </Button>
+          <Popconfirm
+            title="确定删除该项数据吗？"
+            onConfirm={() => handleRemove(actionRef, record)}
+          >
+            <Button danger size="small" type="primary">
+              删除
+            </Button>
+          </Popconfirm>
+        </>
+      ),
+    },
+  ];
+  const handleOk = async () => {
+    const { dispatch } = props;
+    const values = await form.validateFields(); //校验
+    if (values) {
+      const getValues = form.getFieldsValue(); // 获取最新文本值
+      const postData = {
+        id: updateId,
+        ...getValues,
+        entryTime: moment(getValues.entryTime).valueOf(),
+      }
+      dispatch({
+        type: 'functionAndEmployee/create',
+        payload: postData,
+        callback: (res) => {
+          message.success(`${postData.id ? '修改' : '新增'}成功`);
+          handleCancel();
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        },
+      });
+
+
+    }
+  };
+  const handleRemove = async (actionRef, row) => {
+    const hide = message.loading('正在删除');
+    const { dispatch } = props;
+    dispatch({
+      type: 'functionAndEmployee/remove',
+      payload: {
+        id: row.id,
+      },
+      callback: (res) => {
+        hide();
+        if (res) {
+          message.success('删除成功，即将刷新');
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        } else {
+          message.error('删除失败');
+        }
+      },
+    });
+  };
+  const handleUpdate = async (row) => {
+    const { dispatch } = props;
+    updateId = row.id;
+    dispatch({
+      type: 'functionAndEmployee/getInfo',
+      payload: {
+        id: row.id,
+      },
+      callback: (data) => {
+        if (data) {
+          data.entryTime = moment(data.entryTime);
+          queryDeptRoles(data.deptId);
+          form.setFieldsValue(data);
+        }
+      },
+    });
+  };
+  const handleCancel = () => {
+    setVisible(false);
+    form.resetFields();
+  };
+
+  return (
+    <>
+      <ProTable
+        actionRef={actionRef}
+        rowKey="id"
+        search={{
+          labelWidth: 80,
+        }}
+        toolBarRender={() => [
+          <Button key="add" type="primary" onClick={() => setVisible(true)}>
+            <PlusOutlined /> 新建
+          </Button>,
+        ]}
+        request={(params, sorter, filter) => getEmployeeList({ ...params, body: params.code })}
+        columns={columns}
+      />
+      <Modal
+        title="人员信息"
+        visible={visible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
+            确定
+          </Button>,
+          <Button key="back" onClick={handleCancel}>
+            取消
+          </Button>,
+          ,
+        ]}
+      >
+        <Form
+          style={{
+            marginTop: 8,
+          }}
+          form={form}
+          name="basic"
+        >
+          <Tooltip title="注：一经确认无法修改">
+            <FormItem
+              {...formItemLayout}
+              label="人员编号"
+              name="code"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入人员编号',
+                },
+              ]}
+            >
+              <Input placeholder="请输入人员编号" />
+            </FormItem>
+          </Tooltip>
+          <FormItem
+            {...formItemLayout}
+            label="人员名称"
+            name="name"
+            rules={[
+              {
+                required: true,
+                message: '请输入人员名称',
+              },
+            ]}
+          >
+            <Input placeholder="请输入人员名称" />
+          </FormItem>
+
+          <FormItem
+            {...formItemLayout}
+            label="所属部门"
+            name="deptId"
+            rules={[
+              {
+                required: true,
+                message: '请选择部门',
+              },
+            ]}
+          >
+            <Select onChange={handleDeptChange} placeholder="请选择部门">
+              {
+                deptList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+              }
+            </Select>
+          </FormItem>
+          <FormItem
+            {...formItemLayout}
+            label="入职日期"
+            name="entryTime"
+            rules={[
+              {
+                required: true,
+                message: '请选择入职日期',
+              },
+            ]}
+          >
+            <DatePicker placeholder="请选择入职日期" />
+          </FormItem>
+          <FormItem
+            {...formItemLayout}
+            label="所属角色"
+            name="roleIds"
+            rules={[
+              {
+                required: true,
+                message: '请选择角色',
+              },
+            ]}
+          >
+            <Select mode="multiple"
+              allowClear placeholder="请选择角色">
+              {
+                roleList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+              }
+            </Select>
+          </FormItem>
+
+          <FormItem
+            {...formItemLayout}
+            label="电话号码"
+            name="mobile"
+            rules={[
+              {
+                required: true,
+                message: '请输入电话号码',
+              },
+            ]}
+          >
+            <Input placeholder="请输入电话号码" />
+          </FormItem>
+        </Form>
+      </Modal>
+    </>
+  );
+};
+
+export default connect(({ loading }) => ({
+  submitting: loading.effects['functionAndEmployee/create'],
+}))(People);
+
+// function mapStateToProps(state) {
+//   console.log('state', state);
+// }
+// export default connect(mapStateToProps)(People);

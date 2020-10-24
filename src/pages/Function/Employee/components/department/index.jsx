@@ -3,7 +3,7 @@ import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select } from
 import React, { useState, useRef } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import { queryRule, updateRule, addRule, removeRule } from '../../service';
+import { getDeptList } from '../../service';
 import { connect, history } from 'umi';
 const FormItem = Form.Item;
 const { TextArea } = Input;
@@ -76,7 +76,7 @@ const Department = (props) => {
   const columns = [
     {
       title: '部门编号',
-      dataIndex: 'number',
+      dataIndex: 'code',
       formItemProps: {
         placeholder: '请输入部门编号/名称',
       },
@@ -88,12 +88,12 @@ const Department = (props) => {
     },
     {
       title: '层级',
-      dataIndex: 'location',
+      dataIndex: 'level',
       search: false,
     },
     {
       title: '部门人数',
-      dataIndex: 'desc',
+      dataIndex: 'number',
       search: false,
     },
 
@@ -166,7 +166,7 @@ const Department = (props) => {
             <PlusOutlined /> 新建
           </Button>,
         ]}
-        request={(params, sorter, filter) => queryRule({ ...params, sorter, filter })}
+        request={(params, sorter, filter) => getDeptList({ ...params, body: params.code })}
         columns={columns}
       />
       <Modal
