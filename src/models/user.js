@@ -1,11 +1,17 @@
-import { queryCurrent, query as queryUsers } from '@/services/user';
+import {
+  queryCurrent,
+  query as queryUsers
+} from '@/services/user';
 const UserModel = {
   namespace: 'user',
   state: {
     currentUser: {},
   },
   effects: {
-    *fetch(_, { call, put }) {
+    * fetch(_, {
+      call,
+      put
+    }) {
       const response = yield call(queryUsers);
       yield put({
         type: 'save',
@@ -13,17 +19,26 @@ const UserModel = {
       });
     },
 
-    *fetchCurrent(_, { call, put }) {
-      const response = yield call(queryCurrent);
+    * fetchCurrent(_, {
+      call,
+      put
+    }) {
+      // const response = yield call(queryCurrent);
       yield put({
         type: 'saveCurrentUser',
-        payload: response,
+        payload: {
+          name: localStorage.getItem('username'),
+          avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
+        },
       });
     },
   },
   reducers: {
     saveCurrentUser(state, action) {
-      return { ...state, currentUser: action.payload || {} };
+      return {
+        ...state,
+        currentUser: action.payload || {}
+      };
     },
 
     changeNotifyCount(

@@ -41,13 +41,15 @@ const LoginItem = (props) => {
     ...restProps
   } = props;
   const onGetCaptcha = useCallback(async (mobile) => {
+    if (!mobile) {
+      message.error('请输入手机号码');
+      return;
+    }
     const result = await getFakeCaptcha(mobile);
-
     if (result === false) {
       return;
     }
 
-    message.success('获取验证码成功！验证码为：1234');
     setTiming(true);
   }, []);
   useEffect(() => {

@@ -20,14 +20,21 @@ const LoginMessage = ({ content }) => (
 const Login = (props) => {
   const { userLogin = {}, submitting } = props;
   const { status, type: loginType } = userLogin;
-  const [autoLogin, setAutoLogin] = useState(true);
+  // const [autoLogin, setAutoLogin] = useState(true);
   const [type, setType] = useState('account');
 
   const handleSubmit = (values) => {
     const { dispatch } = props;
+    let postData = values;
+    if (type === 'mobile') {
+      postData = {
+        username: values.mobile,
+        password: values.captcha,
+      }
+    }
     dispatch({
       type: 'login/login',
-      payload: { ...values, type },
+      payload: { ...postData, loginType: type === 'account' ? 1 : 2 },
     });
   };
 
@@ -36,12 +43,12 @@ const Login = (props) => {
       <LoginForm activeKey={type} onTabChange={setType} onSubmit={handleSubmit}>
         <Tab key="account" tab="账户密码登录">
           {status === 'error' && loginType === 'account' && !submitting && (
-            <LoginMessage content="账户或密码错误（admin/ant.design）" />
+            <LoginMessage content="账户或密码错误" />
           )}
 
           <UserName
-            name="userName"
-            placeholder="用户名: admin or user"
+            name="username"
+            placeholder="用户名:admin"
             rules={[
               {
                 required: true,
@@ -51,7 +58,7 @@ const Login = (props) => {
           />
           <Password
             name="password"
-            placeholder="密码: ant.design"
+            placeholder="密码:123456"
             rules={[
               {
                 required: true,
@@ -81,7 +88,7 @@ const Login = (props) => {
           <Captcha
             name="captcha"
             placeholder="验证码"
-            countDown={120}
+            countDown={60}
             getCaptchaButtonText=""
             getCaptchaSecondText="秒"
             rules={[
@@ -92,7 +99,7 @@ const Login = (props) => {
             ]}
           />
         </Tab>
-        <div>
+        {/* <div>
           <Checkbox checked={autoLogin} onChange={(e) => setAutoLogin(e.target.checked)}>
             自动登录
           </Checkbox>
@@ -103,9 +110,9 @@ const Login = (props) => {
           >
             忘记密码
           </a>
-        </div>
+        </div> */}
         <Submit loading={submitting}>登录</Submit>
-        <div className={styles.other}>
+        {/* <div className={styles.other}>
           其他登录方式
           <AlipayCircleOutlined className={styles.icon} />
           <TaobaoCircleOutlined className={styles.icon} />
@@ -113,7 +120,7 @@ const Login = (props) => {
           <Link className={styles.register} to="/user/register">
             注册账户
           </Link>
-        </div>
+        </div> */}
       </LoginForm>
     </div>
   );
