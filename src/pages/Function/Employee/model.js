@@ -3,18 +3,14 @@ import {
   updateEmployee,
   deleteEmployee,
   getEmployeeSingle,
-
-
   createDept,
   updateDept,
   deleteDept,
   getDeptSingle,
-
   createRole,
   updateRole,
   deleteRole,
   getRoleSingle,
-
 } from './service';
 
 const Model = {
@@ -22,12 +18,8 @@ const Model = {
   state: {},
   reducers: {},
   effects: {
-    * create({
-      payload,
-      callback
-    }, {
-      call
-    }) {
+    // 员工
+    *create({ payload, callback }, { call }) {
       let result = null;
       if (payload.id) {
         result = yield call(updateEmployee, payload);
@@ -36,45 +28,26 @@ const Model = {
       }
       callback && callback(result);
     },
-    * remove({
-      payload,
-      callback
-    }, {
-      call
-    }) {
+    *remove({ payload, callback }, { call }) {
       const result = yield call(deleteEmployee, payload);
       callback && callback(result);
     },
-    * getInfo({
-      payload,
-      callback
-    }, {
-      call
-    }) {
+    *getInfo({ payload, callback }, { call }) {
       const result = yield call(getEmployeeSingle, payload);
       callback && callback(result);
     },
 
-    * createDepartment({
-      payload,
-      callback
-    }, {
-      call
-    }) {
+    // 部门
+    *createDepartment({ payload, callback }, { call }) {
       let result = null;
-      if (payload.id) {
+      if (payload.deptId) {
         result = yield call(updateDept, payload);
       } else {
         result = yield call(createDept, payload);
       }
       callback && callback(result);
     },
-    * removeDepartment({
-      payload,
-      callback
-    }, {
-      call
-    }) {
+    *removeDepartment({ payload, callback }, { call }) {
       const result = yield call(deleteDept, payload);
       callback && callback(result);
     },
@@ -88,6 +61,24 @@ const Model = {
     //   callback && callback(result);
     // },
 
+    //角色
+    *createRoleType({ payload, callback }, { call }) {
+      let result = null;
+      if (payload.roleId) {
+        result = yield call(updateRole, payload);
+      } else {
+        result = yield call(createRole, payload);
+      }
+      callback && callback(result);
+    },
+    *removeRoleType({ payload, callback }, { call }) {
+      const result = yield call(deleteRole, payload);
+      callback && callback(result);
+    },
+    *getInfoRoleType({ payload, callback }, { call }) {
+      const result = yield call(getRoleSingle, payload);
+      callback && callback(result);
+    },
   },
 };
 export default Model;

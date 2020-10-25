@@ -249,7 +249,7 @@ const People = (props) => {
                 },
               ]}
             >
-              <Input placeholder="请输入人员编号" />
+              <Input disabled={updateId} placeholder="请输入人员编号" />
             </FormItem>
           </Tooltip>
           <FormItem

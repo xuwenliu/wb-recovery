@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import Department from './components/department';
 import People from './components/people';
+import Role from './components/role';
 
 const { TabPane } = Tabs;
 
@@ -17,11 +18,10 @@ const TableList = () => {
             <Department />
           </TabPane>
           <TabPane tab="人员管理" key="2">
-          <People />
-
+            <People />
           </TabPane>
           <TabPane tab="角色管理" key="3">
-            Content of Tab Pane 3
+            <Role />
           </TabPane>
           <TabPane tab="评估小组" key="4">
             Content of Tab Pane 4

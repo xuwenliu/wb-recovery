@@ -1,10 +1,11 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select } from 'antd';
+import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, Checkbox } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import { getDeptList, getDeptAllList, getEmployeeAllList, getRoleAllList } from '../../service';
-import { connect, history } from 'umi';
+import { getRoleList, getDeptAllList, getDeptRoles, getRoleAllList } from '../../service';
+import { connect } from 'umi';
 const FormItem = Form.Item;
+import moment from 'moment';
 
 let updateId = '';
 
@@ -30,16 +31,15 @@ const formItemLayout = {
   },
 };
 
-const Department = (props) => {
+const Role = (props) => {
   const { submitting } = props;
   const actionRef = useRef();
   const [form] = Form.useForm();
   const [visible, setVisible] = useState(false);
-  const [deptList, setDeptList] = useState([]); //部门层级下拉
-  const [deptMangerList, setDeptMangerList] = useState([]); //部门主管下拉
-  const [roleList, setRoleList] = useState([]); //部门职位-全部角色带出 下拉
+  const [deptList, setDeptList] = useState([]);
+  const [roleList, setRoleList] = useState([]);
 
-  //获取部门层级
+  //获取所属部门
   const queryDeptList = async () => {
     const res = await getDeptAllList();
     if (res) {
@@ -47,26 +47,22 @@ const Department = (props) => {
     }
   };
 
-  // 获取部门主管
-  const queryDeptMangerList = async () => {
-    const res = await getEmployeeAllList();
-    if (res) {
-      setDeptMangerList(res);
-    }
-  };
-
-  // 获取部门职位
+  // 获取设置权限-复选框数据
   const queryRoleList = async () => {
     const res = await getRoleAllList();
     if (res) {
-      setRoleList(res);
+      const data = res.map((item) => {
+        item.label = item.name;
+        item.value = item.id;
+        return item;
+      });
+      setRoleList(data);
     }
   };
 
   useEffect(() => {
     queryDeptList();
-    queryDeptMangerList();
-    queryRoleList();
+    queryRoleList(); // 全部权限
   }, []);
 
   // 删除
@@ -74,7 +70,7 @@ const Department = (props) => {
     const hide = message.loading('正在删除');
     const { dispatch } = props;
     dispatch({
-      type: 'functionAndEmployee/removeDepartment',
+      type: 'functionAndEmployee/removeRoleType',
       payload: {
         id: row.id,
       },
@@ -95,24 +91,19 @@ const Department = (props) => {
   const handleUpdate = async (row) => {
     const { dispatch } = props;
     updateId = row.id;
-    const updateData = {
-      ...row,
-      parentDeptId: row.id, // 设置父级部门id
-    };
-    form.setFieldsValue(updateData);
-    setVisible(true);
-    // dispatch({
-    //   type: 'functionAndEmployee/getInfoDepartment',
-    //   payload: {
-    //     id: row.id,
-    //   },
-    //   callback: (data) => {
-    //     if (data) {
-    //       form.setFieldsValue(data);
-    //       setVisible(true);
-    //     }
-    //   },
-    // });
+    dispatch({
+      type: 'functionAndEmployee/getInfoRoleType',
+      payload: {
+        id: row.id,
+      },
+      callback: (data) => {
+        if (data) {
+          data.entryTime = moment(data.entryTime);
+          form.setFieldsValue(data);
+          setVisible(true);
+        }
+      },
+    });
   };
 
   // 取消
@@ -129,16 +120,16 @@ const Department = (props) => {
     if (values) {
       const getValues = form.getFieldsValue(); // 获取最新文本值
       const postData = {
-        deptId: updateId,
-        deptName: getValues.name,
+        roleId: updateId,
         ...getValues,
+        entryTime: moment(getValues.entryTime).valueOf(), // 时间传时间戳
       };
       dispatch({
-        type: 'functionAndEmployee/createDepartment',
+        type: 'functionAndEmployee/createRoleType',
         payload: postData,
         callback: (res) => {
           if (!res) return;
-          message.success(`${postData.deptId ? '修改' : '新增'}成功`);
+          message.success(`${postData.roleId ? '修改' : '新增'}成功`);
           handleCancel();
           if (actionRef.current) {
             actionRef.current.reload();
@@ -150,25 +141,25 @@ const Department = (props) => {
 
   const columns = [
     {
-      title: '部门编号',
+      title: '角色编号',
       dataIndex: 'code',
       formItemProps: {
-        placeholder: '请输入部门编号/名称',
+        placeholder: '请输入角色编号/名称',
       },
     },
     {
-      title: '部门名称',
+      title: '角色名称',
       dataIndex: 'name',
       search: false,
     },
     {
-      title: '层级',
-      dataIndex: 'level',
+      title: '所属部门',
+      dataIndex: 'deptName',
       search: false,
     },
     {
-      title: '部门人数',
-      dataIndex: 'number',
+      title: '权限内容',
+      dataIndex: 'permissionNames',
       search: false,
     },
 
@@ -190,7 +181,6 @@ const Department = (props) => {
       ),
     },
   ];
-
   return (
     <>
       <ProTable
@@ -204,11 +194,11 @@ const Department = (props) => {
             <PlusOutlined /> 新增
           </Button>,
         ]}
-        request={(params, sorter, filter) => getDeptList({ ...params, body: params.code })}
+        request={(params, sorter, filter) => getRoleList({ ...params, body: params.code })}
         columns={columns}
       />
       <Modal
-        title="部门信息"
+        title="角色信息"
         visible={visible}
         onOk={handleOk}
         onCancel={handleCancel}
@@ -223,7 +213,6 @@ const Department = (props) => {
         ]}
       >
         <Form
-          // hideRequiredMark
           style={{
             marginTop: 8,
           }}
@@ -233,44 +222,44 @@ const Department = (props) => {
           <Tooltip title="注：一经确认无法修改">
             <FormItem
               {...formItemLayout}
-              label="部门编号"
+              label="角色编号"
               name="code"
               rules={[
                 {
                   required: true,
-                  message: '请输入部门编号',
+                  message: '请输入角色编号',
                 },
               ]}
             >
-              <Input disabled={updateId} placeholder="请输入部门编号" />
+              <Input disabled={updateId} placeholder="请输入角色编号" />
             </FormItem>
           </Tooltip>
           <FormItem
             {...formItemLayout}
-            label="部门名称"
+            label="角色名称"
             name="name"
             rules={[
               {
                 required: true,
-                message: '请输入部门名称',
+                message: '请输入角色名称',
               },
             ]}
           >
-            <Input placeholder="请输入部门名称" />
+            <Input placeholder="请输入角色名称" />
           </FormItem>
 
           <FormItem
             {...formItemLayout}
-            label="父级部门"
-            name="parentDeptId"
+            label="所属部门"
+            name="deptId"
             rules={[
               {
                 required: true,
-                message: '请选择父级部门',
+                message: '请选择部门',
               },
             ]}
           >
-            <Select disabled={updateId} placeholder="请选择父级部门">
+            <Select placeholder="请选择部门">
               {deptList.map((item) => (
                 <Select.Option key={item.id} value={item.id}>
                   {item.name}
@@ -278,73 +267,20 @@ const Department = (props) => {
               ))}
             </Select>
           </FormItem>
-          {updateId && (
-            <>
-              <FormItem
-                {...formItemLayout}
-                label="子部门"
-                name="location"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择子部门',
-                  },
-                ]}
-              >
-                <Select mode="tags" placeholder="请选择子部门" />
-              </FormItem>
-              <FormItem
-                {...formItemLayout}
-                label="部门职位"
-                name="location"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择部门职位',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择部门职位">
-                  {roleList.map((item) => (
-                    <Select.Option key={item.id} value={item.id}>
-                      {item.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </FormItem>
-            </>
-          )}
+
           <FormItem
             {...formItemLayout}
-            label="部门主管"
-            name="supervisorId"
+            label="设置权限"
+            name="permissionIds"
             rules={[
               {
                 required: true,
-                message: '请选择部门主管',
+                message: '请选择权限',
               },
             ]}
           >
-            <Select placeholder="请选择部门主管">
-              {deptMangerList.map((item) => (
-                <Select.Option key={item.id} value={item.id}>
-                  {item.name}
-                </Select.Option>
-              ))}
-            </Select>
+            <Checkbox.Group options={roleList} />
           </FormItem>
-
-          {/* <FormItem
-            {...submitFormLayout}
-            style={{
-              marginTop: 32,
-            }}
-          >
-            <Button className="mr8" type="primary" htmlType="submit" loading={submitting}>
-              确认
-            </Button>
-            <Button onClick={reset}>重置</Button>
-          </FormItem> */}
         </Form>
       </Modal>
     </>
@@ -352,10 +288,10 @@ const Department = (props) => {
 };
 
 export default connect(({ loading }) => ({
-  submitting: loading.effects['functionAndEmployee/createDepartment'],
-}))(Department);
+  submitting: loading.effects['functionAndEmployee/createRoleType'],
+}))(Role);
 
 // function mapStateToProps(state) {
 //   console.log('state', state);
 // }
-// export default connect(mapStateToProps)(Department);
+// export default connect(mapStateToProps)(Role);

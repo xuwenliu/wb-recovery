@@ -2,13 +2,8 @@
  * request 网络请求工具
  * 更详细的 api 文档: https://github.com/umijs/umi-request
  */
-import {
-  extend
-} from 'umi-request';
-import {
-  notification,
-  message
-} from 'antd';
+import { extend } from 'umi-request';
+import { notification, message } from 'antd';
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
   201: '新建或修改数据成功。',
@@ -31,16 +26,11 @@ const codeMessage = {
  */
 
 const errorHandler = (error) => {
-  const {
-    response
-  } = error;
+  const { response } = error;
 
   if (response && response.status) {
     const errorText = codeMessage[response.status] || response.statusText;
-    const {
-      status,
-      url
-    } = response;
+    const { status, url } = response;
     notification.error({
       message: `请求错误 ${status}: ${url}`,
       description: errorText,
@@ -64,7 +54,6 @@ const request = extend({
   // credentials: 'include', // 默认请求是否带上cookie
 });
 request.interceptors.request.use(async (url, options) => {
-
   if (options.data) {
     if (options.data.current) {
       options.data.page = options.data.current - 1;
@@ -79,21 +68,26 @@ request.interceptors.request.use(async (url, options) => {
   if (method === 'delete' || method === 'put') {
     url = url + '/' + options.data.id;
   }
+  const token = localStorage.getItem('token');
+  let headers = {};
+  if (token) {
+    headers = {
+      Authorization: 'Bearer ' + token,
+    };
+  }
   return {
     url,
     options: {
       ...options,
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem("token")
-      }
+      headers,
     },
-  }
+  };
 });
 
 request.interceptors.response.use(async (response, options) => {
   let result;
   const res = await response.clone().json();
-  console.log('===', res)
+  console.log('===', res);
   if (res.status === 200) {
     // 界面报错处理
     result = res.data ? res.data : res;
@@ -102,7 +96,6 @@ request.interceptors.response.use(async (response, options) => {
       message: res.status,
       description: res.msg,
     });
-    return;
   }
   return result;
 });
