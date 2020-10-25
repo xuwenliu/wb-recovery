@@ -333,18 +333,6 @@ const Department = (props) => {
               ))}
             </Select>
           </FormItem>
-
-          {/* <FormItem
-            {...submitFormLayout}
-            style={{
-              marginTop: 32,
-            }}
-          >
-            <Button className="mr8" type="primary" htmlType="submit" loading={submitting}>
-              确认
-            </Button>
-            <Button onClick={reset}>重置</Button>
-          </FormItem> */}
         </Form>
       </Modal>
     </>

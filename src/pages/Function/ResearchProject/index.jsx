@@ -1,155 +1,240 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, message, Input, Drawer } from 'antd';
-import React, { useState, useRef } from 'react';
-import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
+import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, DatePicker } from 'antd';
+import React, { useState, useEffect, useRef } from 'react';
+import { PageContainer } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import ProDescriptions from '@ant-design/pro-descriptions';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
-import { queryRule, updateRule, addRule, removeRule } from './service';
-/**
- * 添加节点
- * @param fields
- */
+import { getProjectList, getProjectAllCode, getProjectAllEmployee, getProjectAllName } from './service';
 
-const handleAdd = async (fields) => {
-  const hide = message.loading('正在添加');
+import { getEmployeeAllList } from '../Employee/service';
+import { connect } from 'umi';
+const FormItem = Form.Item;
+import moment from 'moment';
 
-  try {
-    await addRule({ ...fields });
-    hide();
-    message.success('添加成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('添加失败请重试！');
-    return false;
-  }
-};
-/**
- * 更新节点
- * @param fields
- */
+let updateId = '';
 
-const handleUpdate = async (fields) => {
-  const hide = message.loading('正在配置');
-
-  try {
-    await updateRule({
-      name: fields.name,
-      desc: fields.desc,
-      key: fields.key,
-    });
-    hide();
-    message.success('配置成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('配置失败请重试！');
-    return false;
-  }
-};
-/**
- *  删除节点
- * @param selectedRows
- */
-
-const handleRemove = async (selectedRows) => {
-  const hide = message.loading('正在删除');
-  if (!selectedRows) return true;
-
-  try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
-    });
-    hide();
-    message.success('删除成功，即将刷新');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('删除失败，请重试');
-    return false;
-  }
+const formItemLayout = {
+  labelCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 6,
+    },
+  },
+  wrapperCol: {
+    xs: {
+      span: 24,
+    },
+    sm: {
+      span: 18,
+    },
+    md: {
+      span: 24,
+    },
+  },
 };
 
-const TableList = () => {
-  const [createModalVisible, handleModalVisible] = useState(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState(false);
-  const [stepFormValues, setStepFormValues] = useState({});
+const ResearchProject = (props) => {
+  const { submitting } = props;
   const actionRef = useRef();
-  const [row, setRow] = useState();
-  const [selectedRowsState, setSelectedRows] = useState([]);
+  const [form] = Form.useForm();
+  const [visible, setVisible] = useState(false);
+  const [allCode, setAllCode] = useState([]);
+  const [allEmployee, setAllEmployee] = useState([]);
+  const [allName, setAllName] = useState([]);
+  const [employeeAllList, setEmployeeAllList] = useState([]);
+
+
+  const queryProjectList = async (params) => {
+    const res = await getProjectList({
+      ...params, body: {
+        code: params.code,
+        employeeId: params.employeeNames,
+        keyword: params.keyword,
+        name: params.name,
+      }
+    })
+    if (res) {
+      queryProjectAllCode();
+      queryProjectAllEmployee();
+      queryProjectAllName();
+      return res;
+    }
+  }
+
+  const queryProjectAllCode = async () => {
+    const res = await getProjectAllCode();
+    if (res) {
+      setAllCode(res);
+    }
+  }
+
+  const queryProjectAllEmployee = async () => {
+    const res = await getProjectAllEmployee();
+    if (res) {
+      setAllEmployee(res);
+    }
+  }
+
+  const queryProjectAllName = async () => {
+    const res = await getProjectAllName();
+    if (res) {
+      setAllName(res);
+    }
+  }
+
+
+  // 获取研究项目人员
+  const queryEmployeeAllList = async () => {
+    const res = await getEmployeeAllList();
+    if (res) {
+      setEmployeeAllList(res);
+    }
+  };
+  useEffect(() => {
+    queryEmployeeAllList();
+  }, [])
+
+  // 删除
+  const handleRemove = async (row) => {
+    const hide = message.loading('正在删除');
+    const { dispatch } = props;
+    dispatch({
+      type: 'functionAndResearchProject/remove',
+      payload: {
+        id: row.id,
+      },
+      callback: (res) => {
+        hide();
+        if (res) {
+          message.success('删除成功，即将刷新');
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        } else {
+          message.error('删除失败');
+        }
+      },
+    });
+  };
+  // 编辑
+  const handleUpdate = async (row, infoNumber) => {
+    const { dispatch } = props;
+    updateId = row.id;
+    dispatch({
+      type: 'functionAndResearchProject/getInfo',
+      payload: {
+        id: row.id,
+      },
+      callback: (data) => {
+        if (data) {
+          data.time = [moment(data.startTime), moment(data.endTime)];
+          data.employeeId = data.employeeDos.map(item => item.id);
+          form.setFieldsValue(data);
+          updateId = infoNumber ? infoNumber : row.id;
+          setVisible(true);
+        }
+      },
+    });
+  };
+
+  // 取消
+  const handleCancel = () => {
+    setVisible(false);
+    form.resetFields();
+    updateId = '';
+  };
+
+  // 提交
+  const handleOk = async () => {
+    const { dispatch } = props;
+    const values = await form.validateFields(); //校验
+    if (values) {
+      const getValues = form.getFieldsValue(); // 获取最新文本值
+      const postData = {
+        id: updateId,
+        ...getValues,
+        startTime: moment(getValues.time[0]).valueOf(), // 时间传时间戳
+        endTime: moment(getValues.time[1]).valueOf(), // 时间传时间戳
+      }
+      dispatch({
+        type: 'functionAndResearchProject/create',
+        payload: postData,
+        callback: (res) => {
+          if (!res) return;
+          message.success(`${postData.id ? '修改' : '新增'}成功`);
+          handleCancel();
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        },
+      });
+    }
+  };
+
+
   const columns = [
     {
-      title: '规则名称',
-      dataIndex: 'name',
-      tip: '规则名称是唯一的 key',
-      formItemProps: {
-        rules: [
+      title: '研究项目编号',
+      dataIndex: 'code',
+      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
+        return <Select placeholder="请选择研究项目编号">
           {
-            required: true,
-            message: '规则名称为必填项',
-          },
-        ],
-      },
-      render: (dom, entity) => {
-        return <a onClick={() => setRow(entity)}>{dom}</a>;
+            allCode.map((item, index) => <Select.Option value={item} key={index}>{item}</Select.Option>)
+          }
+        </Select>
       },
     },
     {
-      title: '描述',
-      dataIndex: 'desc',
-      valueType: 'textarea',
-    },
-    {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val) => `${val} 万`,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: {
-          text: '关闭',
-          status: 'Default',
-        },
-        1: {
-          text: '运行中',
-          status: 'Processing',
-        },
-        2: {
-          text: '已上线',
-          status: 'Success',
-        },
-        3: {
-          text: '异常',
-          status: 'Error',
-        },
+      title: '研究项目名称',
+      dataIndex: 'name',
+      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
+        return <Select placeholder="请选择研究项目名称">
+          {
+            allName.map((item, index) => <Select.Option value={item} key={index}>{item}</Select.Option>)
+          }
+        </Select>
       },
     },
     {
-      title: '上次调度时间',
-      dataIndex: 'updatedAt',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInForm: true,
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
+      title: '研究项目人员',
+      dataIndex: 'employeeNames',
+      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
+        return <Select placeholder="请选择研究项目人员">
+          {
+            allEmployee.map((item, index) => <Select.Option value={item.id} key={index}>{item.name}</Select.Option>)
+          }
+        </Select>
+      },
 
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
+    },
+    {
+      title: '搜索关键字',
+      dataIndex: 'keyword',
+      hideInTable: true,
+      formItemProps: {
+        placeholder: '请输入研究人员、项目编号等关键字',
       },
+    },
+    {
+      title: '研究说明',
+      dataIndex: 'description',
+      search: false,
+    },
+    {
+      title: '立项时间',
+      dataIndex: 'startTime',
+      search: false,
+    },
+    {
+      title: '预计结案时间',
+      dataIndex: 'endTime',
+      search: false,
+    },
+    {
+      title: '备注',
+      dataIndex: 'remark',
+      search: false,
     },
     {
       title: '操作',
@@ -157,136 +242,154 @@ const TableList = () => {
       valueType: 'option',
       render: (_, record) => (
         <>
-          <a
-            onClick={() => {
-              handleUpdateModalVisible(true);
-              setStepFormValues(record);
-            }}
-          >
-            配置
-          </a>
-          <Divider type="vertical" />
-          <a href="">订阅警报</a>
+          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
+            编辑
+          </Button>
+          <Button size="small" onClick={() => handleUpdate(record, 1)} type="success">
+            查看详情
+            </Button>
         </>
       ),
     },
   ];
+
   return (
-    <PageContainer>
-      <ProTable
-        headerTitle="查询表格"
-        actionRef={actionRef}
-        rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
-        toolBarRender={() => [
-          <Button type="primary" onClick={() => handleModalVisible(true)}>
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
-        request={(params, sorter, filter) => queryRule({ ...params, sorter, filter })}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => setSelectedRows(selectedRows),
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              已选择{' '}
-              <a
-                style={{
-                  fontWeight: 600,
-                }}
-              >
-                {selectedRowsState.length}
-              </a>{' '}
-              项&nbsp;&nbsp;
-              <span>
-                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo, 0)} 万
-              </span>
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            批量删除
-          </Button>
-          <Button type="primary">批量审批</Button>
-        </FooterToolbar>
-      )}
-      <CreateForm onCancel={() => handleModalVisible(false)} modalVisible={createModalVisible}>
+    <>
+      <PageContainer>
         <ProTable
-          onSubmit={async (value) => {
-            const success = await handleAdd(value);
+          actionRef={actionRef}
+          rowKey="id"
+          search={{
+            labelWidth: 100,
 
-            if (success) {
-              handleModalVisible(false);
-
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
           }}
-          rowKey="key"
-          type="form"
+          toolBarRender={() => [
+            <Button key="add" type="primary" onClick={() => setVisible(true)}>
+              <PlusOutlined /> 新增
+          </Button>,
+          ]}
+          request={(params, sorter, filter) => queryProjectList(params)}
           columns={columns}
+
         />
-      </CreateForm>
-      {stepFormValues && Object.keys(stepFormValues).length ? (
-        <UpdateForm
-          onSubmit={async (value) => {
-            const success = await handleUpdate(value);
-
-            if (success) {
-              handleUpdateModalVisible(false);
-              setStepFormValues({});
-
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalVisible(false);
-            setStepFormValues({});
-          }}
-          updateModalVisible={updateModalVisible}
-          values={stepFormValues}
-        />
-      ) : null}
-
-      <Drawer
-        width={600}
-        visible={!!row}
-        onClose={() => {
-          setRow(undefined);
-        }}
-        closable={false}
-      >
-        {row?.name && (
-          <ProDescriptions
-            column={2}
-            title={row?.name}
-            request={async () => ({
-              data: row || {},
-            })}
-            params={{
-              id: row?.name,
+        <Modal
+          title="研究立项"
+          visible={visible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          footer={[
+            <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
+              确定
+          </Button>,
+            <Button key="back" onClick={handleCancel}>
+              取消
+          </Button>,
+            ,
+          ]}
+        >
+          <Form
+            style={{
+              marginTop: 8,
             }}
-            columns={columns}
-          />
-        )}
-      </Drawer>
-    </PageContainer>
+            form={form}
+            name="basic"
+          >
+            <Tooltip title="注：一经确认无法修改">
+              <FormItem
+                {...formItemLayout}
+                label="研究项目编号"
+                name="code"
+                rules={[
+                  {
+                    required: true,
+                    message: '请输入研究项目编号',
+                  },
+                ]}
+              >
+                <Input disabled={updateId} placeholder="请输入研究项目编号" />
+              </FormItem>
+            </Tooltip>
+            <FormItem
+              {...formItemLayout}
+              label="研究项目名称"
+              name="name"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入研究项目名称',
+                },
+              ]}
+            >
+              <Input disabled={updateId} placeholder="请输入研究项目名称" />
+            </FormItem>
+
+            <FormItem
+              {...formItemLayout}
+              label="研究项目人员"
+              name="employeeId"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择研究项目人员',
+                },
+              ]}
+            >
+              <Select disabled={updateId} mode="multiple" placeholder="请选择研究项目人员">
+                {
+                  employeeAllList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
+                }
+              </Select>
+            </FormItem>
+
+            <FormItem
+              {...formItemLayout}
+              label="研究说明"
+              name="description"
+              rules={[
+                {
+                  required: true,
+                  message: '请输入研究说明',
+                },
+              ]}
+            >
+              <Input disabled={updateId === 1} placeholder="请输入研究说明" />
+            </FormItem>
+
+
+            <FormItem
+              {...formItemLayout}
+              label="立项时间"
+              name="time"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择立项时间',
+                },
+              ]}
+            >
+              <DatePicker.RangePicker disabled={updateId} />
+            </FormItem>
+
+            <FormItem
+              {...formItemLayout}
+              label="备注"
+              name="remark"
+            >
+              <Input disabled={updateId === 1} placeholder="请输入备注" />
+            </FormItem>
+
+          </Form>
+        </Modal>
+      </PageContainer>
+    </>
   );
 };
 
-export default TableList;
+export default connect(({ loading }) => ({
+  submitting: loading.effects['functionAndResearchProject/create'],
+}))(ResearchProject);
+
+// function mapStateToProps(state) {
+//   console.log('state', state);
+// }
+// export default connect(mapStateToProps)(ResearchProject);
