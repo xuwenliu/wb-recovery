@@ -5,6 +5,7 @@ import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import Department from './components/department';
 import People from './components/people';
 import Role from './components/role';
+import Group from './components/group';
 
 const { TabPane } = Tabs;
 
@@ -24,7 +25,7 @@ const TableList = () => {
             <Role />
           </TabPane>
           <TabPane tab="评估小组" key="4">
-            Content of Tab Pane 4
+            <Group />
           </TabPane>
         </Tabs>
       </Card>

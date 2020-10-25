@@ -11,6 +11,10 @@ export default {
       target: 'http://49.4.71.32:8080',
       changeOrigin: true,
     },
+    '/common/': {
+      target: 'http://49.4.71.32:8080',
+      changeOrigin: true,
+    },
   },
   test: {
     '/api/': {

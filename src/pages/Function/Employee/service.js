@@ -10,7 +10,7 @@ export async function createDept(data) {
 export async function deleteDept(data) {
   return request(`/api/resource/dept/delete`, {
     method: 'DELETE',
-    data
+    data,
   });
 }
 export async function getDeptList(data) {
@@ -34,8 +34,6 @@ export async function updateDept(data) {
   });
 }
 
-
-
 // 人员管理
 export async function createEmployee(data) {
   return request('/api/resource/employee/create', {
@@ -46,7 +44,7 @@ export async function createEmployee(data) {
 export async function deleteEmployee(data) {
   return request('/api/resource/employee/delete', {
     method: 'DELETE',
-    data
+    data,
   });
 }
 export async function getEmployeeList(data) {
@@ -70,7 +68,6 @@ export async function updateEmployee(data) {
   });
 }
 
-
 // 角色管理
 export async function createRole(data) {
   return request('/api/resource/role/create', {
@@ -81,7 +78,7 @@ export async function createRole(data) {
 export async function deleteRole(data) {
   return request('/api/resource/role/delete', {
     method: 'DELETE',
-    data
+    data,
   });
 }
 export async function getRoleList(data) {
@@ -100,6 +97,50 @@ export async function getRoleSingle(data) {
 }
 export async function updateRole(data) {
   return request('/api/resource/role/update', {
+    method: 'POST',
+    data,
+  });
+}
+
+// 评估小组
+export async function createGroup(data) {
+  return request('/api/resource/group/create', {
+    method: 'POST',
+    data,
+  });
+}
+//查询子部门列表
+export async function getGroupDepartments(params) {
+  return request('/api/resource/group/departments', {
+    params,
+  });
+}
+//查询部门中人员列表
+export async function getGroupEmployees(params) {
+  return request('/api/resource/group/employees', {
+    params,
+  });
+}
+export async function deleteGroup(data) {
+  return request('/api/resource/group/delete', {
+    method: 'DELETE',
+    data,
+  });
+}
+export async function getGroupList(data) {
+  return request('/api/resource/group/list', {
+    method: 'POST',
+    data,
+  });
+}
+
+export async function getGroupSingle(data) {
+  return request(`/api/resource/group/single/${data.id}`, {
+    method: 'GET',
+  });
+}
+export async function updateGroup(data) {
+  return request('/api/resource/group/update', {
     method: 'POST',
     data,
   });
