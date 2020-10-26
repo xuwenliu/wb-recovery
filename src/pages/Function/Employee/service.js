@@ -134,9 +134,9 @@ export async function getGroupList(data) {
   });
 }
 
-export async function getGroupSingle(data) {
-  return request(`/api/resource/group/single/${data.id}`, {
-    method: 'GET',
+export async function getGroupSingle(params) {
+  return request(`/api/resource/group/single`, {
+    params,
   });
 }
 export async function updateGroup(data) {

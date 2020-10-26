@@ -39,23 +39,24 @@ const People = (props) => {
   const [deptList, setDeptList] = useState([]);
   const [roleList, setRoleList] = useState([]);
 
-
   //获取所属部门
   const queryDeptList = async () => {
     const res = await getDeptAllList();
     if (res) {
       setDeptList(res);
     }
-  }
+  };
 
   // 选择所属部门
   const handleDeptChange = (id) => {
     queryDeptRoles(id);
-    form.setFields([{
-      name: 'roleIds',
-      value: []
-    }])
-  }
+    form.setFields([
+      {
+        name: 'roleIds',
+        value: [],
+      },
+    ]);
+  };
 
   // 通过部门获取角色
   const queryDeptRoles = async (id) => {
@@ -63,14 +64,14 @@ const People = (props) => {
     if (res) {
       setRoleList(res);
     }
-  }
+  };
 
   useEffect(() => {
-    queryDeptList();
-  }, [])
-
-
-
+    if (props.tab == 2) {
+      queryDeptList();
+      actionRef?.current?.reload();
+    }
+  }, [props.tab]);
 
   // 删除
   const handleRemove = async (row) => {
@@ -85,9 +86,7 @@ const People = (props) => {
         hide();
         if (res) {
           message.success('删除成功，即将刷新');
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         } else {
           message.error('删除失败');
         }
@@ -131,7 +130,7 @@ const People = (props) => {
         id: updateId,
         ...getValues,
         entryTime: moment(getValues.entryTime).valueOf(), // 时间传时间戳
-      }
+      };
       dispatch({
         type: 'functionAndEmployee/create',
         payload: postData,
@@ -139,14 +138,11 @@ const People = (props) => {
           if (!res) return;
           message.success(`${postData.id ? '修改' : '新增'}成功`);
           handleCancel();
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         },
       });
     }
   };
-
 
   const columns = [
     {
@@ -186,10 +182,7 @@ const People = (props) => {
           <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
             编辑
           </Button>
-          <Popconfirm
-            title="确定删除该项数据吗？"
-            onConfirm={() => handleRemove(record)}
-          >
+          <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
             <Button danger size="small" type="primary">
               删除
             </Button>
@@ -278,9 +271,11 @@ const People = (props) => {
             ]}
           >
             <Select onChange={handleDeptChange} placeholder="请选择部门">
-              {
-                deptList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
-              }
+              {deptList.map((item) => (
+                <Select.Option key={item.id} value={item.id}>
+                  {item.name}
+                </Select.Option>
+              ))}
             </Select>
           </FormItem>
           <FormItem
@@ -294,7 +289,7 @@ const People = (props) => {
               },
             ]}
           >
-            <DatePicker placeholder="请选择入职日期" />
+            <DatePicker style={{ width: '50%' }} placeholder="请选择入职日期" />
           </FormItem>
           <FormItem
             {...formItemLayout}
@@ -307,17 +302,18 @@ const People = (props) => {
               },
             ]}
           >
-            <Select mode="multiple"
-              allowClear placeholder="请选择角色">
-              {
-                roleList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
-              }
+            <Select mode="multiple" allowClear placeholder="请选择角色">
+              {roleList.map((item) => (
+                <Select.Option key={item.id} value={item.id}>
+                  {item.name}
+                </Select.Option>
+              ))}
             </Select>
           </FormItem>
 
           <FormItem
             {...formItemLayout}
-            label="电话号码"
+            label="手机号码"
             name="mobile"
             rules={[
               {
@@ -326,7 +322,7 @@ const People = (props) => {
               },
             ]}
           >
-            <Input placeholder="请输入电话号码" />
+            <Input placeholder="请输入手机号码" />
           </FormItem>
         </Form>
       </Modal>
@@ -337,8 +333,3 @@ const People = (props) => {
 export default connect(({ loading }) => ({
   submitting: loading.effects['functionAndEmployee/create'],
 }))(People);
-
-// function mapStateToProps(state) {
-//   console.log('state', state);
-// }
-// export default connect(mapStateToProps)(People);

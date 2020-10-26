@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, Checkbox } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import { getRoleList, getDeptAllList, getDeptRoles, getRoleAllList } from '../../service';
+import { getRoleList, getDeptAllList, getRoleAllList } from '../../service';
 import { connect } from 'umi';
 const FormItem = Form.Item;
 import moment from 'moment';
@@ -61,9 +61,12 @@ const Role = (props) => {
   };
 
   useEffect(() => {
-    queryDeptList();
-    queryRoleList(); // 全部权限
-  }, []);
+    if (props.tab == 3) {
+      queryDeptList();
+      queryRoleList(); // 全部权限
+      actionRef?.current?.reload();
+    }
+  }, [props.tab]);
 
   // 删除
   const handleRemove = async (row) => {
@@ -78,9 +81,7 @@ const Role = (props) => {
         hide();
         if (res) {
           message.success('删除成功，即将刷新');
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         } else {
           message.error('删除失败');
         }
@@ -131,9 +132,7 @@ const Role = (props) => {
           if (!res) return;
           message.success(`${postData.roleId ? '修改' : '新增'}成功`);
           handleCancel();
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         },
       });
     }
@@ -290,8 +289,3 @@ const Role = (props) => {
 export default connect(({ loading }) => ({
   submitting: loading.effects['functionAndEmployee/createRoleType'],
 }))(Role);
-
-// function mapStateToProps(state) {
-//   console.log('state', state);
-// }
-// export default connect(mapStateToProps)(Role);

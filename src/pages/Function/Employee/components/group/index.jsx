@@ -7,7 +7,6 @@ import {
   getDeptAllList,
   getGroupDepartments,
   getGroupEmployees,
-  getRoleAllList,
 } from '../../service';
 import { getCommonEnums } from '../../../../../services/common';
 import { connect } from 'umi';
@@ -54,7 +53,6 @@ const Group = (props) => {
       enumName: 'AssessGroupType',
     });
     if (res) {
-      console.log(Object.values(res));
       setGroupTypeList(Object.values(res));
     }
   };
@@ -68,16 +66,16 @@ const Group = (props) => {
   };
 
   // 查询子部门
-  const querySubDept = async () => {
-    const res = await getGroupDepartments();
+  const querySubDept = async (parentId) => {
+    const res = await getGroupDepartments({ parentId });
     if (res) {
       setSubDeptList(res);
     }
   };
 
   // 查询子部门下的员工
-  const querySubDeptEmployees = async () => {
-    const res = await getGroupEmployees();
+  const querySubDeptEmployees = async (params) => {
+    const res = await getGroupEmployees(params);
     if (res) {
       const data = res.map((item) => {
         item.label = item.name;
@@ -104,8 +102,8 @@ const Group = (props) => {
   };
 
   // 通过子部门获取员工
-  const handleSubDeptChange = (id) => {
-    querySubDeptEmployees(id);
+  const handleSubDeptChange = (deptId) => {
+    querySubDeptEmployees({ deptId });
     form.setFields([
       {
         name: 'permissionIds',
@@ -115,9 +113,12 @@ const Group = (props) => {
   };
 
   useEffect(() => {
-    queryGroupType();
-    queryDeptList();
-  }, []);
+    if (props.tab == 4) {
+      queryGroupType();
+      queryDeptList(); // 全部权限
+      actionRef?.current?.reload();
+    }
+  }, [props.tab]);
 
   // 删除
   const handleRemove = async (row) => {
@@ -132,9 +133,7 @@ const Group = (props) => {
         hide();
         if (res) {
           message.success('删除成功，即将刷新');
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         } else {
           message.error('删除失败');
         }
@@ -176,7 +175,6 @@ const Group = (props) => {
       const postData = {
         id: updateId,
         ...getValues,
-        entryTime: moment(getValues.entryTime).valueOf(), // 时间传时间戳
       };
       dispatch({
         type: 'functionAndEmployee/createGroupType',
@@ -185,9 +183,7 @@ const Group = (props) => {
           if (!res) return;
           message.success(`${postData.id ? '修改' : '新增'}成功`);
           handleCancel();
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         },
       });
     }
@@ -210,6 +206,9 @@ const Group = (props) => {
       title: '评估类型',
       dataIndex: 'groupType',
       search: false,
+      render: (_, record) => {
+        return groupTypeList.filter((item) => item.code === record.groupType)[0]['codeCn'];
+      },
     },
     {
       title: '小组人员',
@@ -305,7 +304,7 @@ const Group = (props) => {
           <FormItem
             {...formItemLayout}
             label="评估类型"
-            name="deptId"
+            name="groupType"
             rules={[
               {
                 required: true,
@@ -321,53 +320,54 @@ const Group = (props) => {
               ))}
             </Select>
           </FormItem>
+          <div style={{ display: 'flex' }}>
+            <FormItem
+              style={{ flex: 1 }}
+              label="设置权限"
+              name="oneId"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择一级部门',
+                },
+              ]}
+            >
+              <Select onChange={handleDeptChange} placeholder="请选择一级部门">
+                {deptList.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </FormItem>
+            <FormItem
+              style={{ flex: 1 }}
+              name="subId"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择子部门',
+                },
+              ]}
+            >
+              <Select onChange={handleSubDeptChange} placeholder="请选择子部门">
+                {subDeptList.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </FormItem>
+          </div>
 
           <FormItem
             {...formItemLayout}
-            label="一级部门"
-            name="oneId"
+            label="选择成员"
+            name="employeeIds"
             rules={[
               {
                 required: true,
-                message: '请选择一级部门',
-              },
-            ]}
-          >
-            <Select onChange={handleDeptChange} placeholder="请选择一级部门">
-              {deptList.map((item) => (
-                <Select.Option key={item.id} value={item.id}>
-                  {item.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </FormItem>
-          <FormItem
-            {...formItemLayout}
-            label="子部门"
-            name="subId"
-            rules={[
-              {
-                required: true,
-                message: '请选择子部门',
-              },
-            ]}
-          >
-            <Select onChange={handleSubDeptChange} placeholder="请选择子部门">
-              {subDeptList.map((item) => (
-                <Select.Option key={item.id} value={item.id}>
-                  {item.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </FormItem>
-          <FormItem
-            {...formItemLayout}
-            label="选择权限"
-            name="permissionIds"
-            rules={[
-              {
-                required: true,
-                message: '请选择权限',
+                message: '请选择成员',
               },
             ]}
           >
@@ -380,10 +380,5 @@ const Group = (props) => {
 };
 
 export default connect(({ loading }) => ({
-  submitting: loading.effects['functionAndEmployee/createRoleType'],
+  submitting: loading.effects['functionAndEmployee/createGroupType'],
 }))(Group);
-
-// function mapStateToProps(state) {
-//   console.log('state', state);
-// }
-// export default connect(mapStateToProps)(Group);

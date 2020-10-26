@@ -2,19 +2,10 @@
  * request 网络请求工具
  * 更详细的 api 文档: https://github.com/umijs/umi-request
  */
-import {
-  extend
-} from 'umi-request';
-import {
-  notification,
-  message
-} from 'antd';
-import {
-  history
-} from 'umi';
-import {
-  stringify
-} from 'qs';
+import { extend } from 'umi-request';
+import { notification, message } from 'antd';
+import { history } from 'umi';
+import { stringify } from 'qs';
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
   201: '新建或修改数据成功。',
@@ -37,16 +28,11 @@ const codeMessage = {
  */
 
 const errorHandler = (error) => {
-  const {
-    response
-  } = error;
+  const { response } = error;
 
   if (response && response.status) {
     const errorText = codeMessage[response.status] || response.statusText;
-    const {
-      status,
-      url
-    } = response;
+    const { status, url } = response;
     notification.error({
       message: `请求错误 ${status}: ${url}`,
       description: errorText,
@@ -116,12 +102,12 @@ request.interceptors.response.use(async (response, options) => {
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       localStorage.removeItem('antd-pro-authority');
+      const queryString = stringify({
+        redirect: window.location.href,
+      });
       history.replace({
-        pathname: '/user/login',
-        search: stringify({
-          redirect: window.location.href
-        })
-      })
+        pathname: `/user/login?${queryString}`,
+      });
     }
   }
   return result;
