@@ -6,6 +6,8 @@ import { extend } from 'umi-request';
 import { notification, message } from 'antd';
 import { history } from 'umi';
 import { stringify } from 'qs';
+import defaultSettings from '../../config/defaultSettings';
+
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
   201: '新建或修改数据成功。',
@@ -56,6 +58,10 @@ const request = extend({
   // credentials: 'include', // 默认请求是否带上cookie
 });
 request.interceptors.request.use(async (url, options) => {
+  if (process.env.NODE_ENV === 'production') {
+    url = defaultSettings.apiUrl + url;
+  }
+
   if (options.data) {
     if (options.data.current) {
       options.data.page = options.data.current - 1;
