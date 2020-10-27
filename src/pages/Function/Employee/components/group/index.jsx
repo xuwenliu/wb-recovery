@@ -151,7 +151,13 @@ const Group = (props) => {
       },
       callback: (data) => {
         if (data) {
-          data.entryTime = moment(data.entryTime);
+          const values = data.employees?.map((item) => {
+            item.label = item.name;
+            item.value = item.id;
+            return item;
+          });
+          setEmployeeList(values);
+          data.employeeIds = values.map((item) => item.value);
           form.setFieldsValue(data);
           setVisible(true);
         }
@@ -162,6 +168,7 @@ const Group = (props) => {
   // 取消
   const handleCancel = () => {
     setVisible(false);
+    setEmployeeList([]);
     form.resetFields();
     updateId = '';
   };
@@ -212,8 +219,11 @@ const Group = (props) => {
     },
     {
       title: '小组人员',
-      dataIndex: 'employeeNames',
+      dataIndex: 'employees',
       search: false,
+      render: (_, record) => {
+        return record.employees?.map((item) => item.name).join();
+      },
     },
 
     {
