@@ -6,7 +6,7 @@ import {
   createDept,
   updateDept,
   deleteDept,
-  getDeptSingle,
+  // getDeptSingle,
   createRole,
   updateRole,
   deleteRole,
@@ -55,10 +55,10 @@ const Model = {
       const result = yield call(deleteDept, payload);
       callback && callback(result);
     },
-    *getInfoDepartment({ payload, callback }, { call }) {
-      const result = yield call(getDeptSingle, payload);
-      callback && callback(result);
-    },
+    // *getInfoDepartment({ payload, callback }, { call }) {
+    //   const result = yield call(getDeptSingle, payload);
+    //   callback && callback(result);
+    // },
 
     //角色
     *createRoleType({ payload, callback }, { call }) {

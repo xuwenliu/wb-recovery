@@ -35,3 +35,32 @@ export async function createCheck(data) {
 export async function getCheckChildren(params) {
   return request(`/api/resource/section/medicalCheck/children/${params.parentId}`);
 }
+
+// 综合评估、教案及档案管理栏位设置
+export async function getComprehensiveAllSection(params) {
+  return request('/api/resource/section/comprehensive/allSection', {
+    params,
+  });
+}
+export async function createComprehensive(data) {
+  return request('/api/resource/section/comprehensive/create', {
+    method: 'POST',
+    data,
+  });
+}
+
+// 汇入数据显示设置
+export async function getImportData(params) {
+  return request('/api/resource/section/importData/all', {
+    params,
+  });
+}
+export async function createImportData(data) {
+  return request('/api/resource/section/importData/create', {
+    method: 'POST',
+    data,
+  });
+}
+export async function getImportDataChildren(params) {
+  return request(`/api/resource/section/importData/children/${params.parentId}`);
+}

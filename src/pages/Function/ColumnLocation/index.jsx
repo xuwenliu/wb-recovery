@@ -4,12 +4,14 @@ import React from 'react';
 import './style.less';
 import ParentCard from './components/ParentCard';
 import MedicineCheckCard from './components/MedicineCheckCard';
+import ComprehensiveCard from './components/ComprehensiveCard';
 
 const ColumnLocation = (props) => {
   return (
     <PageContainer>
       {/* <ParentCard /> */}
-      <MedicineCheckCard />
+      {/* <MedicineCheckCard /> */}
+      <ComprehensiveCard />
     </PageContainer>
   );
 };
