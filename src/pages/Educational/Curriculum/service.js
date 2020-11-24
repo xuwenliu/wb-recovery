@@ -1,25 +1,28 @@
 import request from 'umi-request';
 
-export async function queryRule(params) {
-  return request('/api/rule', {
+export async function getClass(data) {
+  return request('/api/resource/packages/class/pageClass', {
+    method: 'POST',
+    data,
+  });
+}
+export async function removeClass(params) {
+  return request('/api/resource/packages/class/delete', {
+    method: 'DELETE',
     params,
   });
 }
-export async function removeRule(params) {
-  return request('/api/rule', {
+export async function createClass(data) {
+  return request('/api/resource/packages/class/create', {
     method: 'POST',
-    data: { ...params, method: 'delete' },
+    data,
   });
 }
-export async function addRule(params) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: { ...params, method: 'post' },
+export async function getClassInfo(params) {
+  return request('/api/resource/packages/classInfo', {
+    params,
   });
 }
-export async function updateRule(params) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: { ...params, method: 'update' },
-  });
+export async function getAllClass() {
+  return request('/api/resource/packages/class/allClass');
 }

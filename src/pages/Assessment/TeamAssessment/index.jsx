@@ -1,460 +1,783 @@
-import { CloseCircleOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Input, Popover, Row, Select, TimePicker } from 'antd';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
-import { connect } from 'umi';
-import TableForm from './components/TableForm';
-import styles from './style.less';
-const { Option } = Select;
-const { RangePicker } = DatePicker;
-const fieldLabels = {
-  name: '仓库名',
-  url: '仓库域名',
-  owner: '仓库管理员',
-  approver: '审批人',
-  dateRange: '生效日期',
-  type: '仓库类型',
-  name2: '任务名',
-  url2: '任务描述',
-  owner2: '执行人',
-  approver2: '责任人',
-  dateRange2: '生效日期',
-  type2: '任务类型',
-};
-const tableData = [
+import { Card, Image, Row, Col, Checkbox, Radio, Input, Button, Form, message } from 'antd';
+import { connect, history } from 'umi';
+import BaseInfoShow from '@/components/BaseInfoShow';
+import xiaozu from '@/assets/img/xiaozu.png';
+import './index.less';
+import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { getAllDiseaseReason, getAllDisease, getGroupAssessSingle } from './service';
+
+const haveOrNoList = [
   {
-    key: '1',
-    workId: '00001',
-    name: 'John Brown',
-    department: 'New York No. 1 Lake Park',
+    codeCn: '有',
+    code: true,
   },
   {
-    key: '2',
-    workId: '00002',
-    name: 'Jim Green',
-    department: 'London No. 1 Lake Park',
-  },
-  {
-    key: '3',
-    workId: '00003',
-    name: 'Joe Black',
-    department: 'Sidney No. 1 Lake Park',
+    codeCn: '无',
+    code: false,
   },
 ];
 
 const TeamAssessment = ({ submitting, dispatch }) => {
   const [form] = Form.useForm();
-  const [error, setError] = useState([]);
+  const [patientId, setPatientId] = useState();
+  const [info, setInfo] = useState();
+  const [yesList, setYesList] = useState([]);
+  const [diseaseTypeList, setDiseaseTypeList] = useState([]);
+  // const [abilityLevelTypeList, setAbilityLevelTypeList] = useState([]);
+  const [abnormalTypeList, setAbnormalTypeList] = useState([]);
 
-  const getErrorInfo = (errors) => {
-    const errorCount = errors.filter((item) => item.errors.length > 0).length;
+  const [allDiseaseReason, setAllDiseaseReason] = useState([]); // 病因分类
+  const [diseaseReasonBosNames, setDiseaseReasonBosNames] = useState([]); // 病因分类-names
+  const [nerveDiseaseList, setNerveDiseaseList] = useState([]); // 神经相关疾病
+  const [nerveDiseaseNames, setNerveDiseaseNames] = useState([]); // 神经相关疾病-names
 
-    if (!errors || errorCount === 0) {
-      return null;
+  const [senseDiseaseList, setSenseDiseaseList] = useState([]); // 感官异常
+  const [senseDiseaseNames, setSenseDiseaseNames] = useState([]); // 感官异常-听力和视力
+
+  const [geneticDiseaseList, setGeneticDiseaseList] = useState([]); // 遗传、先天症候群
+  const [geneticDiseaseNames, setGeneticDiseaseNames] = useState([]); // 遗传、先天症候群-names
+
+  const [cognitionLevelList, setCognitionLevelList] = useState([]); // 认知发展
+  const [languageLevelList, setLanguageLevelList] = useState([]); // 语言发展
+  const [languageLevelNames, setLanguageLevelNames] = useState([]); // 语言发展-names
+
+  const [perceptionLevelList, setPerceptionLevelList] = useState([]); // 知觉动作发展
+  const [perceptionLevelNames, setPerceptionLevelNames] = useState([]); // 知觉动作发展-names
+
+  const [socialMoodLevelList, setSocialMoodLevelList] = useState([]); // 社会情绪发展
+  const [socialMoodLevelNames, setSocialMoodLevelNames] = useState([]); // 社会情绪发展-names
+
+  const [activeLevelList, setActiveLevelList] = useState([]); // 行为
+  const [activeLevelNames, setActiveLevelNames] = useState([]); // 行为-names
+
+  const onPatientIdChange = (id) => {
+    setPatientId(id);
+  };
+  const onAllInfoChange = (info) => {
+    setInfo(info);
+  };
+
+  const queryEnums = async () => {
+    const newArr = await queryCommonAllEnums();
+    setYesList(getSingleEnums('DiseaseConfirmType', newArr)); //确定 可能
+    // setAbilityLevelTypeList(getSingleEnums('AbilityLevelType', newArr)); //无异常，疑似发展迟缓，发展迟缓
+    setAbnormalTypeList(getSingleEnums('AbnormalType', newArr)); //无异常，异常，疑似异常
+
+    const diseaseTypeData = getSingleEnums('DiseaseType', newArr);
+    const diseaseTypeListOptions = diseaseTypeData.map((item) => {
+      item.label = item.codeCn;
+      item.value = item.code;
+      return item;
+    });
+    setDiseaseTypeList(diseaseTypeListOptions); //
+  };
+
+  // 所有病因
+  const queryAllDiseaseReason = async () => {
+    const res = await getAllDiseaseReason();
+    const options = res?.map((item) => {
+      item.label = item.name;
+      item.value = item.id + '-' + item.name;
+      return item;
+    });
+    setAllDiseaseReason(options);
+  };
+
+  const queryAllDisease = async () => {
+    const res = await getAllDisease();
+    const options = res?.map((item) => {
+      item.label = item.name;
+      item.value = item.id + '-' + item.name;
+      return item;
+    });
+    console.log('options', options);
+    setNerveDiseaseList(options.filter((item) => item.type === 1));
+    setSenseDiseaseList(options.filter((item) => item.type === 2));
+    setGeneticDiseaseList(options.filter((item) => item.type === 3));
+    setCognitionLevelList(options.filter((item) => item.type === 4));
+    setLanguageLevelList(options.filter((item) => item.type === 5));
+    setPerceptionLevelList(options.filter((item) => item.type === 6));
+    setSocialMoodLevelList(options.filter((item) => item.type === 7));
+    setActiveLevelList(options.filter((item) => item.type === 8));
+  };
+
+  const onAllDiseaseReasonChange = (arrId, noClear) => {
+    console.log(arrId);
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'other',
+            value: '',
+          },
+        ]);
+      }
     }
 
-    const scrollToField = (fieldKey) => {
-      const labelNode = document.querySelector(`label[for="${fieldKey}"]`);
+    setDiseaseReasonBosNames(nameList);
+  };
 
-      if (labelNode) {
-        labelNode.scrollIntoView(true);
+  const onNerveDiseaseChange = (arrId, noClear) => {
+    console.log('arrId', arrId);
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherNerveDisease',
+            value: '',
+          },
+        ]);
       }
+    }
+
+    form.setFields([
+      {
+        name: 'haveNerveDisease',
+        value: arrId.length !== 0,
+      },
+    ]);
+
+    setNerveDiseaseNames(nameList);
+  };
+
+  const onSenseDiseaseChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('听力障碍')) {
+        form.setFields([
+          {
+            name: 'hearing',
+            value: '',
+          },
+        ]);
+      }
+      if (!nameList.includes('视力障碍')) {
+        form.setFields([
+          {
+            name: 'vision',
+            value: '',
+          },
+        ]);
+      }
+    }
+
+    form.setFields([
+      {
+        name: 'haveSenseDisease',
+        value: arrId.length !== 0,
+      },
+    ]);
+    setSenseDiseaseNames(nameList);
+  };
+
+  const onGeneticDiseaseChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherGeneticDisease',
+            value: '',
+          },
+        ]);
+      }
+    }
+
+    form.setFields([
+      {
+        name: 'haveGeneticDisease',
+        value: arrId.length !== 0,
+      },
+    ]);
+    setGeneticDiseaseNames(nameList);
+  };
+
+  const onLanguageLevelChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherLanguageLevel',
+            value: '',
+          },
+        ]);
+      }
+    }
+
+    setLanguageLevelNames(nameList);
+  };
+
+  const onPerceptionLevelChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherPerceptionLevel',
+            value: '',
+          },
+        ]);
+      }
+    }
+
+    setPerceptionLevelNames(nameList);
+  };
+
+  const onSocialMoodLevelChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherSocialMoodLevel',
+            value: '',
+          },
+        ]);
+      }
+    }
+    setSocialMoodLevelNames(nameList);
+  };
+
+  const onActiveChange = (arrId, noClear) => {
+    const nameList = [];
+    arrId.forEach((item) => {
+      const name = item.split('-')[1];
+      nameList.push(name);
+    });
+    if (!noClear) {
+      if (!nameList.includes('其他')) {
+        form.setFields([
+          {
+            name: 'otherActiveLevel',
+            value: '',
+          },
+        ]);
+      }
+    }
+    setActiveLevelNames(nameList);
+  };
+
+  const getDiseaseBos = (values, field, otherField) => {
+    const data = [];
+    values[field]?.forEach((item) => {
+      const isOther = item.split('-')[1] === '其他';
+      const pushData = {
+        diseaseId: item.split('-')[0],
+        isOther,
+        other: otherField ? values[otherField] : '',
+      };
+      data.push(pushData);
+    });
+    return data;
+  };
+
+  const getNerve = (values, arrField, type, otherField, changeFunc) => {
+    let arr = [];
+    let other = '';
+
+    if (type === 2) {
+      values.diseaseConnectVos
+        ?.filter((item) => item.type === type)
+        .forEach((item) => {
+          arr.push(`${item.diseaseId}-${item.name}`);
+        });
+      changeFunc && changeFunc(arr, true);
+      return {
+        [arrField]: arr,
+        hearing: values.hearing,
+        vision: values.vision,
+      };
+    } else {
+      values.diseaseConnectVos
+        ?.filter((item) => item.type === type)
+        .forEach((item) => {
+          arr.push(`${item.diseaseId}-${item.name}`);
+          if (item.isOther) {
+            other = item.other;
+          }
+        });
+      changeFunc && changeFunc(arr, true);
+      return {
+        [arrField]: arr,
+        [otherField]: other,
+      };
+    }
+  };
+
+  const queryGroupAssessSingle = async () => {
+    const values = await getGroupAssessSingle({
+      patientId,
+    });
+
+    // 病因分类
+    const diseaseReasonBos = [];
+    let other = '';
+    values.diseaseReasonConnectVos?.forEach((item) => {
+      diseaseReasonBos.push(`${item.reasonId}-${item.name}`);
+      if (item.isOther) {
+        other = item.other;
+      }
+    });
+    onAllDiseaseReasonChange(diseaseReasonBos, true);
+
+    // 神经相关疾病
+    const nerveDisease = getNerve(
+      values,
+      'nerveDisease',
+      1,
+      'otherNerveDisease',
+      onNerveDiseaseChange,
+    );
+    // 感官异常
+    const senseDisease = getNerve(values, 'senseDisease', 2, null, onSenseDiseaseChange);
+
+    // 遗传、先天症候群
+    const geneticDisease = getNerve(
+      values,
+      'geneticDisease',
+      3,
+      'otherGeneticDisease',
+      onGeneticDiseaseChange,
+    );
+
+    //认知发展
+    const cognitionLevelBos = getNerve(values, 'cognitionLevelBos', 4);
+
+    // 语言发展
+    const languageLevelBos = getNerve(
+      values,
+      'languageLevelBos',
+      5,
+      'otherLanguageLevel',
+      onLanguageLevelChange,
+    );
+
+    // 知觉动作发展
+    const perceptionLevelBos = getNerve(
+      values,
+      'perceptionLevelBos',
+      6,
+      'otherPerceptionLevel',
+      onPerceptionLevelChange,
+    );
+
+    // 社会情绪发展
+    const socialMoodLevelBos = getNerve(
+      values,
+      'socialMoodLevelBos',
+      7,
+      'otherSocialMoodLevel',
+      onSocialMoodLevelChange,
+    );
+
+    // 行为
+    const activeLevelBos = getNerve(
+      values,
+      'activeLevelBos',
+      8,
+      'otherActiveLevel',
+      onActiveChange,
+    );
+
+    const setData = {
+      diseaseConfirmType: values.diseaseConfirmType, // 病因分类
+      diseaseReasonBos,
+      other,
+      haveNerveDisease: values.haveNerveDisease, //神经相关疾病
+      ...nerveDisease,
+
+      haveSenseDisease: values.haveSenseDisease, //感官异常
+      ...senseDisease,
+
+      haveGeneticDisease: values.haveGeneticDisease, //遗传、先天症候群
+      ...geneticDisease,
+
+      cognitionLevel: values.cognitionLevel, //认知发展
+      ...cognitionLevelBos,
+
+      languageLevel: values.languageLevel, // 语言发展
+      ...languageLevelBos,
+
+      perceptionLevel: values.perceptionLevel, // 知觉动作发展
+      ...perceptionLevelBos,
+
+      socialMoodLevel: values.socialMoodLevel, // 社会情绪发展
+      ...socialMoodLevelBos,
+
+      activeLevel: values.activeLevel, // 行为
+      ...activeLevelBos,
     };
 
-    const errorList = errors.map((err) => {
-      if (!err || err.errors.length === 0) {
-        return null;
-      }
-
-      const key = err.name[0];
-      return (
-        <li key={key} className={styles.errorListItem} onClick={() => scrollToField(key)}>
-          <CloseCircleOutlined className={styles.errorIcon} />
-          <div className={styles.errorMessage}>{err.errors[0]}</div>
-          <div className={styles.errorField}>{fieldLabels[key]}</div>
-        </li>
-      );
-    });
-    return (
-      <span className={styles.errorIcon}>
-        <Popover
-          title="表单校验信息"
-          content={errorList}
-          overlayClassName={styles.errorPopover}
-          trigger="click"
-          getPopupContainer={(trigger) => {
-            if (trigger && trigger.parentNode) {
-              return trigger.parentNode;
-            }
-
-            return trigger;
-          }}
-        >
-          <CloseCircleOutlined />
-        </Popover>
-        {errorCount}
-      </span>
-    );
+    form.setFieldsValue(setData);
   };
 
-  const onFinish = (values) => {
-    setError([]);
+  const submit = async () => {
+    if (!patientId) {
+      return message.info('请先获取患者信息');
+    }
+    const values = await form.validateFields();
+    console.log(values);
+    const diseaseReasonBos = [];
+    values.diseaseReasonBos?.forEach((item) => {
+      const isOther = item.split('-')[1] === '其他';
+      const pushData = {
+        reasonId: item.split('-')[0],
+        isOther,
+        other: values.other || '',
+      };
+
+      diseaseReasonBos.push(pushData);
+    });
+
+    // 病症
+    const nerveDisease = getDiseaseBos(values, 'nerveDisease', 'otherNerveDisease'); // 神经相关疾病
+    const senseDisease = getDiseaseBos(values, 'senseDisease'); // 感官异常
+    const geneticDisease = getDiseaseBos(values, 'geneticDisease', 'otherGeneticDisease'); // 遗传、先天症候群
+    const cognitionLevelBos = getDiseaseBos(values, 'cognitionLevelBos'); // 认知发展
+    const languageLevelBos = getDiseaseBos(values, 'languageLevelBos', 'otherLanguageLevel'); // 语言发展
+    const perceptionLevelBos = getDiseaseBos(values, 'perceptionLevelBos', 'otherPerceptionLevel'); // 知觉动作发展
+    const socialMoodLevelBos = getDiseaseBos(values, 'socialMoodLevelBos', 'otherSocialMoodLevel'); // 社会情绪发展
+    const activeLevelBos = getDiseaseBos(values, 'activeLevelBos', 'otherActiveLevel'); // 行为
+
+    const diseaseBos = nerveDisease
+      .concat(senseDisease)
+      .concat(geneticDisease)
+      .concat(cognitionLevelBos)
+      .concat(languageLevelBos)
+      .concat(perceptionLevelBos)
+      .concat(socialMoodLevelBos)
+      .concat(activeLevelBos);
+
+    const postData = {
+      patientId,
+      diseaseConfirmType: values.diseaseConfirmType,
+      diseaseReasonBos, // 病因
+      diseaseBos, // 病症
+      haveNerveDisease: values.haveNerveDisease,
+      haveSenseDisease: values.haveSenseDisease, // 感官异常
+      haveGeneticDisease: values.haveGeneticDisease, // 遗传、先天症候群
+      cognitionLevel: values.cognitionLevel, // 认知发展
+      languageLevel: values.languageLevel, // 语言发展
+      perceptionLevel: values.perceptionLevel, // 知觉动作发展
+      socialMoodLevel: values.socialMoodLevel, // 社会情绪发展
+      activeLevel: values.activeLevel, // 行为
+      vision: values.vision, // 视力
+      hearing: values.hearing, // 听力
+    };
+    console.log('postData', postData);
     dispatch({
-      type: 'assessmentAndTeamAssessment/submitAdvancedForm',
-      payload: values,
+      type: 'assessmentAndTeamAssessment/create',
+      payload: postData,
+      callback: (res) => {
+        res && message.success('操作成功');
+      },
     });
   };
+  useEffect(() => {
+    queryEnums();
+    queryAllDiseaseReason();
+    queryAllDisease();
+  }, []);
 
-  const onFinishFailed = (errorInfo) => {
-    setError(errorInfo.errorFields);
-  };
+  useEffect(() => {
+    if (patientId) {
+      queryGroupAssessSingle();
+    }
+  }, [patientId]);
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      hideRequiredMark
-      initialValues={{
-        members: tableData,
-      }}
-      onFinish={onFinish}
-      onFinishFailed={onFinishFailed}
-    >
-      <PageContainer content="高级表单常见于一次性输入和提交大批量数据的场景。">
-        <Card title="仓库管理" className={styles.card} bordered={false}>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.name}
-                name="name"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入仓库名称',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入仓库名称" />
+    <PageContainer className="team-assessment">
+      <BaseInfoShow
+        newUrl="getAllCaseCode"
+        onPatientIdChange={onPatientIdChange}
+        onAllInfoChange={onAllInfoChange}
+      />
+      <div className="group-title">
+        <Image preview={false} className="mr8" width={43} height={37} src={xiaozu} />
+        小组评估
+      </div>
+      <Form form={form}>
+        <Row>
+          <Col span={11}>
+            <Card bordered={false} className="card-title" title="病因分类">
+              <Form.Item name="diseaseConfirmType">
+                <Radio.Group>
+                  {yesList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
               </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.url}
-                name="url"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-              >
-                <Input
-                  style={{
-                    width: '100%',
-                  }}
-                  addonBefore="http://"
-                  addonAfter=".com"
-                  placeholder="请输入"
-                />
+              <Form.Item name="diseaseReasonBos">
+                <Checkbox.Group
+                  onChange={onAllDiseaseReasonChange}
+                  style={{ margin: '8px 0' }}
+                  options={allDiseaseReason}
+                ></Checkbox.Group>
               </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.owner}
-                name="owner"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择管理员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择管理员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
+              {diseaseReasonBosNames.includes('其他') && (
+                <Form.Item name="other">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={11} offset={1}>
+            <Card bordered={false} className="card-title" title="神经相关疾病">
+              <Form.Item name="haveNerveDisease">
+                <Radio.Group>
+                  {haveOrNoList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
               </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.approver}
-                name="approver"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择审批员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择审批员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
+              <Form.Item name="nerveDisease">
+                <Checkbox.Group
+                  onChange={onNerveDiseaseChange}
+                  style={{ margin: '8px 0' }}
+                  options={nerveDiseaseList}
+                ></Checkbox.Group>
               </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.dateRange}
-                name="dateRange"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择生效日期',
-                  },
-                ]}
-              >
-                <RangePicker
-                  placeholder={['开始日期', '结束日期']}
-                  style={{
-                    width: '100%',
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.type}
-                name="type"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择仓库类型',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择仓库类型">
-                  <Option value="private">私密</Option>
-                  <Option value="public">公开</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
-        <Card title="任务管理" className={styles.card} bordered={false}>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.name2}
-                name="name2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入" />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.url2}
-                name="url2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入" />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.owner2}
-                name="owner2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择管理员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择管理员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.approver2}
-                name="approver2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择审批员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择审批员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.dateRange2}
-                name="dateRange2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入',
-                  },
-                ]}
-              >
-                <TimePicker
-                  placeholder="提醒时间"
-                  style={{
-                    width: '100%',
-                  }}
-                  getPopupContainer={(trigger) => {
-                    if (trigger && trigger.parentNode) {
-                      return trigger.parentNode;
-                    }
+              {nerveDiseaseNames.includes('其他') && (
+                <Form.Item name="otherNerveDisease">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+        </Row>
 
-                    return trigger;
-                  }}
-                />
+        <Row style={{ marginTop: 30 }}>
+          <Col span={7}>
+            <Card bordered={false} className="card-title" title="感官异常">
+              <Form.Item name="haveSenseDisease">
+                <Radio.Group>
+                  {haveOrNoList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
               </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.type2}
-                name="type2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择仓库类型',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择仓库类型">
-                  <Option value="private">私密</Option>
-                  <Option value="public">公开</Option>
-                </Select>
+              <Form.Item name="senseDisease">
+                <Checkbox.Group
+                  onChange={onSenseDiseaseChange}
+                  style={{ margin: '8px 0' }}
+                  options={senseDiseaseList}
+                ></Checkbox.Group>
               </Form.Item>
-            </Col>
-          </Row>
-        </Card>
-        <Card title="成员管理" bordered={false}>
-          <Form.Item name="members">
-            <TableForm />
-          </Form.Item>
-        </Card>
-      </PageContainer>
+              {senseDiseaseNames.includes('听力障碍') && (
+                <Form.Item name="hearing">
+                  <Input placeholder="请输入听力障碍" />
+                </Form.Item>
+              )}
+              {senseDiseaseNames.includes('视力障碍') && (
+                <Form.Item name="vision">
+                  <Input placeholder="请输入视力障碍" />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={7} offset={1}>
+            <Card bordered={false} className="card-title" title="遗传、先天症候群">
+              <Form.Item name="haveGeneticDisease">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {haveOrNoList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="geneticDisease">
+                <Checkbox.Group
+                  onChange={onGeneticDiseaseChange}
+                  options={geneticDiseaseList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {geneticDiseaseNames.includes('其他') && (
+                <Form.Item name="otherGeneticDisease">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={7} offset={1}>
+            <Card bordered={false} className="card-title" title="认知发展">
+              <Form.Item name="cognitionLevel">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {abnormalTypeList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="cognitionLevelBos">
+                <Checkbox.Group options={cognitionLevelList}></Checkbox.Group>
+              </Form.Item>
+            </Card>
+          </Col>
+        </Row>
+
+        <Row style={{ marginTop: 30 }}>
+          <Col span={7}>
+            <Card bordered={false} className="card-title" title="语言发展">
+              <Form.Item name="languageLevel">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {abnormalTypeList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="languageLevelBos">
+                <Checkbox.Group
+                  onChange={onLanguageLevelChange}
+                  options={languageLevelList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {languageLevelNames.includes('其他') && (
+                <Form.Item name="otherLanguageLevel">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={7} offset={1}>
+            <Card bordered={false} className="card-title" title="知觉动作发展">
+              <Form.Item name="perceptionLevel">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {abnormalTypeList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="perceptionLevelBos">
+                <Checkbox.Group
+                  onChange={onPerceptionLevelChange}
+                  options={perceptionLevelList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {perceptionLevelNames.includes('其他') && (
+                <Form.Item name="otherPerceptionLevel">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={7} offset={1}>
+            <Card bordered={false} className="card-title" title="社会情绪发展">
+              <Form.Item name="socialMoodLevel">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {abnormalTypeList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="socialMoodLevelBos">
+                <Checkbox.Group
+                  onChange={onSocialMoodLevelChange}
+                  options={socialMoodLevelList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {socialMoodLevelNames.includes('其他') && (
+                <Form.Item name="otherSocialMoodLevel">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+        </Row>
+
+        <Row style={{ marginTop: 30 }}>
+          <Col>
+            <Card bordered={false} className="card-title" title="行为">
+              <Form.Item name="activeLevel">
+                <Radio.Group style={{ marginBottom: 8 }}>
+                  {abnormalTypeList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="activeLevelBos">
+                <Checkbox.Group
+                  onChange={onActiveChange}
+                  options={activeLevelList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {activeLevelNames.includes('其他') && (
+                <Form.Item name="otherActiveLevel">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+        </Row>
+      </Form>
       <FooterToolbar>
-        {getErrorInfo(error)}
-        <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
+        <Button
+          className="mr8"
+          type="primary"
+          onClick={() =>
+            history.push({
+              pathname: '/assessment/trainingobjectives',
+            })
+          }
+        >
+          进入训练目标
+        </Button>
+        <Button loading={submitting} onClick={submit} type="primary">
           提交
         </Button>
       </FooterToolbar>
-    </Form>
+    </PageContainer>
   );
 };
 
 export default connect(({ loading }) => ({
-  submitting: loading.effects['assessmentAndTeamAssessment/submitAdvancedForm'],
+  submitting: loading.effects['assessmentAndTeamAssessment/create'],
 }))(TeamAssessment);

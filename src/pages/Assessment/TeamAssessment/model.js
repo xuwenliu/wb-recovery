@@ -1,13 +1,12 @@
-import { message } from 'antd';
-import { fakeSubmitForm } from './service';
+import { createGroupAssess } from './service';
 
 const Model = {
   namespace: 'assessmentAndTeamAssessment',
   state: {},
   effects: {
-    *submitAdvancedForm({ payload }, { call }) {
-      yield call(fakeSubmitForm, payload);
-      message.success('提交成功');
+    *create({ payload, callback }, { call }) {
+      let result = yield call(createGroupAssess, payload);
+      callback && callback(result);
     },
   },
 };

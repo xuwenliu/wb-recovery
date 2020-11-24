@@ -1,13 +1,12 @@
-import { message } from 'antd';
-import { fakeSubmitForm } from './service';
+import { createSavePlan } from './service';
 
 const Model = {
   namespace: 'assessmentAndCaseAssessmentPlanning',
   state: {},
   effects: {
-    *submitAdvancedForm({ payload }, { call }) {
-      yield call(fakeSubmitForm, payload);
-      message.success('提交成功');
+    *savePlan({ payload, callback }, { call }) {
+      const result = yield call(createSavePlan, payload);
+      callback && callback(result);
     },
   },
 };

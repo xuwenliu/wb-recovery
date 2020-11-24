@@ -1,11 +1,17 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, DatePicker } from 'antd';
+import { Button, Modal, message, Input, Form, Tooltip, Select, DatePicker } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import { getProjectList, getProjectAllCode, getProjectAllEmployee, getProjectAllName } from './service';
+import {
+  getProjectList,
+  getProjectAllCode,
+  getProjectAllEmployee,
+  getProjectAllName,
+} from '@/pages/Function/ResearchProject/service';
 
-import { getEmployeeAllList } from '../Employee/service';
+import { getEmployeeAllList } from '@/pages/Function/Employee/service';
+
 import { connect } from 'umi';
 const FormItem = Form.Item;
 import moment from 'moment';
@@ -44,45 +50,41 @@ const ResearchProject = (props) => {
   const [allName, setAllName] = useState([]);
   const [employeeAllList, setEmployeeAllList] = useState([]);
 
-
   const queryProjectList = async (params) => {
     const res = await getProjectList({
-      ...params, body: {
+      ...params,
+      body: {
         code: params.code,
         employeeId: params.employeeNames,
         keyword: params.keyword,
         name: params.name,
-      }
-    })
+      },
+    });
     if (res) {
-      queryProjectAllCode();
-      queryProjectAllEmployee();
-      queryProjectAllName();
       return res;
     }
-  }
+  };
 
   const queryProjectAllCode = async () => {
     const res = await getProjectAllCode();
     if (res) {
       setAllCode(res);
     }
-  }
+  };
 
   const queryProjectAllEmployee = async () => {
     const res = await getProjectAllEmployee();
     if (res) {
       setAllEmployee(res);
     }
-  }
+  };
 
   const queryProjectAllName = async () => {
     const res = await getProjectAllName();
     if (res) {
       setAllName(res);
     }
-  }
-
+  };
 
   // 获取研究项目人员
   const queryEmployeeAllList = async () => {
@@ -93,11 +95,10 @@ const ResearchProject = (props) => {
   };
   useEffect(() => {
     queryEmployeeAllList();
-  }, [])
+  }, []);
 
   // 删除
   const handleRemove = async (row) => {
-    const hide = message.loading('正在删除');
     const { dispatch } = props;
     dispatch({
       type: 'functionAndResearchProject/remove',
@@ -105,12 +106,9 @@ const ResearchProject = (props) => {
         id: row.id,
       },
       callback: (res) => {
-        hide();
         if (res) {
-          message.success('删除成功，即将刷新');
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          message.success('删除成功');
+          actionRef?.current?.reload();
         } else {
           message.error('删除失败');
         }
@@ -129,7 +127,7 @@ const ResearchProject = (props) => {
       callback: (data) => {
         if (data) {
           data.time = [moment(data.startTime), moment(data.endTime)];
-          data.employeeId = data.employeeDos.map(item => item.id);
+          data.employeeId = data.employeeDos.map((item) => item.id);
           form.setFieldsValue(data);
           updateId = infoNumber ? infoNumber : row.id;
           setVisible(true);
@@ -156,7 +154,7 @@ const ResearchProject = (props) => {
         ...getValues,
         startTime: moment(getValues.time[0]).valueOf(), // 时间传时间戳
         endTime: moment(getValues.time[1]).valueOf(), // 时间传时间戳
-      }
+      };
       dispatch({
         type: 'functionAndResearchProject/create',
         payload: postData,
@@ -164,49 +162,66 @@ const ResearchProject = (props) => {
           if (!res) return;
           message.success(`${postData.id ? '修改' : '新增'}成功`);
           handleCancel();
-          if (actionRef.current) {
-            actionRef.current.reload();
-          }
+          actionRef?.current?.reload();
         },
       });
     }
   };
-
 
   const columns = [
     {
       title: '研究项目编号',
       dataIndex: 'code',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return <Select placeholder="请选择研究项目编号">
-          {
-            allCode.map((item, index) => <Select.Option value={item} key={index}>{item}</Select.Option>)
-          }
-        </Select>
+        return (
+          <Select
+            onFocus={allCode.length === 0 && queryProjectAllCode}
+            placeholder="请选择研究项目编号"
+          >
+            {allCode.map((item, index) => (
+              <Select.Option value={item} key={index}>
+                {item}
+              </Select.Option>
+            ))}
+          </Select>
+        );
       },
     },
     {
       title: '研究项目名称',
       dataIndex: 'name',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return <Select placeholder="请选择研究项目名称">
-          {
-            allName.map((item, index) => <Select.Option value={item} key={index}>{item}</Select.Option>)
-          }
-        </Select>
+        return (
+          <Select
+            onFocus={allName.length === 0 && queryProjectAllName}
+            placeholder="请选择研究项目名称"
+          >
+            {allName.map((item, index) => (
+              <Select.Option value={item} key={index}>
+                {item}
+              </Select.Option>
+            ))}
+          </Select>
+        );
       },
     },
     {
       title: '研究项目人员',
       dataIndex: 'employeeNames',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return <Select placeholder="请选择研究项目人员">
-          {
-            allEmployee.map((item, index) => <Select.Option value={item.id} key={index}>{item.name}</Select.Option>)
-          }
-        </Select>
+        return (
+          <Select
+            onFocus={allEmployee.length === 0 && queryProjectAllEmployee}
+            placeholder="请选择研究项目人员"
+          >
+            {allEmployee.map((item, index) => (
+              <Select.Option value={item.id} key={index}>
+                {item.name}
+              </Select.Option>
+            ))}
+          </Select>
+        );
       },
-
     },
     {
       title: '搜索关键字',
@@ -247,7 +262,7 @@ const ResearchProject = (props) => {
           </Button>
           <Button size="small" onClick={() => handleUpdate(record, 1)} type="success">
             查看详情
-            </Button>
+          </Button>
         </>
       ),
     },
@@ -261,16 +276,14 @@ const ResearchProject = (props) => {
           rowKey="id"
           search={{
             labelWidth: 100,
-
           }}
           toolBarRender={() => [
             <Button key="add" type="primary" onClick={() => setVisible(true)}>
               <PlusOutlined /> 新增
-          </Button>,
+            </Button>,
           ]}
           request={(params, sorter, filter) => queryProjectList(params)}
           columns={columns}
-
         />
         <Modal
           title="研究立项"
@@ -280,10 +293,10 @@ const ResearchProject = (props) => {
           footer={[
             <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
               确定
-          </Button>,
+            </Button>,
             <Button key="back" onClick={handleCancel}>
               取消
-          </Button>,
+            </Button>,
             ,
           ]}
         >
@@ -335,9 +348,11 @@ const ResearchProject = (props) => {
               ]}
             >
               <Select disabled={updateId} mode="multiple" placeholder="请选择研究项目人员">
-                {
-                  employeeAllList.map(item => <Select.Option key={item.id} value={item.id}>{item.name}</Select.Option>)
-                }
+                {employeeAllList.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
               </Select>
             </FormItem>
 
@@ -352,9 +367,8 @@ const ResearchProject = (props) => {
                 },
               ]}
             >
-              <Input disabled={updateId === 1} placeholder="请输入研究说明" />
+              <Input.TextArea disabled={updateId === 1} placeholder="请输入研究说明" />
             </FormItem>
-
 
             <FormItem
               {...formItemLayout}
@@ -370,14 +384,9 @@ const ResearchProject = (props) => {
               <DatePicker.RangePicker disabled={updateId} />
             </FormItem>
 
-            <FormItem
-              {...formItemLayout}
-              label="备注"
-              name="remark"
-            >
-              <Input disabled={updateId === 1} placeholder="请输入备注" />
+            <FormItem {...formItemLayout} label="备注" name="remark">
+              <Input.TextArea disabled={updateId === 1} placeholder="请输入备注" />
             </FormItem>
-
           </Form>
         </Modal>
       </PageContainer>
@@ -388,8 +397,3 @@ const ResearchProject = (props) => {
 export default connect(({ loading }) => ({
   submitting: loading.effects['functionAndResearchProject/create'],
 }))(ResearchProject);
-
-// function mapStateToProps(state) {
-//   console.log('state', state);
-// }
-// export default connect(mapStateToProps)(ResearchProject);

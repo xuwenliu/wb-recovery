@@ -1,13 +1,49 @@
-import { message } from 'antd';
-import { fakeSubmitForm } from './service';
+import {
+  saveRoughActivity,
+  saveTrainAndTarget,
+  saveCareFulActivity,
+  saveTrainCognition,
+  saveTrainAdaptation,
+  saveTrainEnv,
+  saveLanguageInfo,
+  saveTrainSelfCare,
+} from './service';
 
 const Model = {
   namespace: 'assessmentAndTrainingObjectives',
   state: {},
   effects: {
-    *submitAdvancedForm({ payload }, { call }) {
-      yield call(fakeSubmitForm, payload);
-      message.success('提交成功');
+    *createSaveRoughActivity({ payload, callback }, { call }) {
+      const res = yield call(saveRoughActivity, payload);
+      callback && callback(res);
+    },
+    *createSaveTrainAndTarget({ payload, callback }, { call }) {
+      const res = yield call(saveTrainAndTarget, payload);
+      callback && callback(res);
+    },
+    *createSaveCareFulActivity({ payload, callback }, { call }) {
+      const res = yield call(saveCareFulActivity, payload);
+      callback && callback(res);
+    },
+    *createSaveTrainCognition({ payload, callback }, { call }) {
+      const res = yield call(saveTrainCognition, payload);
+      callback && callback(res);
+    },
+    *createSaveTrainAdaptation({ payload, callback }, { call }) {
+      const res = yield call(saveTrainAdaptation, payload);
+      callback && callback(res);
+    },
+    *createSaveTrainEnv({ payload, callback }, { call }) {
+      const res = yield call(saveTrainEnv, payload);
+      callback && callback(res);
+    },
+    *createSaveLanguageInfo({ payload, callback }, { call }) {
+      const res = yield call(saveLanguageInfo, payload);
+      callback && callback(res);
+    },
+    *createSaveTrainSelfCare({ payload, callback }, { call }) {
+      const res = yield call(saveTrainSelfCare, payload);
+      callback && callback(res);
     },
   },
 };

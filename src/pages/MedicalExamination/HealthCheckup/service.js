@@ -1,25 +1,30 @@
 import request from 'umi-request';
 
-export async function queryRule(params) {
-  return request('/api/rule', {
+export async function getPhysiquePatientInfo(params) {
+  return request('/api/resource/physique/patientInfo', {
     params,
   });
 }
-export async function removeRule(params) {
-  return request('/api/rule', {
+export async function createPhysique(data) {
+  return request('/api/resource/physique/create', {
     method: 'POST',
-    data: { ...params, method: 'delete' },
+    data,
   });
 }
-export async function addRule(params) {
-  return request('/api/rule', {
+export async function getPhysiqueList(data) {
+  return request('/api/resource/physique/record', {
     method: 'POST',
-    data: { ...params, method: 'post' },
+    data,
   });
 }
-export async function updateRule(params) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: { ...params, method: 'update' },
+//所有病例编号
+export async function getPhysiqueAllCaseCode() {
+  return request('/api/resource/physique/allCaseCode');
+}
+
+// 曲线图
+export async function getPhysiqueGraphData(params) {
+  return request('/api/resource/physique/graphData', {
+    params,
   });
 }

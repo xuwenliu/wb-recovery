@@ -46,7 +46,7 @@ export default defineConfig({
           routes: [
             {
               path: '/',
-              redirect: '/patriarch/baseinfo',
+              redirect: '/patriarch/childrenrecord',
             },
             {
               name: 'patriarch',
@@ -55,16 +55,23 @@ export default defineConfig({
               authority: ['admin'],
               routes: [
                 {
-                  name: 'baseinfo',
+                  name: 'childrenrecord',
                   icon: 'smile',
-                  path: '/patriarch/baseinfo',
-                  component: './Patriarch/BaseInfo',
+                  path: '/patriarch/childrenrecord',
+                  component: './Patriarch/ChildrenRecord',
+                },
+                {
+                  icon: 'smile',
+                  path: '/patriarch/childrenrecord/edit',
+                  component: './Patriarch/ChildrenRecord/Edit',
+                  hideInMenu: true,
                 },
                 {
                   name: 'check',
                   icon: 'smile',
                   path: '/patriarch/check',
-                  component: './Patriarch/Check',
+                  // component: './Patriarch/Check',
+                  component: './scale/compose/quick',
                 },
                 {
                   name: 'medicalrecord',
@@ -97,6 +104,12 @@ export default defineConfig({
                   icon: 'smile',
                   path: '/medicalexamination/diagnosisprescription',
                   component: './MedicalExamination/DiagnosisPrescription',
+                },
+                {
+                  icon: 'smile',
+                  path: '/medicalexamination/diagnosisprescription/detail',
+                  component: './MedicalExamination/DiagnosisPrescription/Detail',
+                  hideInMenu: true,
                 },
               ],
             },
@@ -150,6 +163,11 @@ export default defineConfig({
                   path: '/rehabilitation/collectiveplan',
                   component: './Rehabilitation/CollectivePlan',
                 },
+                {
+                  icon: 'smile',
+                  path: '/rehabilitation/collectiveplan/edit',
+                  component: './Rehabilitation/CollectivePlan/Edit',
+                },
               ],
             },
             {
@@ -202,6 +220,14 @@ export default defineConfig({
                   path: '/educational/curriculum',
                   component: './Educational/Curriculum',
                 },
+
+                {
+                  icon: 'smile',
+                  path: '/educational/curriculum/edit',
+                  component: './Educational/Curriculum/Edit',
+                  hideInMenu: true,
+                },
+
                 {
                   name: 'apply',
                   icon: 'smile',
@@ -266,7 +292,6 @@ export default defineConfig({
                   component: './Function/Place',
                 },
                 {
-                  name: 'place',
                   icon: 'smile',
                   path: '/function/place/edit',
                   component: './Function/Place/Edit',
@@ -274,6 +299,101 @@ export default defineConfig({
                 },
               ],
             },
+            /**
+             * 量表 「開始」
+             */
+            {
+              path: '/project',
+              routes: [
+                {
+                  path: '/project',
+                  redirect: '/project/list',
+                },
+                {
+                  path: '/project/list',
+                  component: './project/list',
+                },
+                {
+                  path: '/project/detail',
+                  component: './project/detail',
+                },
+              ],
+            },
+            /**
+            {
+              name: 'demo',
+              path: '/scale/demo',
+              component: './scale/demo',
+            },
+             */
+            {
+              path: '/scale/compose/quick',
+              Routes: ['src/pages/Authorized'],
+              component: './scale/compose/quick',
+            },
+            {
+              path: '/scale/list',
+              component: './scale/list',
+            },
+            {
+              path: '/scale/user',
+              component: './scale/user/list',
+            },
+            {
+              path: '/scale/user/detail',
+              component: './scale/user/detail',
+            },
+            {
+              path: '/scale/answer/:id',
+              component: './scale/answer',
+            },
+            {
+              path: '/scale/collect/:id',
+              component: './scale/collect',
+            },
+            {
+              path: '/scale/manage',
+              component: './scale/manage',
+            },
+            {
+              path: '/scale/record',
+              component: './scale/record',
+            },
+            {
+              path: '/scale/report/:id',
+              component: './scale/report',
+            },
+            {
+              path: '/scale/suggest/:answer',
+              component: './scale/suggest',
+            },
+            {
+              path: '/scale/compose',
+              component: './scale/compose/type',
+            },
+            {
+              path: '/scale/compose/testeeinfo',
+              component: './scale/compose/testeeinfo',
+            },
+            {
+              path: '/scale/compose/answer',
+              component: './scale/compose/answer',
+            },
+            {
+              path: '/scale/compose/answer/single',
+              component: './scale/compose/answer/single',
+            },
+            {
+              path: '/scale/compose/report',
+              component: './scale/compose/report',
+            },
+            {
+              path: '/scale/compose/:name/list',
+              component: './scale/compose/list',
+            },
+            /**
+             * 結束
+             */
             {
               component: './404',
             },

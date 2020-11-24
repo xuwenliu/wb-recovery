@@ -1,25 +1,18 @@
-import { queryAdvancedProfile } from './service';
+import { saveCollectiveEdu, deletePlan } from './service';
 
 const Model = {
   namespace: 'rehabilitationAndCollectivePlan',
-  state: {
-    advancedOperation1: [],
-    advancedOperation2: [],
-    advancedOperation3: [],
-  },
+  state: {},
   effects: {
-    *fetchAdvanced(_, { call, put }) {
-      const response = yield call(queryAdvancedProfile);
-      yield put({
-        type: 'show',
-        payload: response,
-      });
+    *create({ payload, callback }, { call }) {
+      const result = yield call(saveCollectiveEdu, payload);
+      callback && callback(result);
+    },
+    *remove({ payload, callback }, { call }) {
+      const result = yield call(deletePlan, payload);
+      callback && callback(result);
     },
   },
-  reducers: {
-    show(state, { payload }) {
-      return { ...state, ...payload };
-    },
-  },
+  reducers: {},
 };
 export default Model;

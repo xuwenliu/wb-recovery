@@ -6,8 +6,6 @@ import { extend } from 'umi-request';
 import { notification, message } from 'antd';
 import { history } from 'umi';
 import { stringify } from 'qs';
-import defaultSettings from '../../config/defaultSettings';
-
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
   201: '新建或修改数据成功。',
@@ -32,6 +30,8 @@ const codeMessage = {
 const errorHandler = (error) => {
   const { response } = error;
 
+  console.log('error:', error);
+
   if (response && response.status) {
     const errorText = codeMessage[response.status] || response.statusText;
     const { status, url } = response;
@@ -44,6 +44,11 @@ const errorHandler = (error) => {
       description: '您的网络发生异常，无法连接服务器',
       message: '网络异常',
     });
+    /**
+    history.replace({
+      pathname: `/user/login`,
+    });
+     */
   }
 
   return response;
@@ -55,15 +60,13 @@ const errorHandler = (error) => {
 const request = extend({
   errorHandler,
   // 默认错误处理
-  // credentials: 'include', // 默认请求是否带上cookie
+  credentials: 'include', // 默认请求是否带上cookie
 });
 request.interceptors.request.use(async (url, options) => {
-  if (process.env.NODE_ENV === 'production') {
-    url = defaultSettings.apiUrl + url;
-  }
-
   if (options.data) {
     if (options.data.current) {
+      // 这里统一处理 分页查询参数 后端需要的是 page 和 size 而框架自己的是 current和pageSize
+      // 并且后端要求page默认从0开始 所有下边减1
       options.data.page = options.data.current - 1;
       delete options.data.current;
     }
@@ -72,15 +75,23 @@ request.interceptors.request.use(async (url, options) => {
       delete options.data.pageSize;
     }
   }
+  // 如果是delete请求方式 则 在url后面拼接id参数
   const method = options.method.toLocaleLowerCase();
   if (method === 'delete' || method === 'put') {
-    url = url + '/' + options.data.id;
+    if (options.data && options.data.id) {
+      url = url + '/' + options.data.id;
+    }
   }
+  // 请求头添加token
   const token = localStorage.getItem('token');
   let headers = {};
+  if (options.headers) {
+    headers = { ...options.headers };
+  }
   if (token) {
     headers = {
-      Authorization: 'Bearer ' + token,
+      ...headers,
+      Authorization: `Bearer ${token}`,
     };
   }
   return {
@@ -94,25 +105,31 @@ request.interceptors.request.use(async (url, options) => {
 
 request.interceptors.response.use(async (response, options) => {
   let result;
+
+  if (response.status === 204) {
+    return;
+  }
+
   const res = await response.clone().json();
-  console.log('===', res);
-  if (res.status === 200) {
-    // 界面报错处理
+
+  if (res.status === undefined || res.status === 200) {
     result = res.data ? res.data : res;
   } else {
+    // 界面报错处理
     notification.error({
       message: res.status,
       description: res.msg,
     });
     if (res.status === 403) {
+      // token 过期
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       localStorage.removeItem('antd-pro-authority');
-      const queryString = stringify({
-        redirect: window.location.href,
-      });
+      // const queryString = stringify({
+      //   redirect: window.location.href,
+      // });
       history.replace({
-        pathname: `/user/login?${queryString}`,
+        pathname: `/user/login`,
       });
     }
   }

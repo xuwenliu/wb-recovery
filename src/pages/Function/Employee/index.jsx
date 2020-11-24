@@ -1,7 +1,6 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, message, Input, Drawer, Tabs, Card } from 'antd';
-import React, { useState, useRef } from 'react';
-import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
+import { Tabs, Card } from 'antd';
+import React, { useState } from 'react';
+import { PageContainer } from '@ant-design/pro-layout';
 import Department from './components/department';
 import People from './components/people';
 import Role from './components/role';

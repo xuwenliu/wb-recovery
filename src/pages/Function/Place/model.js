@@ -1,4 +1,4 @@
-import { addRule, updateRule, getInfo, removeRule } from './service';
+import { saveSite, getInfo, removeSite } from './service';
 
 const Model = {
   namespace: 'functionAndPlace',
@@ -6,16 +6,11 @@ const Model = {
   reducers: {},
   effects: {
     *create({ payload, callback }, { call }) {
-      let result = null;
-      if (payload.id) {
-        result = yield call(updateRule, payload);
-      } else {
-        result = yield call(addRule, payload);
-      }
+      let result = yield call(saveSite, payload);
       callback && callback(result);
     },
     *remove({ payload, callback }, { call }) {
-      const result = yield call(removeRule, payload);
+      const result = yield call(removeSite, payload);
       callback && callback(result);
     },
     *getInfo({ payload, callback }, { call, put }) {

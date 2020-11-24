@@ -1,5 +1,45 @@
 import request from 'umi-request';
 
-export async function queryAdvancedProfile() {
-  return request('/api/profile/advanced');
+//全部就诊问题
+export async function getAllProblem() {
+  return request('/api/resource/visiting/allProblem');
 }
+
+//所有既往史
+export async function getAllPast() {
+  return request('/api/resource/visiting/allPast');
+}
+
+// 所有疫苗
+export async function getAllVaccine() {
+  return request('/api/resource/visiting/allVaccine');
+}
+
+// 高危因素
+export async function getAllVisitingDanger() {
+  return request('/api/resource/visiting/allVisitingDanger');
+}
+// 全部治疗处方
+export async function getAllPrescription() {
+  return request('/api/resource/visiting/allPrescription');
+}
+export async function createVisiting(data) {
+  return request('/api/resource/visiting/create', {
+    method: 'POST',
+    data,
+  });
+}
+
+// 医学检查记录详细
+export async function getVisitingSingle(params) {
+  return request('/api/resource/visiting/single', {
+    params,
+  });
+}
+
+export async function getLastVisiting(params) {
+  return request('/api/resource/visiting/lastVisiting', {
+    params,
+  });
+}
+

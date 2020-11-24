@@ -1,4 +1,3 @@
-import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import React from 'react';
 import './style.less';
@@ -10,9 +9,9 @@ import ImportDataCard from './components/ImportDataCard';
 const ColumnLocation = (props) => {
   return (
     <PageContainer>
-      {/* <ParentCard /> */}
-      {/* <MedicineCheckCard /> */}
-      {/* <ComprehensiveCard /> */}
+      <ParentCard />
+      <MedicineCheckCard />
+      <ComprehensiveCard />
       <ImportDataCard />
     </PageContainer>
   );

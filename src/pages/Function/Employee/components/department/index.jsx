@@ -2,7 +2,12 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import { getDeptList, getDeptAllList, getEmployeeAllList, getDeptRoles } from '../../service';
+import {
+  getDeptList,
+  getDeptAllList,
+  getEmployeeAllList,
+  getDeptRoles,
+} from '@/pages/Function/Employee/service';
 import { connect } from 'umi';
 const FormItem = Form.Item;
 
@@ -78,7 +83,6 @@ const Department = (props) => {
 
   // 删除
   const handleRemove = async (row) => {
-    const hide = message.loading('正在删除');
     const { dispatch } = props;
     dispatch({
       type: 'functionAndEmployee/removeDepartment',
@@ -86,9 +90,8 @@ const Department = (props) => {
         id: row.id,
       },
       callback: (res) => {
-        hide();
         if (res) {
-          message.success('删除成功，即将刷新');
+          message.success('删除成功');
           actionRef?.current?.reload();
           queryDeptList(); //删除成功后-重新获取父级部门-如果删除后直接来修改则会有删除前的数据
         } else {

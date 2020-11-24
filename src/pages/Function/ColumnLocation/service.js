@@ -25,6 +25,14 @@ export async function getCheckAll(params) {
   });
 }
 
+// 医学检查树形
+export async function getCheckTree(params) {
+  return request('/api/resource/section/check/tree', {
+    params,
+  });
+}
+
+
 export async function createCheck(data) {
   return request('/api/resource/section/check/create', {
     method: 'POST',
@@ -57,6 +65,12 @@ export async function getImportData(params) {
 }
 export async function createImportData(data) {
   return request('/api/resource/section/importData/create', {
+    method: 'POST',
+    data,
+  });
+}
+export async function updateImportData(data) {
+  return request('/api/resource/section/importData/update', {
     method: 'POST',
     data,
   });

@@ -1,21 +1,16 @@
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import { Button, Card, DatePicker, Input, Form, message, Radio, Select, Tooltip } from 'antd';
-import { connect, FormattedMessage, formatMessage, history } from 'umi';
+import { ArrowLeftOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Button, Card, Input, Form, message, Tooltip } from 'antd';
+import { connect, history } from 'umi';
 import React, { useState, useEffect } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import 'braft-editor/dist/index.css';
+import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import BraftEditor from 'braft-editor';
 
 import './style.less';
 const FormItem = Form.Item;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
-const { TextArea } = Input;
 
-const Edit = (props) => {
-  const { submitting } = props;
+const Edit = ({ dispatch, submitting, location }) => {
+  const [error, setError] = useState([]);
   const [form] = Form.useForm();
-  const [title, setTitle] = useState('新增场地');
 
   const formItemLayout = {
     labelCol: {
@@ -48,55 +43,26 @@ const Edit = (props) => {
       },
     },
     wrapperCol: {
-      xs: {
-        span: 24,
-      },
-      sm: {
-        span: 24,
-      },
-      md: {
-        span: 24,
-      },
+      span: 24,
     },
   };
-  const submitFormLayout = {
-    wrapperCol: {
-      xs: {
-        span: 24,
-        offset: 0,
-      },
-      sm: {
-        span: 10,
-        offset: 2,
-      },
-    },
-  };
-
-  useEffect(() => {
-    const { id } = props.location.query;
-    if (id) {
-      setTitle('编辑场地');
-      getInfo();
-    }
-  }, []);
 
   const getInfo = () => {
-    const { dispatch } = props;
-    const { id } = props.location.query;
+    const { id } = location.query;
     dispatch({
       type: 'functionAndPlace/getInfo',
-      payload: { id },
+      payload: { siteId: id },
       callback: (res) => {
-        res.editorState = BraftEditor.createEditorState(res.editorState);
+        res.equipment = res.equipment ? BraftEditor.createEditorState(res.equipment) : '';
         form.setFieldsValue(res);
       },
     });
   };
 
   const onFinish = (values) => {
-    const { dispatch } = props;
-    const { id } = props.location.query;
-    values.editorState = values.editorState.toHTML();
+    const { id } = location.query;
+    values.equipment = values.equipment ? values.equipment.toHTML() : '';
+    values.id = id; // 更新时使用
     dispatch({
       type: 'functionAndPlace/create',
       payload: values,
@@ -111,41 +77,47 @@ const Edit = (props) => {
     });
   };
 
-  const reset = () => {
-    form.resetFields();
-    const { id } = props.location.query;
+  useEffect(() => {
+    const { id } = location.query;
     if (id) {
       getInfo();
     }
+  }, []);
+
+  const onFinishFailed = (errorInfo) => {
+    setError(errorInfo.errorFields);
+  };
+
+  const getErrorInfo = (errors) => {
+    const errorCount = errors.filter((item) => item.errors.length > 0).length;
+    if (!errors || errorCount === 0) {
+      return null;
+    }
+    return (
+      <span className="errorIcon">
+        <CloseCircleOutlined />
+        {errorCount}
+      </span>
+    );
   };
 
   return (
-    <PageContainer
-      title={title}
-      extra={
-        <Button onClick={() => history.goBack()} icon={<ArrowLeftOutlined />}>
-          返回
-        </Button>
-      }
+    <Form
+      style={{
+        marginTop: 8,
+      }}
+      form={form}
+      name="basic"
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
     >
-      <Card bordered={false}>
-        <Form
-          // hideRequiredMark
-          style={{
-            marginTop: 8,
-          }}
-          form={form}
-          name="basic"
-          initialValues={{
-            public: '1',
-          }}
-          onFinish={onFinish}
-        >
+      <PageContainer header={{ title: '' }}>
+        <Card bordered={false}>
           <Tooltip title="注：一经确认无法修改">
             <FormItem
               {...formItemLayout}
               label="场地编号"
-              name="no"
+              name="code"
               rules={[
                 {
                   required: true,
@@ -173,7 +145,7 @@ const Edit = (props) => {
           <FormItem
             {...formItemLayout}
             label="场地位置"
-            name="location"
+            name="place"
             rules={[
               {
                 required: true,
@@ -187,7 +159,7 @@ const Edit = (props) => {
           <FormItem
             {...formItemLayout}
             label="场地说明"
-            name="desc"
+            name="description"
             rules={[
               {
                 required: true,
@@ -195,41 +167,28 @@ const Edit = (props) => {
               },
             ]}
           >
-            <TextArea
-              style={{
-                minHeight: 32,
-              }}
-              placeholder="请输入场地说明"
-              rows={4}
-            />
+            <Input.TextArea rows={4} placeholder="请输入场地说明" />
           </FormItem>
 
-          <FormItem {...formEditorLayout} label="器材说明" name="editorState">
+          <FormItem {...formEditorLayout} label="器材说明" name="equipment">
             <BraftEditor placeholder="请输入器材说明" className="my-editor" />
           </FormItem>
+        </Card>
+      </PageContainer>
+      <FooterToolbar>
+        {getErrorInfo(error)}
+        <Button onClick={() => history.goBack()} icon={<ArrowLeftOutlined />}>
+          返回
+        </Button>
 
-          <FormItem
-            {...submitFormLayout}
-            style={{
-              marginTop: 32,
-            }}
-          >
-            <Button className="mr8" type="primary" htmlType="submit" loading={submitting}>
-              确认
-            </Button>
-            <Button onClick={reset}>重置</Button>
-          </FormItem>
-        </Form>
-      </Card>
-    </PageContainer>
+        <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
+          提交
+        </Button>
+      </FooterToolbar>
+    </Form>
   );
 };
 
 export default connect(({ loading }) => ({
   submitting: loading.effects['functionAndPlace/create'],
 }))(Edit);
-
-// function mapStateToProps(state) {
-//   console.log('state', state);
-// }
-// export default connect(mapStateToProps)(Edit);

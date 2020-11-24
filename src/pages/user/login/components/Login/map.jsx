@@ -6,14 +6,7 @@ export default {
     props: {
       size: 'large',
       id: 'userName',
-      prefix: (
-        <UserOutlined
-          style={{
-            color: '#1890ff',
-          }}
-          className={styles.prefixIcon}
-        />
-      ),
+      prefix: <UserOutlined className={styles.prefixIcon} />,
       placeholder: 'admin',
     },
     rules: [
@@ -26,7 +19,7 @@ export default {
   Password: {
     props: {
       size: 'large',
-      prefix: <LockTwoTone className={styles.prefixIcon} />,
+      prefix: <LockTwoTone twoToneColor="#83ac36" className={styles.prefixIcon} />,
       type: 'password',
       id: 'password',
       placeholder: '888888',
@@ -41,7 +34,7 @@ export default {
   Mobile: {
     props: {
       size: 'large',
-      prefix: <MobileTwoTone className={styles.prefixIcon} />,
+      prefix: <MobileTwoTone twoToneColor="#83ac36" className={styles.prefixIcon} />,
       placeholder: 'mobile number',
     },
     rules: [
@@ -58,7 +51,7 @@ export default {
   Captcha: {
     props: {
       size: 'large',
-      prefix: <MailTwoTone className={styles.prefixIcon} />,
+      prefix: <MailTwoTone twoToneColor="#83ac36" className={styles.prefixIcon} />,
       placeholder: 'captcha',
     },
     rules: [

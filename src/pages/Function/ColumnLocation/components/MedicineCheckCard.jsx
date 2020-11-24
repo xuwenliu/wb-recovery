@@ -1,7 +1,11 @@
 import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { getCheckAll, createCheck, getCheckChildren } from '../service';
-import { getCommonEnums } from '../../../../services/common';
+import {
+  getCheckAll,
+  createCheck,
+  getCheckChildren,
+} from '@/pages/Function/ColumnLocation/service';
+import { getCommonEnums } from '@/services/common';
 
 const formItemLayout = {
   labelCol: { span: 2 },
@@ -11,6 +15,7 @@ const formItemLayout = {
 const codeObj = [2, 3, 3, 2, 4, 4, 4, 1]; // 每一个对应的下拉框个数
 
 const MedicineCheckCard = () => {
+  const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
   const [name, setName] = useState('');
   const [parentInfo, setParentInfo] = useState();
@@ -21,6 +26,7 @@ const MedicineCheckCard = () => {
       enumName: 'MedicineCheckSectionType',
     });
     const res = await getCheckAll();
+    setLoading(false);
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr
@@ -74,20 +80,21 @@ const MedicineCheckCard = () => {
     }
   };
 
-  const selectChange = (parentId, item, oneItem) => {
+  const selectChange = (parentId, item, nextLevel) => {
     if (item.code === 8) return; // 门诊复查 没有下级 则不请求接口了
 
     if (!parentId) return;
+    console.log(parentId, item, nextLevel);
     setParentInfo({
       ...item,
       parentId,
     });
 
-    const nextLevel = oneItem.level + 1;
+    // const nextLevel = oneItem.level + 1;
     queryCheckChildren(parentId, item.code, nextLevel);
   };
 
-  const addItem = async (item) => {
+  const addItem = async (item, oneItem) => {
     if (!name) {
       message.error('请输入需要添加的名称');
       return;
@@ -102,12 +109,17 @@ const MedicineCheckCard = () => {
     if (res) {
       message.success('新增成功');
       setName('');
-      setParentInfo(null);
-      queryCheckAll();
+      if (postData.parentId) {
+        // 第一个之后的下拉框添加
+        selectChange(postData.parentId, item, oneItem.level);
+      } else {
+        queryCheckAll(); // 第一个下拉框的添加
+      }
     }
   };
   return (
     <Card
+      loading={loading}
       title="医学检查栏位设置"
       style={{
         marginBottom: 24,
@@ -117,14 +129,14 @@ const MedicineCheckCard = () => {
       <Form form={form}>
         {parentSection.map((item, idx) => {
           return (
-            <Form.Item key={idx} {...formItemLayout} label={item.codeCn} name={item.codeEn}>
+            <Form.Item key={idx} {...formItemLayout} label={item.codeCn}>
               {item.list.map((oneItem, oneIndex) => (
                 <Select
                   allowClear
                   style={{ width: '20%' }}
                   className="mr8"
                   key={oneIndex}
-                  onChange={(e) => selectChange(e, item, oneItem)}
+                  onChange={(e) => selectChange(e, item, oneItem.level + 1)}
                   dropdownRender={(menu) => (
                     <div>
                       {menu}
@@ -142,7 +154,7 @@ const MedicineCheckCard = () => {
                             display: 'block',
                             cursor: 'pointer',
                           }}
-                          onClick={() => addItem(item)}
+                          onClick={() => addItem(item, oneItem)}
                         >
                           新增
                         </a>

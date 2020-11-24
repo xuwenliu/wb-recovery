@@ -1,4 +1,4 @@
-import { queryAdvancedProfile } from './service';
+// import { queryAdvancedProfile } from './service';
 
 const Model = {
   namespace: 'functionAndAccount',
@@ -8,13 +8,13 @@ const Model = {
     advancedOperation3: [],
   },
   effects: {
-    *fetchAdvanced(_, { call, put }) {
-      const response = yield call(queryAdvancedProfile);
-      yield put({
-        type: 'show',
-        payload: response,
-      });
-    },
+    // *fetchAdvanced(_, { call, put }) {
+    //   const response = yield call(queryAdvancedProfile);
+    //   yield put({
+    //     type: 'show',
+    //     payload: response,
+    //   });
+    // },
   },
   reducers: {
     show(state, { payload }) {

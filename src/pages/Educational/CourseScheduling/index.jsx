@@ -1,292 +1,315 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, message, Input, Drawer } from 'antd';
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Row, Col, Select, Input, Form, Button, List, Card, Modal, Radio, DatePicker } from 'antd';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
-import ProTable from '@ant-design/pro-table';
-import ProDescriptions from '@ant-design/pro-descriptions';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
-import { queryRule, updateRule, addRule, removeRule } from './service';
-/**
- * 添加节点
- * @param fields
- */
-
-const handleAdd = async (fields) => {
-  const hide = message.loading('正在添加');
-
-  try {
-    await addRule({ ...fields });
-    hide();
-    message.success('添加成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('添加失败请重试！');
-    return false;
-  }
+import ProTable, { ProColumns, TableDropdown, ActionType } from '@ant-design/pro-table';
+import { LightFilter, ProFormDatePicker } from '@ant-design/pro-form';
+import moment from 'moment';
+import { history, connect } from 'umi';
+const layout = {
+  labelCol: {
+    span: 4,
+  },
 };
-/**
- * 更新节点
- * @param fields
- */
-
-const handleUpdate = async (fields) => {
-  const hide = message.loading('正在配置');
-
-  try {
-    await updateRule({
-      name: fields.name,
-      desc: fields.desc,
-      key: fields.key,
-    });
-    hide();
-    message.success('配置成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('配置失败请重试！');
-    return false;
-  }
-};
-/**
- *  删除节点
- * @param selectedRows
- */
-
-const handleRemove = async (selectedRows) => {
-  const hide = message.loading('正在删除');
-  if (!selectedRows) return true;
-
-  try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
-    });
-    hide();
-    message.success('删除成功，即将刷新');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('删除失败，请重试');
-    return false;
-  }
-};
-
-const TableList = () => {
-  const [createModalVisible, handleModalVisible] = useState(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState(false);
-  const [stepFormValues, setStepFormValues] = useState({});
+const CourseScheduling = ({ submitting, dispatch }) => {
+  const [form] = Form.useForm();
+  const [initLoading, setInitLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [list, setList] = useState([
+    {
+      name: '小刘',
+      class: 23,
+    },
+  ]);
   const actionRef = useRef();
-  const [row, setRow] = useState();
-  const [selectedRowsState, setSelectedRows] = useState([]);
+  const [query, setQuery] = useState({
+    tab: 1,
+    date: moment().valueOf(),
+    keyword: '',
+    selectId: null,
+  });
+  const [visible, setVisible] = useState(false);
+
+  const onLoadMore = () => {};
+
+  const loadMore =
+    !initLoading && !loading ? (
+      <div
+        style={{
+          textAlign: 'center',
+          marginTop: 12,
+          marginBottom: 12,
+          height: 32,
+          lineHeight: '32px',
+        }}
+      >
+        <Button size="small" onClick={onLoadMore}>
+          查看更多
+        </Button>
+      </div>
+    ) : null;
+
+  const optionsWithTab = [
+    { label: '概览界面', value: 1 },
+    { label: '评估师界面', value: 2 },
+    { label: '患者界面', value: 3 },
+    { label: '教室界面', value: 4 },
+  ];
+  const onOptionsWithTabChange = (e) => {
+    const tab = e.target.value;
+    setQuery({
+      ...query,
+      tab,
+    });
+  };
+
+  const queryList = () => {
+    console.log(query);
+  };
+
+  useEffect(() => {
+    setInitLoading(false);
+  }, []);
+
   const columns = [
     {
-      title: '规则名称',
-      dataIndex: 'name',
-      tip: '规则名称是唯一的 key',
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-            message: '规则名称为必填项',
-          },
-        ],
-      },
-      render: (dom, entity) => {
-        return <a onClick={() => setRow(entity)}>{dom}</a>;
-      },
+      title: '',
+      dataIndex: 'title',
     },
     {
-      title: '描述',
-      dataIndex: 'desc',
-      valueType: 'textarea',
-    },
-    {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val) => `${val} 万`,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: {
-          text: '关闭',
-          status: 'Default',
-        },
-        1: {
-          text: '运行中',
-          status: 'Processing',
-        },
-        2: {
-          text: '已上线',
-          status: 'Success',
-        },
-        3: {
-          text: '异常',
-          status: 'Error',
-        },
-      },
-    },
-    {
-      title: '上次调度时间',
-      dataIndex: 'updatedAt',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInForm: true,
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
-      },
-    },
-    {
-      title: '操作',
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => (
-        <>
-          <a
-            onClick={() => {
-              handleUpdateModalVisible(true);
-              setStepFormValues(record);
-            }}
-          >
-            配置
-          </a>
-          <Divider type="vertical" />
-          <a href="">订阅警报</a>
-        </>
-      ),
+      title: '标题',
+      dataIndex: 'title',
     },
   ];
+
+  const handleCancel = () => {
+    setVisible(false);
+    form.resetFields();
+  };
+
+  const handleOk = async () => {
+    await form.validateFields();
+    let values = form.getFieldsValue();
+    dispatch({
+      type: 'educationalAndCourseScheduling/create',
+      payload: values,
+      callback: (res) => {
+        if (res) {
+          message.success('操作成功');
+          handleCancel();
+        }
+      },
+    });
+  };
+
   return (
-    <PageContainer>
-      <ProTable
-        headerTitle="查询表格"
-        actionRef={actionRef}
-        rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
-        toolBarRender={() => [
-          <Button type="primary" onClick={() => handleModalVisible(true)}>
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
-        request={(params, sorter, filter) => queryRule({ ...params, sorter, filter })}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => setSelectedRows(selectedRows),
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
+    <PageContainer
+      extra={[
+        <Button key="1" type="primary" onClick={() => setVisible(true)}>
+          新增排课
+        </Button>,
+      ]}
+    >
+      <Card>
+        <Row>
+          <Col style={{ textAlign: 'center' }} span={4}>
             <div>
-              已选择{' '}
-              <a
-                style={{
-                  fontWeight: 600,
-                }}
-              >
-                {selectedRowsState.length}
-              </a>{' '}
-              项&nbsp;&nbsp;
-              <span>
-                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo, 0)} 万
-              </span>
+              <Button style={{ width: 120 }}>患者管理</Button>
             </div>
-          }
+            <div style={{ margin: '20px 0' }}>
+              <Button style={{ width: 120 }}>治疗师管理</Button>
+            </div>
+            <div>
+              <Button style={{ width: 120 }}>上课统计</Button>
+            </div>
+
+            <List
+              style={{ marginTop: 30, background: '#F2F3F7' }}
+              bordered
+              header="本月上课量排行榜"
+              itemLayout="horizontal"
+              loadMore={loadMore}
+              dataSource={list}
+              renderItem={(item) => (
+                <List.Item>
+                  <span>{item.name}</span>
+                  <span>{item.class}节</span>
+                </List.Item>
+              )}
+            />
+          </Col>
+          <Col span={20}>
+            <Row>
+              <Col span={24} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+                <Radio.Group
+                  style={{ marginLeft: '10%' }}
+                  options={optionsWithTab}
+                  onChange={onOptionsWithTabChange}
+                  value={query.tab}
+                  optionType="button"
+                  buttonStyle="solid"
+                />
+              </Col>
+            </Row>
+            <ProTable
+              columns={columns}
+              actionRef={actionRef}
+              params={query} // query中只要有一项变化就会执行queryList
+              request={queryList}
+              rowKey="id"
+              search={false}
+              pagination={false}
+              toolbar={{
+                search: {
+                  allowClear: true,
+                  placeholder: '请输入治疗师/患者姓名',
+                  style: { width: '250px' },
+                  onSearch: (keyword) => {
+                    setQuery({
+                      ...query,
+                      keyword,
+                    });
+                  },
+                },
+                filter: (
+                  <LightFilter
+                    initialValues={{
+                      date: moment(),
+                    }}
+                    onFinish={({ date }) => {
+                      setQuery({
+                        ...query,
+                        date: moment(date).valueOf(),
+                      });
+                    }}
+                  >
+                    <ProFormDatePicker name="date" />
+                  </LightFilter>
+                ),
+                menu: {
+                  type: 'dropdown',
+                  items: [
+                    {
+                      label: '运动',
+                      key: '1',
+                    },
+                    {
+                      label: '治疗',
+                      key: '2',
+                    },
+                  ],
+                  onChange: (id) => {
+                    setQuery({
+                      ...query,
+                      selectId: id,
+                    });
+                  },
+                },
+              }}
+            />
+          </Col>
+        </Row>
+        <Modal
+          title="排课"
+          visible={visible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          confirmLoading={submitting}
         >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            批量删除
-          </Button>
-          <Button type="primary">批量审批</Button>
-        </FooterToolbar>
-      )}
-      <CreateForm onCancel={() => handleModalVisible(false)} modalVisible={createModalVisible}>
-        <ProTable
-          onSubmit={async (value) => {
-            const success = await handleAdd(value);
-
-            if (success) {
-              handleModalVisible(false);
-
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          rowKey="key"
-          type="form"
-          columns={columns}
-        />
-      </CreateForm>
-      {stepFormValues && Object.keys(stepFormValues).length ? (
-        <UpdateForm
-          onSubmit={async (value) => {
-            const success = await handleUpdate(value);
-
-            if (success) {
-              handleUpdateModalVisible(false);
-              setStepFormValues({});
-
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalVisible(false);
-            setStepFormValues({});
-          }}
-          updateModalVisible={updateModalVisible}
-          values={stepFormValues}
-        />
-      ) : null}
-
-      <Drawer
-        width={600}
-        visible={!!row}
-        onClose={() => {
-          setRow(undefined);
-        }}
-        closable={false}
-      >
-        {row?.name && (
-          <ProDescriptions
-            column={2}
-            title={row?.name}
-            request={async () => ({
-              data: row || {},
-            })}
-            params={{
-              id: row?.name,
-            }}
-            columns={columns}
-          />
-        )}
-      </Drawer>
+          <Form hideRequiredMark form={form} {...layout}>
+            <Form.Item
+              label="角色"
+              name="roleId"
+              rules={[{ required: true, message: '请选择角色' }]}
+            >
+              <Select>
+                {[].map((item) => (
+                  <Select.Option value={item.id}>{item.name}</Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="老师"
+              name="teacherId"
+              rules={[{ required: true, message: '请选择老师' }]}
+            >
+              <Select>
+                {[].map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="患者"
+              name="teacherId"
+              rules={[{ required: true, message: '请选择患者' }]}
+            >
+              <Select>
+                {[].map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="课程"
+              name="classId"
+              rules={[{ required: true, message: '请选择课程' }]}
+            >
+              <Select>
+                {[].map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="课程内容"
+              name="content"
+              rules={[{ required: true, message: '请输入课程内容' }]}
+            >
+              <Input.TextArea rows={3} />
+            </Form.Item>
+            <Form.Item
+              label="日期"
+              name="content"
+              rules={[{ required: true, message: '请输入课程内容' }]}
+            >
+              <DatePicker />
+            </Form.Item>
+            <Form.Item label="时间段" name="time">
+              <Select>
+                <Select.Option value={1}>7am~6pm</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="教室位置"
+              name="classRoom"
+              rules={[{ required: true, message: '请选择教室位置' }]}
+            >
+              <Select>
+                {[].map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </Card>
+      <FooterToolbar>
+        <Button type="primary" onClick={() => history.push('/archives/childrehabilitation')}>
+          进入康复计划
+        </Button>
+      </FooterToolbar>
     </PageContainer>
   );
 };
 
-export default TableList;
+export default connect(({ loading }) => ({
+  submitting: loading.effects['educationalAndCourseScheduling/create'],
+}))(CourseScheduling);

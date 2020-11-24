@@ -21,7 +21,10 @@ export async function getProjectAllEmployee() {
 export async function getProjectAllName() {
   return request('/api/resource/project/allName');
 }
-
+// 所有研究立项
+export async function getProjectAllProject() {
+  return request('/api/resource/project/allProject');
+}
 
 export async function createProject(data) {
   return request('/api/resource/project/create', {
@@ -35,7 +38,6 @@ export async function deleteProject(data) {
     data,
   });
 }
-
 
 export async function updateProject(data) {
   return request('/api/resource/project/update', {

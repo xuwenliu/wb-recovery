@@ -1,14 +1,18 @@
 import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { getComprehensiveAllSection, createComprehensive } from '../service';
-import { getCommonEnums } from '../../../../services/common';
+import {
+  getComprehensiveAllSection,
+  createComprehensive,
+} from '@/pages/Function/ColumnLocation/service';
+import { getCommonEnums } from '@/services/common';
 
 const formItemLayout = {
-  labelCol: { span: 10 },
-  wrapperCol: { span: 14 },
+  labelCol: { span: 14 },
+  wrapperCol: { span: 10 },
 };
 
 const ComprehensiveCard = () => {
+  const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
   const [name, setName] = useState('');
   const [form] = Form.useForm();
@@ -18,6 +22,7 @@ const ComprehensiveCard = () => {
       enumName: 'AssessSectionType',
     });
     const res = await getComprehensiveAllSection();
+    setLoading(false);
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr
@@ -31,6 +36,7 @@ const ComprehensiveCard = () => {
           return item;
         })
         .sort((a, b) => a.ordianl - b.ordianl);
+        console.log('newCommon',newCommon)
       setParentSection(newCommon);
     }
   };
@@ -59,6 +65,7 @@ const ComprehensiveCard = () => {
   };
   return (
     <Card
+      loading={loading}
       title="综合评估、教案及档案管理栏位设置"
       style={{
         marginBottom: 24,
@@ -74,8 +81,8 @@ const ComprehensiveCard = () => {
       >
         {parentSection.map((item, index) => {
           return (
-            <Col key={index} span={8}>
-              <Form.Item {...formItemLayout} label={item.codeCn} name={item.codeEn}>
+            <Col key={index} span={12}>
+              <Form.Item {...formItemLayout} label={item.codeCn}>
                 <Select
                   allowClear
                   dropdownRender={(menu) => (

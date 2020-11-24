@@ -1,14 +1,21 @@
 import { Form, Card, Select, Radio, Row, Col, Divider, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { getImportData, createImportData, getImportDataChildren } from '../service';
-import { getCommonEnums } from '../../../../services/common';
+import {
+  getImportData,
+  createImportData,
+  updateImportData,
+  getImportDataChildren,
+} from '@/pages/Function/ColumnLocation/service';
+import { getCommonEnums } from '@/services/common';
 
 const formSubItemLayout = {
   labelCol: { span: 2 },
-  wrapperCol: { span: 10 },
+  wrapperCol: { span: 22 },
 };
+const codeObj = [4, 4, 4, 4, 4]; // 每一个对应的下拉框个数
 
 const ImportDataCard = () => {
+  const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
   const [name, setName] = useState('');
   const [parentInfo, setParentInfo] = useState();
@@ -19,32 +26,57 @@ const ImportDataCard = () => {
       enumName: 'ImportDataViewSectionType',
     });
     const res = await getImportData();
+    setLoading(false);
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr
         .map((item) => {
           item.list = [];
+
           res.forEach((sub) => {
-            if (item.code === sub.type) {
+            if (item.code === sub.type && sub.level === 1) {
+              // 只需要给第一项（level===1）赋值
               item.list.push(sub);
+              item.isShow = sub.isShow; // 取子项的isShow属性赋值给最外层
             }
           });
+          // item.list [] 一维数组
+          let newList = []; // 二维数组
+          for (let i = 0; i < codeObj[item.code - 1]; i++) {
+            newList.push({
+              list: [],
+              level: i + 1,
+            });
+          }
+          newList[0] = {
+            list: item.list,
+            level: 1,
+          };
+          item.list = newList;
           return item;
         })
         .sort((a, b) => a.ordianl - b.ordianl);
+      console.log('newCommon', newCommon);
       setParentSection(newCommon);
     }
   };
 
-  const queryParentSectionChildren = async (parentId, nextCode) => {
+  const queryImportDataChildren = async (parentId, nextCode, nextLevel) => {
     const res = await getImportDataChildren({ parentId });
-    if (res) {
+    if (res && res.length > 0) {
       const newParentSection = parentSection.map((item) => {
         if (item.code === nextCode) {
-          item.list = res;
+          item.list.map((sub) => {
+            // sub = {list: Array(1), level: 1}
+            if (sub.level === nextLevel) {
+              sub.list = res;
+            }
+            return sub;
+          });
         }
         return item;
       });
+
       setParentSection(newParentSection);
     }
   };
@@ -53,102 +85,51 @@ const ImportDataCard = () => {
     queryParentSectionAll();
   }, []);
 
-  const selectChange = (parentId, item) => {
+  const selectChange = (parentId, item, nextLevel) => {
     if (!parentId) return;
-    const nextCode = item.code + 1;
     setParentInfo({
       ...item,
       parentId,
     });
-    // 如果选择了职业种类-大类，请求职业种类-中类
-    if (item.code === 13) {
-      form.setFields([
-        {
-          name: 'PROFESSION_MEDIUM',
-          value: '',
-        },
-        {
-          name: 'PROFESSION_SMALL',
-          value: '',
-        },
-      ]);
-      const newParentSection = parentSection.map((sub) => {
-        // 切换大类的时候把中类和小类下拉框数据置空
-        if (sub.code === nextCode || sub.code === nextCode + 1) {
-          sub.list = [];
-        }
-        return sub;
-      });
-      setParentSection(newParentSection);
 
-      queryParentSectionChildren(parentId, nextCode);
-    }
-    // 如果选择了职业种类-中类，请求职业种类-小类
-    if (item.code === 14) {
-      form.setFields([
-        {
-          name: 'PROFESSION_SMALL',
-          value: '',
-        },
-      ]);
-      const newParentSection = parentSection.map((sub) => {
-        // 切换中类的时候把小类下拉框数据置空
-        if (sub.code === nextCode) {
-          sub.list = [];
-        }
-        return sub;
-      });
-      setParentSection(newParentSection);
-      queryParentSectionChildren(parentId, nextCode);
-    }
+    // const nextLevel = oneItem.level + 1;
+    queryImportDataChildren(parentId, item.code, nextLevel);
   };
-  const addItem = async (item) => {
+  const radioChange = async (e, item) => {
+    const isShow = e.target.value;
+    await updateImportData({
+      isShow,
+      type: item.code,
+    });
+    message.success('操作成功');
+  };
+  const addItem = async (item, oneItem) => {
     if (!name) {
       message.error('请输入需要添加的名称');
       return;
     }
+    console.log(item);
     let postData = {
       name,
+      parentId: parentInfo?.parentId,
       type: item.code,
     };
-
-    if (item.code === 14) {
-      // 职业种类-中类
-      if (!parentInfo || parentInfo.code !== 13) {
-        message.error('请先选择职业种类-大类');
-        return;
-      }
-      postData = {
-        name,
-        parentId: parentInfo.parentId,
-        type: item.code,
-      };
-    }
-
-    if (item.code === 15) {
-      // 职业种类-小类
-      if (!parentInfo || parentInfo.code !== 14) {
-        message.error('请先选择职业种类-中类');
-        return;
-      }
-      postData = {
-        name,
-        parentId: parentInfo.parentId,
-        type: item.code,
-      };
-    }
 
     const res = await createImportData(postData);
     if (res) {
       message.success('新增成功');
       setName('');
-      setParentInfo('');
-      queryParentSectionAll();
+      if (postData.parentId) {
+        // 第一个之后的下拉框添加
+        selectChange(postData.parentId, item, oneItem.level);
+      } else {
+        queryParentSectionAll(); // 第一个下拉框的添加
+      }
     }
-    console.log(res);
   };
   return (
     <Card
+      loading={loading}
       title="汇入数据显示设置"
       style={{
         marginBottom: 24,
@@ -156,52 +137,64 @@ const ImportDataCard = () => {
       bordered={false}
     >
       <Form form={form}>
-        {parentSection.map((item) => {
+        {parentSection.map((item, index) => {
           return (
-            <Col key={item.ordianl}>
-              <p style={{ paddingLeft: 25 }}>{item.codeCn}</p>
-              <Form.Item {...formSubItemLayout} label="是否显示" name="isShow">
-                <Radio.Group>
+            <Col key={index}>
+              <div>
+                {index + 1}.{item.codeCn}
+              </div>
+              <div style={{ margin: '10px 0' }}>
+                是否显示:
+                <Radio.Group
+                  onChange={(e) => radioChange(e, item)}
+                  style={{ marginLeft: 8 }}
+                  defaultValue={item.isShow}
+                >
                   <Radio value={true}>是</Radio>
                   <Radio value={false}>否</Radio>
                 </Radio.Group>
-              </Form.Item>
+              </div>
 
-              <Form.Item {...formSubItemLayout} label="选择内容" name={item.codeEn}>
-                <Select
-                  allowClear
-                  onChange={(e) => selectChange(e, item)}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '4px 0' }} />
-                      <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                        <Input
-                          style={{ flex: 'auto' }}
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                        <a
-                          style={{
-                            flex: 'none',
-                            padding: '8px',
-                            display: 'block',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => addItem(item)}
-                        >
-                          新增
-                        </a>
+              <Form.Item label="选择内容">
+                {item.list.map((oneItem, oneIndex) => (
+                  <Select
+                    allowClear
+                    style={{ width: '20%' }}
+                    className="mr8"
+                    key={oneIndex}
+                    onChange={(e) => selectChange(e, item, oneItem.level + 1)}
+                    dropdownRender={(menu) => (
+                      <div>
+                        {menu}
+                        <Divider style={{ margin: '4px 0' }} />
+                        <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                          <Input
+                            style={{ flex: 'auto' }}
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                          <a
+                            style={{
+                              flex: 'none',
+                              padding: '8px',
+                              display: 'block',
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => addItem(item, oneItem)}
+                          >
+                            新增
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                >
-                  {item.list.map((sub) => (
-                    <Select.Option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </Select.Option>
-                  ))}
-                </Select>
+                    )}
+                  >
+                    {oneItem.list.map((sub) => (
+                      <Select.Option key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                ))}
               </Form.Item>
             </Col>
           );

@@ -1,77 +1,49 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, message, Input, Drawer, Popconfirm } from 'antd';
+import { Button, message, Tooltip, Popconfirm } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import { queryRule, updateRule, addRule, removeRule } from './service';
-import { history } from 'umi';
+import { getSitePage } from './service';
+import { history, connect } from 'umi';
 
-const handleAdd = async () => {
-  history.push({
-    pathname: '/function/place/edit',
-  });
-};
-
-const handleUpdate = async (row) => {
-  history.push({
-    pathname: '/function/place/edit',
-    query: {
-      id: row.id,
-    },
-  });
-};
-
-const handleRemove = async (actionRef, row) => {
-  const hide = message.loading('正在删除');
-  const { dispatch } = props;
-  dispatch({
-    type: 'functionAndPlace/remove',
-    payload: {
-      id: row.id,
-    },
-    callback: (res) => {
-      hide();
-      if (res) {
-        message.success('删除成功，即将刷新');
-        if (actionRef.current) {
-          actionRef.current.reload();
-        }
-      } else {
-        message.error('删除失败');
-      }
-    },
-  });
-};
-
-const TableList = () => {
+const Place = ({ dispatch }) => {
   const actionRef = useRef();
   const columns = [
     {
       title: '场地编号',
-      dataIndex: 'number',
+      dataIndex: 'code',
       formItemProps: {
-        placeholder: '请输入场地编号/名称',
+        placeholder: '请输入场地编号',
       },
     },
     {
       title: '场地名称',
       dataIndex: 'name',
-      search: false,
+      ellipsis: true,
+      formItemProps: {
+        placeholder: '请输入场地名称',
+      },
     },
     {
       title: '场地位置',
-      dataIndex: 'location',
+      dataIndex: 'place',
+      ellipsis: true,
       search: false,
     },
     {
       title: '场地说明',
-      dataIndex: 'desc',
+      dataIndex: 'description',
       search: false,
+      ellipsis: true,
     },
     {
       title: '器材说明',
-      dataIndex: 'desc',
+      dataIndex: 'equipment',
       search: false,
+      ellipsis: true,
+      render: (_, record) => {
+        return <span dangerouslySetInnerHTML={{ __html: record.equipment }}></span>;
+      },
     },
     {
       title: '操作',
@@ -82,10 +54,7 @@ const TableList = () => {
           <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
             编辑
           </Button>
-          <Popconfirm
-            title="确定删除该项数据吗？"
-            onConfirm={() => handleRemove(actionRef, record)}
-          >
+          <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
             <Button danger size="small" type="primary">
               删除
             </Button>
@@ -94,6 +63,39 @@ const TableList = () => {
       ),
     },
   ];
+
+  const handleAdd = async () => {
+    history.push({
+      pathname: '/function/place/edit',
+    });
+  };
+
+  const handleUpdate = async (row) => {
+    history.push({
+      pathname: '/function/place/edit',
+      query: {
+        id: row.id,
+      },
+    });
+  };
+
+  const handleRemove = async (row) => {
+    dispatch({
+      type: 'functionAndPlace/remove',
+      payload: {
+        siteId: row.id,
+      },
+      callback: (res) => {
+        if (res) {
+          message.success('删除成功');
+          actionRef?.current?.reload();
+        } else {
+          message.error('删除失败');
+        }
+      },
+    });
+  };
+
   return (
     <PageContainer>
       <ProTable
@@ -104,14 +106,18 @@ const TableList = () => {
         }}
         toolBarRender={() => [
           <Button key="add" type="primary" onClick={() => handleAdd()}>
-            <PlusOutlined /> 新建
-          </Button>
+            <PlusOutlined /> 新增
+          </Button>,
         ]}
-        request={(params, sorter, filter) => queryRule({ ...params, sorter, filter })}
+        request={(params, sorter, filter) =>
+          getSitePage({ ...params, body: { code: params.code, name: params.name } })
+        }
         columns={columns}
       />
     </PageContainer>
   );
 };
 
-export default TableList;
+export default connect(({ loading }) => ({
+  submitting: loading.effects['functionAndPlace/remove'],
+}))(Place);

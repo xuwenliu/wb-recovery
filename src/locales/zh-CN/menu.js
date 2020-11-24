@@ -1,6 +1,6 @@
 export default {
   'menu.patriarch': '家长端',
-  'menu.patriarch.baseinfo': '基本资料',
+  'menu.patriarch.childrenrecord': '儿童档案',
   'menu.patriarch.check': '检核自评',
   'menu.patriarch.medicalrecord': '就诊记录',
   'menu.patriarch.assessmentrecord': '测评记录',
@@ -30,7 +30,6 @@ export default {
   'menu.educational.curriculum': '课程管理',
   'menu.educational.apply': '报名管理',
 
-
   'menu.function': '功能管理',
   'menu.function.account': '我的账号',
   'menu.function.columnlocation': '栏位设置',
@@ -40,7 +39,6 @@ export default {
   'menu.function.researchproject': '研究立项',
   'menu.function.employee': '员工管理',
   'menu.function.place': '场地管理',
-
 
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
@@ -92,4 +90,7 @@ export default {
   'menu.editor.flow': '流程编辑器',
   'menu.editor.mind': '脑图编辑器',
   'menu.editor.koni': '拓扑编辑器',
+
+  'menu.demo': 'Demo',
+  'menu.project': '项目',
 };

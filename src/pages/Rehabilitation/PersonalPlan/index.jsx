@@ -1,452 +1,100 @@
-import {
-  DingdingOutlined,
-  DownOutlined,
-  EllipsisOutlined,
-  InfoCircleOutlined,
-} from '@ant-design/icons';
-import {
-  Badge,
-  Button,
-  Card,
-  Statistic,
-  Descriptions,
-  Divider,
-  Dropdown,
-  Menu,
-  Popover,
-  Steps,
-  Table,
-  Tooltip,
-  Empty,
-} from 'antd';
-import { GridContent, PageContainer, RouteContext } from '@ant-design/pro-layout';
-import React, { Component, Fragment } from 'react';
-import classNames from 'classnames';
-import { connect } from 'umi';
-import styles from './style.less';
-const { Step } = Steps;
-const ButtonGroup = Button.Group;
-const menu = (
-  <Menu>
-    <Menu.Item key="1">选项一</Menu.Item>
-    <Menu.Item key="2">选项二</Menu.Item>
-    <Menu.Item key="3">选项三</Menu.Item>
-  </Menu>
-);
-const mobileMenu = (
-  <Menu>
-    <Menu.Item key="1">操作一</Menu.Item>
-    <Menu.Item key="2">操作二</Menu.Item>
-    <Menu.Item key="3">选项一</Menu.Item>
-    <Menu.Item key="4">选项二</Menu.Item>
-    <Menu.Item key="">选项三</Menu.Item>
-  </Menu>
-);
-const action = (
-  <RouteContext.Consumer>
-    {({ isMobile }) => {
-      if (isMobile) {
-        return (
-          <Dropdown.Button
-            type="primary"
-            icon={<DownOutlined />}
-            overlay={mobileMenu}
-            placement="bottomRight"
-          >
-            主操作
-          </Dropdown.Button>
-        );
-      }
+import React, { useState, useEffect } from 'react';
+import { PageContainer } from '@ant-design/pro-layout';
+import { Card, Tabs } from 'antd';
 
-      return (
-        <Fragment>
-          <ButtonGroup>
-            <Button>操作一</Button>
-            <Button>操作二</Button>
-            <Dropdown overlay={menu} placement="bottomRight">
-              <Button>
-                <EllipsisOutlined />
-              </Button>
-            </Dropdown>
-          </ButtonGroup>
-          <Button type="primary">主操作</Button>
-        </Fragment>
-      );
-    }}
-  </RouteContext.Consumer>
-);
-const extra = (
-  <div className={styles.moreInfo}>
-    <Statistic title="状态" value="待审批" />
-    <Statistic title="订单金额" value={568.08} prefix="¥" />
-  </div>
-);
-const description = (
-  <RouteContext.Consumer>
-    {({ isMobile }) => (
-      <Descriptions className={styles.headerList} size="small" column={isMobile ? 1 : 2}>
-        <Descriptions.Item label="创建人">曲丽丽</Descriptions.Item>
-        <Descriptions.Item label="订购产品">XX 服务</Descriptions.Item>
-        <Descriptions.Item label="创建时间">2017-07-07</Descriptions.Item>
-        <Descriptions.Item label="关联单据">
-          <a href="">12421</a>
-        </Descriptions.Item>
-        <Descriptions.Item label="生效日期">2017-07-07 ~ 2017-08-08</Descriptions.Item>
-        <Descriptions.Item label="备注">请于两个工作日内确认</Descriptions.Item>
-      </Descriptions>
-    )}
-  </RouteContext.Consumer>
-);
-const desc1 = (
-  <div className={classNames(styles.textSecondary, styles.stepDescription)}>
-    <Fragment>
-      曲丽丽
-      <DingdingOutlined
-        style={{
-          marginLeft: 8,
-        }}
-      />
-    </Fragment>
-    <div>2016-12-12 12:32</div>
-  </div>
-);
-const desc2 = (
-  <div className={styles.stepDescription}>
-    <Fragment>
-      周毛毛
-      <DingdingOutlined
-        style={{
-          color: '#00A0E9',
-          marginLeft: 8,
-        }}
-      />
-    </Fragment>
-    <div>
-      <a href="">催一下</a>
-    </div>
-  </div>
-);
-const popoverContent = (
-  <div
-    style={{
-      width: 160,
-    }}
-  >
-    吴加号
-    <span
-      className={styles.textSecondary}
-      style={{
-        float: 'right',
-      }}
-    >
-      <Badge
-        status="default"
-        text={
-          <span
-            style={{
-              color: 'rgba(0, 0, 0, 0.45)',
-            }}
-          >
-            未响应
-          </span>
-        }
-      />
-    </span>
-    <div
-      className={styles.textSecondary}
-      style={{
-        marginTop: 4,
-      }}
-    >
-      耗时：2小时25分钟
-    </div>
-  </div>
-);
+import BaseInfoShow from '@/components/BaseInfoShow';
+import ScaleTrainingSuggest from '@/components/Scale/ScaleTrainingSuggest';
+import TeachingProgram from '@/pages/Rehabilitation/PersonalPlan/components/TeachingProgram';
+import TeachingRecord from '@/pages/Rehabilitation/PersonalPlan/components/TeachingRecord';
+import CaseAssessmentRecord from '@/pages/Assessment/CaseAssessmentPlanning/components/CaseAssessmentRecord';
+import HealthCheckupRecordList from '@/components/HealthCheckupRecordList';
+import MedicalRecordList from '@/components/MedicalRecordList';
+import AssessmentRecordList from '@/components/AssessmentRecordList';
+import BaseInfo from '@/pages/MedicalExamination/DiagnosisPrescription/components/BaseInfo';
+import ChartsPer from '@/components/ChartsPer';
+import ChartsStand from '@/components/ChartsStand';
+import { getPhysiqueGraphData } from '@/pages/MedicalExamination/HealthCheckup/service';
 
-const customDot = (dot, { status }) => {
-  if (status === 'process') {
-    return (
-      <Popover placement="topLeft" arrowPointAtCenter content={popoverContent}>
-        {dot}
-      </Popover>
-    );
-  }
+const PersonalPlan = () => {
+  const [patientId, setPatientId] = useState();
+  const [info, setInfo] = useState();
+  const [graphData, setGraphData] = useState();
+  const [tab, setTab] = useState('1');
+  const [classId, setClassId] = useState();
 
-  return dot;
+  const onPatientIdChange = (id) => {
+    setPatientId(id);
+  };
+  const onAllInfoChange = (info) => {
+    setInfo(info);
+  };
+
+  // 查询-曲线图数据
+  const queryPhysiqueGraphData = async () => {
+    if (info?.patientId) {
+      const res = await getPhysiqueGraphData({ patientId: info.patientId });
+      setGraphData(res);
+    }
+  };
+
+  const tabChange = (tab, classId) => {
+    setTab(tab);
+    setClassId(classId);
+  };
+
+  useEffect(() => {
+    queryPhysiqueGraphData();
+  }, [info?.patientId]);
+
+  return (
+    <PageContainer>
+      <BaseInfoShow
+        onPatientIdChange={onPatientIdChange}
+        onAllInfoChange={onAllInfoChange}
+        newUrl="getSpecialEduAllCaseCode"
+      />
+      <Card style={{ marginTop: 20 }}>
+        <Tabs
+          activeKey={tab}
+          onChange={(tab) => {
+            setTab(tab);
+            setClassId(null);
+          }}
+        >
+          <Tabs.TabPane tab="训练建议" key="1">
+            <ScaleTrainingSuggest user={info} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="教学计划" key="2">
+            <TeachingProgram patientId={patientId} tabChange={tabChange} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="教学记录" key="3">
+            <TeachingRecord patientId={patientId} tab={tab} classId={classId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="病历基本资料" key="4">
+            <CaseAssessmentRecord info={info} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="体格检查记录" key="5">
+            <HealthCheckupRecordList patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="百分位曲线图" key="6">
+            <ChartsPer gender={info?.genderName} graphData={graphData} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="标准差单位曲线图" key="7">
+            <ChartsStand gender={info?.genderName} graphData={graphData} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="基本资料" key="8">
+            <BaseInfo patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="检核自评" key="9"></Tabs.TabPane>
+          <Tabs.TabPane tab="就诊记录" key="10">
+            <MedicalRecordList patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="测评记录" key="11">
+            <AssessmentRecordList />
+          </Tabs.TabPane>
+        </Tabs>
+      </Card>
+    </PageContainer>
+  );
 };
-
-const operationTabList = [
-  {
-    key: 'tab1',
-    tab: '操作日志一',
-  },
-  {
-    key: 'tab2',
-    tab: '操作日志二',
-  },
-  {
-    key: 'tab3',
-    tab: '操作日志三',
-  },
-];
-const columns = [
-  {
-    title: '操作类型',
-    dataIndex: 'type',
-    key: 'type',
-  },
-  {
-    title: '操作人',
-    dataIndex: 'name',
-    key: 'name',
-  },
-  {
-    title: '执行结果',
-    dataIndex: 'status',
-    key: 'status',
-    render: (text) => {
-      if (text === 'agree') {
-        return <Badge status="success" text="成功" />;
-      }
-
-      return <Badge status="error" text="驳回" />;
-    },
-  },
-  {
-    title: '操作时间',
-    dataIndex: 'updatedAt',
-    key: 'updatedAt',
-  },
-  {
-    title: '备注',
-    dataIndex: 'memo',
-    key: 'memo',
-  },
-];
-
-class PersonalPlan extends Component {
-  state = {
-    operationKey: 'tab1',
-    tabActiveKey: 'detail',
-  };
-
-  componentDidMount() {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'rehabilitationAndPersonalPlan/fetchAdvanced',
-    });
-  }
-
-  onOperationTabChange = (key) => {
-    this.setState({
-      operationKey: key,
-    });
-  };
-  onTabChange = (tabActiveKey) => {
-    this.setState({
-      tabActiveKey,
-    });
-  };
-
-  render() {
-    const { operationKey, tabActiveKey } = this.state;
-    const { rehabilitationAndPersonalPlan, loading } = this.props;
-    const {
-      advancedOperation1,
-      advancedOperation2,
-      advancedOperation3,
-    } = rehabilitationAndPersonalPlan;
-    const contentList = {
-      tab1: (
-        <Table
-          pagination={false}
-          loading={loading}
-          dataSource={advancedOperation1}
-          columns={columns}
-        />
-      ),
-      tab2: (
-        <Table
-          pagination={false}
-          loading={loading}
-          dataSource={advancedOperation2}
-          columns={columns}
-        />
-      ),
-      tab3: (
-        <Table
-          pagination={false}
-          loading={loading}
-          dataSource={advancedOperation3}
-          columns={columns}
-        />
-      ),
-    };
-    return (
-      <PageContainer
-        title="单号：234231029431"
-        extra={action}
-        className={styles.pageHeader}
-        content={description}
-        extraContent={extra}
-        tabActiveKey={tabActiveKey}
-        onTabChange={this.onTabChange}
-        tabList={[
-          {
-            key: 'detail',
-            tab: '详情',
-          },
-          {
-            key: 'rule',
-            tab: '规则',
-          },
-        ]}
-      >
-        <div className={styles.main}>
-          <GridContent>
-            <Card
-              title="流程进度"
-              style={{
-                marginBottom: 24,
-              }}
-            >
-              <RouteContext.Consumer>
-                {({ isMobile }) => (
-                  <Steps
-                    direction={isMobile ? 'vertical' : 'horizontal'}
-                    progressDot={customDot}
-                    current={1}
-                  >
-                    <Step title="创建项目" description={desc1} />
-                    <Step title="部门初审" description={desc2} />
-                    <Step title="财务复核" />
-                    <Step title="完成" />
-                  </Steps>
-                )}
-              </RouteContext.Consumer>
-            </Card>
-            <Card
-              title="用户信息"
-              style={{
-                marginBottom: 24,
-              }}
-              bordered={false}
-            >
-              <Descriptions
-                style={{
-                  marginBottom: 24,
-                }}
-              >
-                <Descriptions.Item label="用户姓名">付小小</Descriptions.Item>
-                <Descriptions.Item label="会员卡号">32943898021309809423</Descriptions.Item>
-                <Descriptions.Item label="身份证">3321944288191034921</Descriptions.Item>
-                <Descriptions.Item label="联系方式">18112345678</Descriptions.Item>
-                <Descriptions.Item label="联系地址">
-                  曲丽丽 18100000000 浙江省杭州市西湖区黄姑山路工专路交叉路口
-                </Descriptions.Item>
-              </Descriptions>
-              <Descriptions
-                style={{
-                  marginBottom: 24,
-                }}
-                title="信息组"
-              >
-                <Descriptions.Item label="某某数据">725</Descriptions.Item>
-                <Descriptions.Item label="该数据更新时间">2017-08-08</Descriptions.Item>
-                <Descriptions.Item
-                  label={
-                    <span>
-                      某某数据
-                      <Tooltip title="数据说明">
-                        <InfoCircleOutlined
-                          style={{
-                            color: 'rgba(0, 0, 0, 0.43)',
-                            marginLeft: 4,
-                          }}
-                        />
-                      </Tooltip>
-                    </span>
-                  }
-                >
-                  725
-                </Descriptions.Item>
-                <Descriptions.Item label="该数据更新时间">2017-08-08</Descriptions.Item>
-              </Descriptions>
-              <h4
-                style={{
-                  marginBottom: 16,
-                }}
-              >
-                信息组
-              </h4>
-              <Card type="inner" title="多层级信息组">
-                <Descriptions
-                  style={{
-                    marginBottom: 16,
-                  }}
-                  title="组名称"
-                >
-                  <Descriptions.Item label="负责人">林东东</Descriptions.Item>
-                  <Descriptions.Item label="角色码">1234567</Descriptions.Item>
-                  <Descriptions.Item label="所属部门">XX公司 - YY部</Descriptions.Item>
-                  <Descriptions.Item label="过期时间">2017-08-08</Descriptions.Item>
-                  <Descriptions.Item label="描述">
-                    这段描述很长很长很长很长很长很长很长很长很长很长很长很长很长很长...
-                  </Descriptions.Item>
-                </Descriptions>
-                <Divider
-                  style={{
-                    margin: '16px 0',
-                  }}
-                />
-                <Descriptions
-                  style={{
-                    marginBottom: 16,
-                  }}
-                  title="组名称"
-                  column={1}
-                >
-                  <Descriptions.Item label="学名">
-                    Citrullus lanatus (Thunb.) Matsum. et
-                    Nakai一年生蔓生藤本；茎、枝粗壮，具明显的棱。卷须较粗..
-                  </Descriptions.Item>
-                </Descriptions>
-                <Divider
-                  style={{
-                    margin: '16px 0',
-                  }}
-                />
-                <Descriptions title="组名称">
-                  <Descriptions.Item label="负责人">付小小</Descriptions.Item>
-                  <Descriptions.Item label="角色码">1234568</Descriptions.Item>
-                </Descriptions>
-              </Card>
-            </Card>
-            <Card
-              title="用户近半年来电记录"
-              style={{
-                marginBottom: 24,
-              }}
-              bordered={false}
-            >
-              <Empty />
-            </Card>
-            <Card
-              className={styles.tabsCard}
-              bordered={false}
-              tabList={operationTabList}
-              onTabChange={this.onOperationTabChange}
-            >
-              {contentList[operationKey]}
-            </Card>
-          </GridContent>
-        </div>
-      </PageContainer>
-    );
-  }
-}
-
-export default connect(({ rehabilitationAndPersonalPlan, loading }) => ({
-  rehabilitationAndPersonalPlan,
-  loading: loading.effects['rehabilitationAndPersonalPlan/fetchAdvanced'],
-}))(PersonalPlan);
+export default PersonalPlan;

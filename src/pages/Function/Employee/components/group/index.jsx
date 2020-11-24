@@ -7,11 +7,11 @@ import {
   getDeptAllList,
   getGroupDepartments,
   getGroupEmployees,
-} from '../../service';
-import { getCommonEnums } from '../../../../../services/common';
+} from '@/pages/Function/Employee/service';
+
+import { getCommonEnums } from '@/services/common';
 import { connect } from 'umi';
 const FormItem = Form.Item;
-import moment from 'moment';
 
 let updateId = '';
 
@@ -122,7 +122,6 @@ const Group = (props) => {
 
   // 删除
   const handleRemove = async (row) => {
-    const hide = message.loading('正在删除');
     const { dispatch } = props;
     dispatch({
       type: 'functionAndEmployee/removeGroupType',
@@ -130,9 +129,8 @@ const Group = (props) => {
         id: row.id,
       },
       callback: (res) => {
-        hide();
         if (res) {
-          message.success('删除成功，即将刷新');
+          message.success('删除成功');
           actionRef?.current?.reload();
         } else {
           message.error('删除失败');

@@ -1,25 +1,14 @@
-import { queryAdvancedProfile } from './service';
+import { createVisiting } from './service';
 
 const Model = {
   namespace: 'medicalExaminationAndDiagnosisPrescription',
-  state: {
-    advancedOperation1: [],
-    advancedOperation2: [],
-    advancedOperation3: [],
-  },
+  state: {},
   effects: {
-    *fetchAdvanced(_, { call, put }) {
-      const response = yield call(queryAdvancedProfile);
-      yield put({
-        type: 'show',
-        payload: response,
-      });
+    *create({ payload, callback }, { call }) {
+      let result = yield call(createVisiting, payload);
+      callback && callback(result);
     },
   },
-  reducers: {
-    show(state, { payload }) {
-      return { ...state, ...payload };
-    },
-  },
+  reducers: {},
 };
 export default Model;

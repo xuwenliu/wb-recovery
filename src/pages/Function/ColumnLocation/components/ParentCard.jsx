@@ -1,7 +1,11 @@
 import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
-import { getParentSectionAll, createParent, getParentSectionChildren } from '../service';
-import { getCommonEnums } from '../../../../services/common';
+import {
+  getParentSectionAll,
+  createParent,
+  getParentSectionChildren,
+} from '@/pages/Function/ColumnLocation/service';
+import { getCommonEnums } from '@/services/common';
 
 const formItemLayout = {
   labelCol: { span: 10 },
@@ -9,6 +13,7 @@ const formItemLayout = {
 };
 
 const ParentCard = () => {
+  const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
   const [name, setName] = useState('');
   const [parentInfo, setParentInfo] = useState();
@@ -19,6 +24,7 @@ const ParentCard = () => {
       enumName: 'ParentSectionType',
     });
     const res = await getParentSectionAll();
+    setLoading(false);
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr
@@ -56,12 +62,16 @@ const ParentCard = () => {
   const selectChange = (parentId, item) => {
     if (!parentId) return;
     const nextCode = item.code + 1;
-    setParentInfo({
-      ...item,
-      parentId,
-    });
+    // setParentInfo({
+    //   ...item,
+    //   parentId,
+    // });
     // 如果选择了职业种类-大类，请求职业种类-中类
     if (item.code === 13) {
+      setParentInfo({
+        ...item,
+        parentId1: parentId,
+      });
       form.setFields([
         {
           name: 'PROFESSION_MEDIUM',
@@ -85,6 +95,11 @@ const ParentCard = () => {
     }
     // 如果选择了职业种类-中类，请求职业种类-小类
     if (item.code === 14) {
+      setParentInfo({
+        ...item,
+        parentId1: parentInfo.parentId1,
+        parentId2: parentId,
+      });
       form.setFields([
         {
           name: 'PROFESSION_SMALL',
@@ -120,7 +135,7 @@ const ParentCard = () => {
       }
       postData = {
         name,
-        parentId: parentInfo.parentId,
+        parentId: parentInfo.parentId1,
         type: item.code,
       };
     }
@@ -133,7 +148,7 @@ const ParentCard = () => {
       }
       postData = {
         name,
-        parentId: parentInfo.parentId,
+        parentId: parentInfo.parentId2,
         type: item.code,
       };
     }
@@ -142,13 +157,22 @@ const ParentCard = () => {
     if (res) {
       message.success('新增成功');
       setName('');
-      setParentInfo('');
-      queryParentSectionAll();
+      if (item.code === 14) {
+        // 职业种类-中类
+        queryParentSectionChildren(parentInfo.parentId1, item.code);
+      } else if (item.code === 15) {
+        // 职业种类-小类
+        queryParentSectionChildren(parentInfo.parentId1, item.code - 1);
+        queryParentSectionChildren(parentInfo.parentId2, item.code);
+      } else {
+        queryParentSectionAll();
+      }
     }
     console.log(res);
   };
   return (
     <Card
+      loading={loading}
       title="家长端基本资料栏位设置"
       style={{
         marginBottom: 24,
@@ -165,7 +189,7 @@ const ParentCard = () => {
         {parentSection.map((item) => {
           return (
             <Col key={item.ordianl} span={6}>
-              <Form.Item {...formItemLayout} label={item.codeCn} name={item.codeEn}>
+              <Form.Item {...formItemLayout} label={item.codeCn}>
                 <Select
                   allowClear
                   onChange={(e) => selectChange(e, item)}

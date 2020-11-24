@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, DatePicker } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import { getEmployeeList, getDeptAllList, getDeptRoles } from '../../service';
+import { getEmployeeList, getDeptAllList, getDeptRoles } from '@/pages/Function/Employee/service';
 import { connect } from 'umi';
 const FormItem = Form.Item;
 import moment from 'moment';
@@ -75,7 +75,6 @@ const People = (props) => {
 
   // 删除
   const handleRemove = async (row) => {
-    const hide = message.loading('正在删除');
     const { dispatch } = props;
     dispatch({
       type: 'functionAndEmployee/remove',
@@ -83,9 +82,8 @@ const People = (props) => {
         id: row.id,
       },
       callback: (res) => {
-        hide();
         if (res) {
-          message.success('删除成功，即将刷新');
+          message.success('删除成功');
           actionRef?.current?.reload();
         } else {
           message.error('删除失败');

@@ -30,7 +30,7 @@ const Login = (props) => {
       postData = {
         username: values.mobile,
         password: values.captcha,
-      }
+      };
     }
     dispatch({
       type: 'login/login',

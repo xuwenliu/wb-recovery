@@ -1,460 +1,70 @@
-import { CloseCircleOutlined } from '@ant-design/icons';
-import { Button, Card, Col, DatePicker, Form, Input, Popover, Row, Select, TimePicker } from 'antd';
-import React, { useState } from 'react';
-import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
-import { connect } from 'umi';
-import TableForm from './components/TableForm';
-import styles from './style.less';
-const { Option } = Select;
-const { RangePicker } = DatePicker;
-const fieldLabels = {
-  name: '仓库名',
-  url: '仓库域名',
-  owner: '仓库管理员',
-  approver: '审批人',
-  dateRange: '生效日期',
-  type: '仓库类型',
-  name2: '任务名',
-  url2: '任务描述',
-  owner2: '执行人',
-  approver2: '责任人',
-  dateRange2: '生效日期',
-  type2: '任务类型',
-};
-const tableData = [
-  {
-    key: '1',
-    workId: '00001',
-    name: 'John Brown',
-    department: 'New York No. 1 Lake Park',
-  },
-  {
-    key: '2',
-    workId: '00002',
-    name: 'Jim Green',
-    department: 'London No. 1 Lake Park',
-  },
-  {
-    key: '3',
-    workId: '00003',
-    name: 'Joe Black',
-    department: 'Sidney No. 1 Lake Park',
-  },
-];
+import React, { useState, useEffect } from 'react';
+import { PageContainer } from '@ant-design/pro-layout';
+import { Card, Tabs } from 'antd';
 
-const CaseAssessmentPlanning = ({ submitting, dispatch }) => {
-  const [form] = Form.useForm();
-  const [error, setError] = useState([]);
+import BaseInfoShow from '@/components/BaseInfoShow';
+import HealthCheckupRecordList from '@/components/HealthCheckupRecordList';
+import MedicalRecordList from '@/components/MedicalRecordList';
+import AssessmentRecordList from '@/components/AssessmentRecordList';
+import CaseAssessmentRecord from '@/pages/Assessment/CaseAssessmentPlanning/components/CaseAssessmentRecord';
+import BaseInfo from '@/pages/MedicalExamination/DiagnosisPrescription/components/BaseInfo';
+import ChartsPer from '@/components/ChartsPer';
+import ChartsStand from '@/components/ChartsStand';
+import { getPhysiqueGraphData } from '@/pages/MedicalExamination/HealthCheckup/service';
 
-  const getErrorInfo = (errors) => {
-    const errorCount = errors.filter((item) => item.errors.length > 0).length;
+const CaseAssessmentPlanning = () => {
+  const [patientId, setPatientId] = useState();
+  const [info, setInfo] = useState();
+  const [graphData, setGraphData] = useState();
 
-    if (!errors || errorCount === 0) {
-      return null;
+  const onPatientIdChange = (id) => {
+    setPatientId(id);
+  };
+  const onAllInfoChange = (info) => {
+    setInfo(info);
+  };
+  // 查询-曲线图数据
+  const queryPhysiqueGraphData = async () => {
+    if (info?.patientId) {
+      const res = await getPhysiqueGraphData({ patientId: info.patientId });
+      setGraphData(res);
     }
-
-    const scrollToField = (fieldKey) => {
-      const labelNode = document.querySelector(`label[for="${fieldKey}"]`);
-
-      if (labelNode) {
-        labelNode.scrollIntoView(true);
-      }
-    };
-
-    const errorList = errors.map((err) => {
-      if (!err || err.errors.length === 0) {
-        return null;
-      }
-
-      const key = err.name[0];
-      return (
-        <li key={key} className={styles.errorListItem} onClick={() => scrollToField(key)}>
-          <CloseCircleOutlined className={styles.errorIcon} />
-          <div className={styles.errorMessage}>{err.errors[0]}</div>
-          <div className={styles.errorField}>{fieldLabels[key]}</div>
-        </li>
-      );
-    });
-    return (
-      <span className={styles.errorIcon}>
-        <Popover
-          title="表单校验信息"
-          content={errorList}
-          overlayClassName={styles.errorPopover}
-          trigger="click"
-          getPopupContainer={(trigger) => {
-            if (trigger && trigger.parentNode) {
-              return trigger.parentNode;
-            }
-
-            return trigger;
-          }}
-        >
-          <CloseCircleOutlined />
-        </Popover>
-        {errorCount}
-      </span>
-    );
   };
 
-  const onFinish = (values) => {
-    setError([]);
-    dispatch({
-      type: 'assessmentAndCaseAssessmentPlanning/submitAdvancedForm',
-      payload: values,
-    });
-  };
-
-  const onFinishFailed = (errorInfo) => {
-    setError(errorInfo.errorFields);
-  };
+  useEffect(() => {
+    queryPhysiqueGraphData();
+  }, [info?.patientId]);
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      hideRequiredMark
-      initialValues={{
-        members: tableData,
-      }}
-      onFinish={onFinish}
-      onFinishFailed={onFinishFailed}
-    >
-      <PageContainer content="高级表单常见于一次性输入和提交大批量数据的场景。">
-        <Card title="仓库管理" className={styles.card} bordered={false}>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.name}
-                name="name"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入仓库名称',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入仓库名称" />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.url}
-                name="url"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-              >
-                <Input
-                  style={{
-                    width: '100%',
-                  }}
-                  addonBefore="http://"
-                  addonAfter=".com"
-                  placeholder="请输入"
-                />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.owner}
-                name="owner"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择管理员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择管理员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.approver}
-                name="approver"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择审批员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择审批员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.dateRange}
-                name="dateRange"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择生效日期',
-                  },
-                ]}
-              >
-                <RangePicker
-                  placeholder={['开始日期', '结束日期']}
-                  style={{
-                    width: '100%',
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.type}
-                name="type"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择仓库类型',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择仓库类型">
-                  <Option value="private">私密</Option>
-                  <Option value="public">公开</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
-        <Card title="任务管理" className={styles.card} bordered={false}>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.name2}
-                name="name2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入" />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.url2}
-                name="url2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-              >
-                <Input placeholder="请输入" />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.owner2}
-                name="owner2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择管理员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择管理员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col lg={6} md={12} sm={24}>
-              <Form.Item
-                label={fieldLabels.approver2}
-                name="approver2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择审批员',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择审批员">
-                  <Option value="xiao">付晓晓</Option>
-                  <Option value="mao">周毛毛</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 6,
-                offset: 2,
-              }}
-              lg={{
-                span: 8,
-              }}
-              md={{
-                span: 12,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.dateRange2}
-                name="dateRange2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入',
-                  },
-                ]}
-              >
-                <TimePicker
-                  placeholder="提醒时间"
-                  style={{
-                    width: '100%',
-                  }}
-                  getPopupContainer={(trigger) => {
-                    if (trigger && trigger.parentNode) {
-                      return trigger.parentNode;
-                    }
-
-                    return trigger;
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col
-              xl={{
-                span: 8,
-                offset: 2,
-              }}
-              lg={{
-                span: 10,
-              }}
-              md={{
-                span: 24,
-              }}
-              sm={24}
-            >
-              <Form.Item
-                label={fieldLabels.type2}
-                name="type2"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择仓库类型',
-                  },
-                ]}
-              >
-                <Select placeholder="请选择仓库类型">
-                  <Option value="private">私密</Option>
-                  <Option value="public">公开</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
-        <Card title="成员管理" bordered={false}>
-          <Form.Item name="members">
-            <TableForm />
-          </Form.Item>
-        </Card>
-      </PageContainer>
-      <FooterToolbar>
-        {getErrorInfo(error)}
-        <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
-          提交
-        </Button>
-      </FooterToolbar>
-    </Form>
+    <PageContainer>
+      <BaseInfoShow onPatientIdChange={onPatientIdChange} onAllInfoChange={onAllInfoChange} />
+      <Card style={{ marginTop: 20 }}>
+        <Tabs defaultActiveKey="1">
+          <Tabs.TabPane tab="个案评估规划" key="1">
+            <CaseAssessmentRecord info={info} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="体格检查记录" key="2">
+            <HealthCheckupRecordList patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="百分位曲线图" key="3">
+            <ChartsPer gender={info?.genderName} graphData={graphData} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="标准差单位曲线图" key="4">
+            <ChartsStand gender={info?.genderName} graphData={graphData} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="基本资料" key="5">
+            <BaseInfo patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="检核自评" key="6"></Tabs.TabPane>
+          <Tabs.TabPane tab="就诊记录" key="7">
+            <MedicalRecordList patientId={patientId} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="测评记录" key="8">
+            <AssessmentRecordList />
+          </Tabs.TabPane>
+        </Tabs>
+      </Card>
+    </PageContainer>
   );
 };
-
-export default connect(({ loading }) => ({
-  submitting: loading.effects['assessmentAndCaseAssessmentPlanning/submitAdvancedForm'],
-}))(CaseAssessmentPlanning);
+export default CaseAssessmentPlanning;

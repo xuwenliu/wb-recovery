@@ -22,6 +22,9 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  p {
+    margin: 0;
+  }
 }
 
 ul,
@@ -54,13 +57,67 @@ ol {
 }
 
 .mr8 {
-  margin-right: 8px;
+  margin-right: 8px !important;
+}
+.ml4 {
+  margin-left: 4px !important;
 }
 .my-editor {
   border: 1px solid #d1d1d1;
   border-radius: 5px;
 }
 
-.ant-pro-global-header-layout-mix{
-  background-color: #8ca949;
+.ant-pro-global-header-layout-mix {
+  background-color: #8ca949 !important;
+}
+.qrCode {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.ant-form-item {
+  .ant-select.select {
+    width: 20%;
+    margin-left: 4px;
+    &:last-of-type {
+      margin-right: 4px;
+    }
+  }
+  .address {
+    display: inline-block;
+    width: 36%;
+  }
+}
+.ant-table-thead > tr > th {
+  background: #edf3f9 !important;
+}
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: #edf3f9 !important;
+}
+.reduce {
+  font-size: 20px;
+  color: #ff4d4f;
+  margin-right: 8px;
+  margin-top: 6px;
+}
+.add {
+  font-size: 20px;
+  color: #8ca949;
+  margin-top: 6px;
+}
+
+// 禁止操作
+.box {
+  position: relative;
+  .mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ddd;
+    z-index: 99;
+    opacity: 0.5;
+  }
 }

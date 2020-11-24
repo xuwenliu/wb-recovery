@@ -1,5 +1,5 @@
 import { parse } from 'querystring';
-/* eslint no-useless-escape:0 import/prefer-default-export:0 */
+import { getCommonAllEnums } from '@/services/common';
 
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
 export const isUrl = (path) => reg.test(path);
@@ -21,3 +21,28 @@ export const isAntDesignProOrDev = () => {
   return isAntDesignPro();
 };
 export const getPageQuery = () => parse(window.location.href.split('?')[1]);
+
+export const queryCommonAllEnums = async () => {
+  const res = await getCommonAllEnums();
+  if (!res) return;
+  const erArr = Object.entries(res);
+  const newArr = [];
+  erArr.forEach((item) => {
+    // const key = item[0].replace(/[^a-zA-Z]/g, ''); // 取出英文当key
+    const key = item[0]; // 取出英文当key
+    const value = Object.values(item[1]);
+    newArr.push({
+      key,
+      value,
+    });
+  });
+  return newArr;
+};
+// 从所有枚举里面获取type类型的枚举
+export const getSingleEnums = (key, all) => {
+  console.log(key, all);
+  return all
+    .filter((item) => item.key === key)
+    .map((item) => item.value)[0]
+    .sort((a, b) => a.ordianl - b.ordianl);
+};

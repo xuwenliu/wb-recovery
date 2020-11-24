@@ -12,6 +12,15 @@ import Authorized from '@/utils/Authorized';
 import RightContent from '@/components/GlobalHeader/RightContent';
 import { getMatchMenu } from '@umijs/route-utils';
 import logo from '../assets/img/logo.png';
+
+/**
+ * add material theme
+ */
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import selftheme from '@/theme';
+
+const theme = createMuiTheme(selftheme);
+
 const noMatch = (
   <Result
     status={403}
@@ -160,7 +169,7 @@ const BasicLayout = (props) => {
       {...settings}
     >
       <Authorized authority={authorized.authority} noMatch={noMatch}>
-        {children}
+        <ThemeProvider theme={theme}>{children}</ThemeProvider>
       </Authorized>
     </ProLayout>
   );

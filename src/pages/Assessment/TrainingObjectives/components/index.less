@@ -1,0 +1,31 @@
+.bottom-content {
+  .card-title {
+    .ant-card-head {
+      border: 0;
+      .ant-card-head-title {
+        position: relative;
+        padding-left: 18px;
+        font-size: 20px;
+        font-weight: 500;
+        color: #4b7902;
+      }
+      .ant-card-head-title::before {
+        content: '';
+        width: 6px;
+        height: 18px;
+        display: block;
+        background: #4b7902;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+    .ant-card-body {
+      padding: 0 24px 24px;
+      .ant-form-item {
+        margin-bottom: 24px!important;
+      }
+    }
+  }
+}
