@@ -4,6 +4,7 @@ import { CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { FooterToolbar } from '@ant-design/pro-layout';
 import BraftEditor from 'braft-editor';
 import copy from 'copy-to-clipboard';
+import { media } from '@/utils/utils';
 
 import { connect, history } from 'umi';
 import {
@@ -1028,7 +1029,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
               },
             ]}
           >
-            <BraftEditor placeholder="请输入建议" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入建议" className="my-editor" />
           </Form.Item>
         </Card>
       </div>

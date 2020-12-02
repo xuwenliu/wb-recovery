@@ -10,7 +10,7 @@ import {
   getPhysiqueAllCaseCode,
 } from '@/pages/MedicalExamination/HealthCheckup/service';
 import { getAllCaseCode } from '@/pages/Assessment/TeamAssessment/service';
-import { getSpecialEduAllCaseCode } from '@/pages/Rehabilitation/PersonalPlan/service';
+import { getSpecialAllCaseCode } from '@/pages/Rehabilitation/PersonalPlan/service';
 import bingli from '@/assets/img/bingli.png';
 
 let patientId = '771739876879560704';
@@ -31,8 +31,8 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
       if (res.length) {
         setAllCode(res);
       }
-    } else if (newUrl === 'getSpecialEduAllCaseCode') {
-      res = await getSpecialEduAllCaseCode();
+    } else if (newUrl === 'getSpecialAllCaseCode') {
+      res = await getSpecialAllCaseCode();
       if (res.length) {
         setAllCode(res);
       }

@@ -18,6 +18,8 @@ import BraftEditor from 'braft-editor';
 import './index.less';
 import { connect, history } from 'umi';
 import moment from 'moment';
+import { media } from '@/utils/utils';
+
 import {
   getAllProblem,
   getAllPast,
@@ -921,7 +923,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
               },
             ]}
           >
-            <BraftEditor placeholder="请输入建议" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入建议" className="my-editor" />
           </Form.Item>
         </Card>
       </div>

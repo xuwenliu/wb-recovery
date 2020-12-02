@@ -6,7 +6,7 @@ import {
   DatePicker,
   Form,
   Input,
-  Popover,
+  message,
   Row,
   Select,
   Image,
@@ -35,6 +35,7 @@ import MedicalHistorySelect from '@/pages/Patriarch/ChildrenRecord/Edit/componen
 
 import { getParentSectionAll } from '@/pages/Function/ColumnLocation/service';
 import { getAllBirthDangerInfo } from '@/pages/Patriarch/ChildrenRecord/service';
+import { fileUpload } from '@/services/common';
 
 const FormMoreItemLayout = {
   labelCol: { span: 3 },
@@ -62,6 +63,9 @@ const disabledGTToday = (current) => {
 
 const BaseInfo = ({ submitting, dispatch, location }) => {
   const { id, type } = location.query;
+
+  const [filePaths, setFilePaths] = useState([]);
+  const [fileList, setFileList] = useState([]);
 
   const [pageLoading, setPageLoading] = useState(true);
   const [form] = Form.useForm();
@@ -226,7 +230,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
 
     const postData = {
       abnormalActionIds: values.abnormalActionIds, //异常行为id集合
-      filePaths: values.filePaths, //	患者文档
+      filePaths, //	患者文档
       patientAllergyConnectBos: values.patientAllergyConnectBos?.filter((item) => item.allergyId), // 患者过敏史
       patientBasicInfoCreateBo, // 	患者基本信息创建
       patientBirthRecordBo, // 患者出生记录
@@ -254,6 +258,26 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
       },
     });
   };
+
+  const handleBeforeUpload = async (file, fileList) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fileUpload(formData);
+    if (res) {
+      setFilePaths([res]);
+      fileList = fileList.map(item => {
+        item.url = res;
+        return item;
+      })
+      setFileList(fileList);
+      message.success('文件上传成功');
+    } else {
+      message.error('文件上传失败');
+    }
+
+    return false;
+  };
+
   const onFinishFailed = (errorInfo) => {
     setError(errorInfo.errorFields);
   };
@@ -267,6 +291,14 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
       callback: (values) => {
         console.log('values', values);
         // 基本信息
+        const fileList = values.patientDocumentVos?.map((item) => {
+          item.name = item.path?.split('_')[1] || item.path;
+          item.url = item.path;
+          item.uid = '-2';
+          item.status = 'done';
+          return item;
+        });
+        setFileList(fileList);
 
         // TODO-城市三级联动待处理
         const patientBasicInfoCreateBo = {
@@ -1474,7 +1506,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             <div>本人同意无偿提供儿童的康复训练过程及数据，作为后续研究使用。</div>
           </div>
           <Form.Item>
-            <Upload.Dragger>
+            <Upload.Dragger fileList={fileList} action="#" beforeUpload={handleBeforeUpload}>
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>

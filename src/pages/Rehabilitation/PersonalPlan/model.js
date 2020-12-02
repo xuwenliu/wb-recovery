@@ -1,4 +1,4 @@
-import { saveSpecialEdu } from './service';
+import { saveSpecialEdu, updatePlan } from './service';
 
 const Model = {
   namespace: 'rehabilitationAndPersonalPlan',
@@ -6,6 +6,10 @@ const Model = {
   effects: {
     *create({ payload, callback }, { call }) {
       const result = yield call(saveSpecialEdu, payload);
+      callback && callback(result);
+    },
+    *update({ payload, callback }, { call }) {
+      const result = yield call(updatePlan, payload);
       callback && callback(result);
     },
   },

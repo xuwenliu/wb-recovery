@@ -24,3 +24,7 @@ export async function getInfo(params) {
     params,
   });
 }
+// 所有场地
+export async function getSiteAll() {
+  return request('/api/resource/site/all');
+}

@@ -5,11 +5,18 @@ export async function getCommonAllEnums() {
 }
 export async function getCommonEnums(params) {
   return request('/common/enums', {
-    params: params,
+    params,
   });
 }
 export async function getCommonRegion(params) {
   return request('/common/region', {
-    params: params,
+    params,
+  });
+}
+
+export async function fileUpload(data) {
+  return request('/api/resource/file/upload', {
+    method: 'POST',
+    data,
   });
 }

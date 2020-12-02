@@ -56,6 +56,14 @@ export async function getEmployeeList(data) {
 export async function getEmployeeAllList() {
   return request('/api/resource/employee/all');
 }
+
+// 角色下面的所有员工
+export async function getEmployeeFindByRole(params) {
+  return request('/api/resource/employee/findByRole', {
+    params,
+  });
+}
+
 export async function getEmployeeSingle(data) {
   return request(`/api/resource/employee/single/${data.id}`, {
     method: 'GET',
@@ -75,6 +83,11 @@ export async function createRole(data) {
     data,
   });
 }
+// 全部角色
+export async function getAllRole() {
+  return request('/api/resource/role/allRole');
+}
+
 export async function deleteRole(data) {
   return request('/api/resource/role/delete', {
     method: 'DELETE',

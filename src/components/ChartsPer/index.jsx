@@ -1,15 +1,8 @@
 import React, { useEffect } from 'react';
 import { Card, Row, Col } from 'antd';
-import moment from 'moment';
 
-import charts from '@/utils/canvas';
+import { charts, clearCanvas } from '@/utils/canvas';
 const ChartsPer = ({ graphData, gender }) => {
-  function clearCanvas(canvas) {
-    var c = document.getElementById(canvas);
-    var cxt = c.getContext('2d');
-    cxt.clearRect(0, 0, c.width, c.height);
-  }
-
   useEffect(() => {
     console.log('graphData', graphData);
     let genderInt = gender === '男' ? 1 : 2;

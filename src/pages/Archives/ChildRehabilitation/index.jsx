@@ -5,7 +5,7 @@ import { Card, Form, Select } from 'antd';
 import BaseInfoShow from '@/components/BaseInfoShow';
 
 const layout = {
-  labelCol: { span: 1 },
+  labelCol: { span: 2 },
   wrapperCol: { span: 4 },
 };
 

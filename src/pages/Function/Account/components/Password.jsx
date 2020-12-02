@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Row, Col, message, Button } from 'antd';
 import { getFakeCaptcha } from '@/services/login';
+import { updatePasswords } from '../service';
 
 const formItemLayout = {
   labelCol: {
@@ -12,13 +13,8 @@ const formItemLayout = {
 };
 const tailFormItemLayout = {
   wrapperCol: {
-    labelCol: {
-      span: 2,
-    },
-    sm: {
-      span: 16,
-      offset: 2,
-    },
+    span: 2,
+    offset: 2,
   },
 };
 
@@ -36,18 +32,24 @@ const Password = () => {
       setStep(2);
     }
   };
+
+  const handleCancel = () => {
+    form.resetFields();
+    setStep(1);
+    setTiming(false);
+  };
+
   const onFinish = async (values) => {
     const postData = {
       ...data,
       ...values,
     };
     console.log(postData);
-  };
-
-  const handleCancel = () => {
-    form.resetFields();
-    setStep(1);
-    setTiming(false);
+    const result = await updatePasswords(postData);
+    if (result) {
+      message.success('密码修改成功');
+      handleCancel();
+    }
   };
 
   const onGetCaptcha = useCallback(async () => {
@@ -56,10 +58,10 @@ const Password = () => {
       message.error('请输入手机号码');
       return;
     }
-    // const result = await getFakeCaptcha(phone);
-    // if (result === false) {
-    //   return;
-    // }
+    const result = await getFakeCaptcha(phone);
+    if (!result) {
+      return;
+    }
 
     setTiming(true);
   }, []);
@@ -106,7 +108,7 @@ const Password = () => {
             <Row gutter={8}>
               <Col span={16}>
                 <Form.Item
-                  name="captcha"
+                  name="code"
                   noStyle
                   rules={[
                     {
@@ -130,7 +132,7 @@ const Password = () => {
       {step === 2 && (
         <>
           <Form.Item
-            name="password"
+            name="passwords"
             label="输入新密码"
             rules={[
               {
@@ -143,9 +145,9 @@ const Password = () => {
             <Input.Password placeholder="请输入新密码" />
           </Form.Item>
           <Form.Item
-            name="confirm"
+            name="confirmPasswords"
             label="确认新密码"
-            dependencies={['password']}
+            dependencies={['passwords']}
             hasFeedback
             rules={[
               {
@@ -154,7 +156,7 @@ const Password = () => {
               },
               ({ getFieldValue }) => ({
                 validator(rule, value) {
-                  if (!value || getFieldValue('password') === value) {
+                  if (!value || getFieldValue('passwords') === value) {
                     return Promise.resolve();
                   }
                   return Promise.reject('两次密码不一致');

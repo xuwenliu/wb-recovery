@@ -46,7 +46,8 @@ const LoginItem = (props) => {
       return;
     }
     const result = await getFakeCaptcha(mobile);
-    if (result === false) {
+    console.log('result',result);
+    if (!result) {
       return;
     }
 

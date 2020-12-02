@@ -1,6 +1,9 @@
-import React from 'react';
-import { Form, Input, Select, Button, DatePicker } from 'antd';
+import React, { useEffect } from 'react';
+import { Form, Input, Select, Button, DatePicker, message } from 'antd';
 import CitySelect from '../../../Patriarch/ChildrenRecord/Edit/components/CitySelect';
+import { getUserInfo } from '../service';
+import { connect } from 'umi';
+import moment from 'moment';
 const layout = {
   labelCol: {
     span: 3,
@@ -18,14 +21,61 @@ const citySelectLayout = {
   },
 };
 
-const BaseInfo = () => {
+const BaseInfo = ({ submitting, dispatch }) => {
   const [form] = Form.useForm();
 
+  const queryUserInfo = async () => {
+    const values = await getUserInfo();
+    if (values) {
+      const setData = {
+        ...values,
+        createTime: moment(values.createTime),
+        job: values.roleVos?.map((item) => item.name).join(' '),
+        regionAddress: {
+          province: values.provinceCode,
+          city: values.cityCode,
+          area: values.regionCode,
+          place: values.household,
+        },
+        nowAddress: {
+          province: values.nowProvinceCode,
+          city: values.nowCityCode,
+          area: values.nowRegionCode,
+          place: values.nowPlace,
+        },
+      };
+      form.setFieldsValue(setData);
+    }
+  };
+  useEffect(() => {
+    queryUserInfo();
+  }, []);
   const onFinish = (values) => {
-    console.log(values);
+    const postData = {
+      ...values,
+      provinceCode: values.regionAddress?.province,
+      cityCode: values.regionAddress?.city,
+      regionCode: values.regionAddress?.area,
+      household: values.regionAddress?.place,
+      nowProvinceCode: values.nowAddress?.province,
+      nowCityCode: values.nowAddress?.city,
+      nowRegionCode: values.nowAddress?.area,
+      nowPlace: values.nowAddress?.place,
+    };
+
+    dispatch({
+      type: 'functionAndAccount/update',
+      payload: postData,
+      callback: (res) => {
+        if (res) {
+          message.success('操作成功');
+        }
+      },
+    });
   };
   const cancel = () => {
     form.resetFields();
+    queryUserInfo();
   };
   const checkAddress = (rule, value) => {
     if (!value || !value.province) {
@@ -45,108 +95,55 @@ const BaseInfo = () => {
 
   return (
     <Form {...layout} name="user" onFinish={onFinish} form={form}>
-      <Form.Item
-        name="nickName"
-        label="账户昵称"
-        rules={[
-          {
-            required: true,
-            message: '请输入账户昵称',
-          },
-        ]}
-      >
+      <Form.Item name="nickName" label="账户昵称">
         <Input className="ml4" placeholder="请输入账户昵称" />
       </Form.Item>
-      <Form.Item
-        name="account"
-        label="账户账号"
-        rules={[
-          {
-            required: true,
-            message: '请输入账户账号',
-          },
-        ]}
-      >
+      <Form.Item name="account" label="账户账号">
         <Input className="ml4" placeholder="请输入账户账号" />
       </Form.Item>
-      <Form.Item
-        name="job"
-        label="员工职位"
-        rules={[
-          {
-            required: true,
-            message: '请选择员工职位',
-          },
-        ]}
-      >
-        <Select className="ml4" placeholder="请选择员工职位" />
+
+      <Form.Item name="job" label="员工职位">
+        <Input className="ml4" disabled />
+      </Form.Item>
+
+      <Form.Item name="createTime" label="创建日期">
+        <DatePicker
+          disabled
+          style={{ width: '50%' }}
+          className="ml4"
+          placeholder="请选择创建日期"
+        />
       </Form.Item>
       <Form.Item
-        name="createTime"
-        label="创建日期"
+        name="mobile"
+        label="手机号码"
         rules={[
           {
-            required: true,
-            message: '请选择创建日期',
-          },
-        ]}
-      >
-        <DatePicker style={{ width: '50%' }} className="ml4" placeholder="请选择创建日期" />
-      </Form.Item>
-      <Form.Item
-        name="phone"
-        label="联系电话"
-        rules={[
-          {
-            required: true,
-            message: '请输入联系电话',
+            pattern: /^1\d{10}$/,
+            message: '手机号码格式错误！',
           },
         ]}
       >
         <Input className="ml4" placeholder="请输入联系电话" />
       </Form.Item>
-      <Form.Item
-        {...citySelectLayout}
-        label="户籍所在地"
-        name="regionAddress"
-        rules={[
-          {
-            required: true,
-            message: '请选择户籍所在地',
-          },
-          {
-            validator: checkAddress,
-          },
-        ]}
-      >
+      <Form.Item {...citySelectLayout} label="户籍所在地" name="regionAddress">
         <CitySelect />
       </Form.Item>
 
-      <Form.Item
-        {...citySelectLayout}
-        label="现居住地址"
-        name="nowAddress"
-        rules={[
-          {
-            required: true,
-            message: '请选择现居住地址',
-          },
-          {
-            validator: checkAddress,
-          },
-        ]}
-      >
+      <Form.Item {...citySelectLayout} label="现居住地址" name="nowAddress">
         <CitySelect />
       </Form.Item>
 
       <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 3 }}>
-        <Button className="mr8" type="primary" htmlType="submit">
+        <Button loading={submitting} className="mr8" type="primary" htmlType="submit">
           确定
         </Button>
-        <Button onClick={cancel}>取消</Button>
+        <Button onClick={cancel}>重置</Button>
       </Form.Item>
     </Form>
   );
 };
 
-export default BaseInfo;
+export default connect(({ loading }) => ({
+  submitting: loading.effects['functionAndAccount/update'],
+}))(BaseInfo);

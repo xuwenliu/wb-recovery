@@ -51,7 +51,7 @@ const PersonalPlan = () => {
       <BaseInfoShow
         onPatientIdChange={onPatientIdChange}
         onAllInfoChange={onAllInfoChange}
-        newUrl="getSpecialEduAllCaseCode"
+        newUrl="getSpecialAllCaseCode"
       />
       <Card style={{ marginTop: 20 }}>
         <Tabs
@@ -65,7 +65,7 @@ const PersonalPlan = () => {
             <ScaleTrainingSuggest user={info} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="教学计划" key="2">
-            <TeachingProgram patientId={patientId} tabChange={tabChange} />
+            <TeachingProgram patientId={patientId} user={info} tabChange={tabChange} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="教学记录" key="3">
             <TeachingRecord patientId={patientId} tab={tab} classId={classId} />

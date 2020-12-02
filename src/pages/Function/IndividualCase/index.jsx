@@ -1,16 +1,9 @@
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, DatePicker } from 'antd';
+import { Button, Modal, message, Input, Form, Tooltip, Select, DatePicker } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
-import {
-  getProjectList,
-  getProjectAllCode,
-  getProjectAllEmployee,
-  getProjectAllName,
-} from '@/pages/Function/ResearchProject/service';
-
-import { getEmployeeAllList } from '@/pages/Function/Employee/service';
+import { getSpecialList } from './service';
+import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
 import { connect } from 'umi';
 const FormItem = Form.Item;
 import moment from 'moment';
@@ -44,130 +37,27 @@ const IndividualCase = (props) => {
   const actionRef = useRef();
   const [form] = Form.useForm();
   const [visible, setVisible] = useState(false);
-  const [allCode, setAllCode] = useState([]);
-  const [allEmployee, setAllEmployee] = useState([]);
   const [allName, setAllName] = useState([]);
   const [employeeAllList, setEmployeeAllList] = useState([]);
+  const [diseaseTypeList, setDiseaseTypeList] = useState([]);
 
-  const queryProjectList = async (params) => {
-    const res = await getProjectList({
+  const querySpecialList = async (params) => {
+    const res = await getSpecialList({
       ...params,
       body: {
-        code: params.code,
-        employeeId: params.employeeNames,
-        keyword: params.keyword,
-        name: params.name,
+        diseaseType: params.diseaseNames,
+        projectId: params.projectId,
+        keywords: params.keywords,
       },
     });
     if (res) {
-      queryProjectAllCode();
-      queryProjectAllEmployee();
-      queryProjectAllName();
       return res;
     }
   };
 
-  const queryProjectAllCode = async () => {
-    const res = await getProjectAllCode();
-    if (res) {
-      setAllCode(res);
-    }
-  };
-
-  const queryProjectAllEmployee = async () => {
-    const res = await getProjectAllEmployee();
-    if (res) {
-      setAllEmployee(res);
-    }
-  };
-
-  const queryProjectAllName = async () => {
-    const res = await getProjectAllName();
-    if (res) {
-      setAllName(res);
-    }
-  };
-
-  // 获取研究项目人员
-  const queryEmployeeAllList = async () => {
-    const res = await getEmployeeAllList();
-    if (res) {
-      setEmployeeAllList(res);
-    }
-  };
-  useEffect(() => {
-    queryEmployeeAllList();
-  }, []);
-
-  // 删除
-  const handleRemove = async (row) => {
-    const { dispatch } = props;
-    dispatch({
-      type: 'functionAndIndividualCase/remove',
-      payload: {
-        id: row.id,
-      },
-      callback: (res) => {
-        if (res) {
-          message.success('删除成功');
-          actionRef?.current?.reload();
-        } else {
-          message.error('删除失败');
-        }
-      },
-    });
-  };
-  // 编辑
-  const handleUpdate = async (row, infoNumber) => {
-    const { dispatch } = props;
-    updateId = row.id;
-    dispatch({
-      type: 'functionAndIndividualCase/getInfo',
-      payload: {
-        id: row.id,
-      },
-      callback: (data) => {
-        if (data) {
-          data.time = [moment(data.startTime), moment(data.endTime)];
-          data.employeeId = data.employeeDos.map((item) => item.id);
-          form.setFieldsValue(data);
-          updateId = infoNumber ? infoNumber : row.id;
-          setVisible(true);
-        }
-      },
-    });
-  };
-
-  // 取消
-  const handleCancel = () => {
-    setVisible(false);
-    form.resetFields();
-    updateId = '';
-  };
-
-  // 提交
-  const handleOk = async () => {
-    const { dispatch } = props;
-    const values = await form.validateFields(); //校验
-    if (values) {
-      const getValues = form.getFieldsValue(); // 获取最新文本值
-      const postData = {
-        id: updateId,
-        ...getValues,
-        startTime: moment(getValues.time[0]).valueOf(), // 时间传时间戳
-        endTime: moment(getValues.time[1]).valueOf(), // 时间传时间戳
-      };
-      dispatch({
-        type: 'functionAndIndividualCase/create',
-        payload: postData,
-        callback: (res) => {
-          if (!res) return;
-          message.success(`${postData.id ? '修改' : '新增'}成功`);
-          handleCancel();
-          actionRef?.current?.reload();
-        },
-      });
-    }
+  const queryEnums = async () => {
+    const newArr = await queryCommonAllEnums();
+    setDiseaseTypeList(getSingleEnums('DiseaseType', newArr)); //病因分类
   };
 
   const columns = [
@@ -187,26 +77,14 @@ const IndividualCase = (props) => {
         );
       },
     },
-    {
-      title: '就诊机构',
-      dataIndex: 'jiGou',
-      hideInTable: true,
-      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return (
-          <Select placeholder="请选择就诊机构">
-            {allCode.map((item, index) => (
-              <Select.Option value={item} key={index}>
-                {item}
-              </Select.Option>
-            ))}
-          </Select>
-        );
-      },
-    },
+
     {
       title: '病历创建时间',
-      dataIndex: 'createTime',
+      dataIndex: 'createDocumentTime',
       search: false,
+      render: (_, record) => {
+        return moment(record.createDocumentTime).format('YYYY-MM-DD');
+      },
     },
     {
       title: '姓名',
@@ -215,19 +93,19 @@ const IndividualCase = (props) => {
     },
     {
       title: '病历编号',
-      dataIndex: 'code',
+      dataIndex: 'caseCodeV',
       search: false,
     },
 
     {
       title: '病因分类',
-      dataIndex: 'employeeNames',
+      dataIndex: 'diseaseNames',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
         return (
-          <Select placeholder="请选择研究项目人员">
-            {allEmployee.map((item, index) => (
-              <Select.Option value={item.id} key={index}>
-                {item.name}
+          <Select onFocus={diseaseTypeList.length === 0 && queryEnums} placeholder="请选择病因">
+            {diseaseTypeList.map((item) => (
+              <Select.Option value={item.code} key={item.code}>
+                {item.codeCn}
               </Select.Option>
             ))}
           </Select>
@@ -241,17 +119,17 @@ const IndividualCase = (props) => {
     },
     {
       title: '就诊次数',
-      dataIndex: 'number',
+      dataIndex: 'visitingCount',
       search: false,
     },
     {
       title: '康复训练',
-      dataIndex: 'xunLian',
+      dataIndex: 'trainWayCount',
       search: false,
     },
     {
       title: '搜索关键字',
-      dataIndex: 'keyword',
+      dataIndex: 'keywords',
       hideInTable: true,
       formItemProps: {
         placeholder: '请输入姓名、病历编号等关键字进行搜索',
@@ -281,28 +159,23 @@ const IndividualCase = (props) => {
           search={{
             labelWidth: 100,
           }}
-          // toolBarRender={() => [
-          //   <Button key="add" type="primary" onClick={() => setVisible(true)}>
-          //     <PlusOutlined /> 新增
-          //   </Button>,
-          // ]}
-          request={(params, sorter, filter) => queryProjectList(params)}
+          request={(params, sorter, filter) => querySpecialList(params)}
           columns={columns}
         />
         <Modal
           title="研究立项"
           visible={visible}
-          onOk={handleOk}
-          onCancel={handleCancel}
-          footer={[
-            <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
-              确定
-            </Button>,
-            <Button key="back" onClick={handleCancel}>
-              取消
-            </Button>,
-            ,
-          ]}
+          // onOk={handleOk}
+          // onCancel={handleCancel}
+          // footer={[
+          //   <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
+          //     确定
+          //   </Button>,
+          //   <Button key="back" onClick={handleCancel}>
+          //     取消
+          //   </Button>,
+          //   ,
+          // ]}
         >
           <Form
             style={{

@@ -5,6 +5,7 @@ import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import BraftEditor from 'braft-editor';
 import { history, connect } from 'umi';
+import { media } from '@/utils/utils';
 
 import { getComprehensiveAllSection } from '@/pages/Function/ColumnLocation/service';
 import { getCollectiveEduDetail } from '../service';
@@ -344,6 +345,7 @@ const Edit = ({ submitting, dispatch, location }) => {
                               rules={[{ required: true, message: '请输入' }]}
                             >
                               <BraftEditor
+                                media={media()}
                                 placeholder="请输入上课内容、动作、动作完成次数、教具等"
                                 className="my-editor"
                               />

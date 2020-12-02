@@ -12,8 +12,9 @@ import girl_036_per from './girl_036_per';
 import girl_036_stand from './girl_036_stand';
 import girl_218_per from './girl_218_per';
 import girl_218_stand from './girl_218_stand';
+import M from './canvas_t';
 
-const charts = (canvas, gender, age, type, { height, weight, head }) => {
+export const charts = (canvas, gender, age, type, { height, weight, head }) => {
   if (gender === 1) {
     if (age === 1) {
       switch (type) {
@@ -66,4 +67,13 @@ const charts = (canvas, gender, age, type, { height, weight, head }) => {
   }
 };
 
-export default charts;
+export const lateralView = (canvas, json, title, content, fix_score, total) => {
+  let m = new M();
+  m.t(canvas, json, title, content, fix_score, total);
+};
+
+export const clearCanvas = (canvas) => {
+  var c = document.getElementById(canvas);
+  var cxt = c.getContext('2d');
+  cxt.clearRect(0, 0, c.width, c.height);
+};

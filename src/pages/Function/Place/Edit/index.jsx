@@ -4,7 +4,7 @@ import { connect, history } from 'umi';
 import React, { useState, useEffect } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import BraftEditor from 'braft-editor';
-
+import { media } from '@/utils/utils';
 import './style.less';
 const FormItem = Form.Item;
 
@@ -171,7 +171,7 @@ const Edit = ({ dispatch, submitting, location }) => {
           </FormItem>
 
           <FormItem {...formEditorLayout} label="器材说明" name="equipment">
-            <BraftEditor placeholder="请输入器材说明" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入器材说明" className="my-editor" />
           </FormItem>
         </Card>
       </PageContainer>

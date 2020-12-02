@@ -9,6 +9,12 @@ import { formatDateFromTime } from '@/utils/format';
 
 import Chart1 from './Chart1';
 import Chart2 from './Chart2';
+import Chart3 from './Chart3';
+import Chart4 from './Chart4';
+import Chart5 from './Chart5';
+import Chart6 from './Chart6';
+import Chart7 from './Chart7';
+import Chart8 from './Chart8';
 
 const getQuestion = (map, no) => {
   const q = map[no];
@@ -27,7 +33,7 @@ const getQuestion = (map, no) => {
   }
 
   return {
-    title: `X-${no}`,
+    name: `X-${no}`,
     score: '',
   };
 };
@@ -103,7 +109,7 @@ function Result({ user = {} }) {
 
   return (
     <>
-      {records.content.length > 1 && (
+      {/* {records.content.length > 1 && (
         <Radio.Group
           defaultValue={records.content[0].id}
           buttonStyle="solid"
@@ -121,34 +127,32 @@ function Result({ user = {} }) {
             </Radio.Button>
           ))}
         </Radio.Group>
-      )}
+      )} */}
 
       <Tabs defaultActiveKey={1}>
         <Tabs.TabPane tab="综合发展" key={1}>
           <Chart1 list={list} />
-
         </Tabs.TabPane>
         <Tabs.TabPane tab="感官知觉" key={2}>
-          感官知觉图表
-          <Chart2 list={list}/>
+          <Chart2 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="粗大动作" key={3}>
-          粗大动作图表
+          <Chart3 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="精细动作" key={4}>
-          精细动作图表
+          <Chart4 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="生活自理" key={5}>
-          生活自理图表
+          <Chart5 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="沟通" key={6}>
-          沟通图表
+          <Chart6 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="认知" key={7}>
-          认知图表
+          <Chart7 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="社会技能" key={8}>
-          社会技能图表
+          <Chart8 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
       </Tabs>
 

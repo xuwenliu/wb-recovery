@@ -1,25 +1,14 @@
-// import { queryAdvancedProfile } from './service';
+import { updateUserInfo } from './service';
 
 const Model = {
   namespace: 'functionAndAccount',
-  state: {
-    advancedOperation1: [],
-    advancedOperation2: [],
-    advancedOperation3: [],
-  },
+  state: {},
   effects: {
-    // *fetchAdvanced(_, { call, put }) {
-    //   const response = yield call(queryAdvancedProfile);
-    //   yield put({
-    //     type: 'show',
-    //     payload: response,
-    //   });
-    // },
-  },
-  reducers: {
-    show(state, { payload }) {
-      return { ...state, ...payload };
+    *update({ payload, callback }, { call, put }) {
+      const result = yield call(updateUserInfo, payload);
+      callback && callback(result);
     },
   },
+  reducers: {},
 };
 export default Model;

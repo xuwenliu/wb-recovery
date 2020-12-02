@@ -7,6 +7,7 @@ import BaseInfoShow from '@/components/BaseInfoShow';
 import ScaleTrainingSuggest from '@/components/Scale/ScaleTrainingSuggest';
 import ResultAnalysisTable from '@/components/Scale/ResultAnalysisTable';
 import Result from './components/Result';
+import Recipe from './components/Recipe';
 
 const EvaluationCourses = () => {
   const [patientId, setPatientId] = useState();
@@ -31,7 +32,9 @@ const EvaluationCourses = () => {
             <Result user={info} />
             {/* <ResultAnalysisTable user={info} /> */}
           </Tabs.TabPane>
-          <Tabs.TabPane tab="康复处方" key="4" />
+          <Tabs.TabPane tab="康复处方" key="4">
+            <Recipe patientId={patientId} />
+          </Tabs.TabPane>
         </Tabs>
       </Card>
     </PageContainer>

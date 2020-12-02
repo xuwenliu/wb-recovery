@@ -5,11 +5,15 @@ import React, { useState, useEffect } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import 'braft-editor/dist/index.css';
 import BraftEditor from 'braft-editor';
+import { fileUpload } from '@/services/common';
+import { media } from '@/utils/utils';
 
 const FormItem = Form.Item;
 
 const Edit = (props) => {
   const { id } = props.location.query;
+  const [docPaths, setDocPaths] = useState([]);
+  const [fileList, setFileList] = useState([]);
 
   const { submitting } = props;
   const [error, setError] = useState([]);
@@ -65,6 +69,15 @@ const Edit = (props) => {
         res.description = BraftEditor.createEditorState(res.description);
         res.condition = BraftEditor.createEditorState(res.condition);
         res.equipment = BraftEditor.createEditorState(res.equipment);
+        const fileList = res.filePaths?.map((item) => {
+          let obj = {};
+          obj.name = item?.split('_')[1] || item;
+          obj.url = item;
+          obj.uid = '-2';
+          obj.status = 'done';
+          return obj;
+        });
+        setFileList(fileList);
         form.setFieldsValue(res);
       },
     });
@@ -72,6 +85,7 @@ const Edit = (props) => {
 
   const onFinish = (values) => {
     const { dispatch } = props;
+    values.docPaths = docPaths;
     values.description = values.description ? values.description.toHTML() : '';
     values.condition = values.condition ? values.condition.toHTML() : '';
     values.equipment = values.equipment ? values.equipment.toHTML() : '';
@@ -88,6 +102,25 @@ const Edit = (props) => {
         }
       },
     });
+  };
+
+  const handleBeforeUpload = async (file, fileList) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fileUpload(formData);
+    if (res) {
+      setDocPaths([res]);
+      fileList = fileList.map((item) => {
+        item.url = res;
+        return item;
+      });
+      setFileList(fileList);
+      message.success('文件上传成功');
+    } else {
+      message.error('文件上传失败');
+    }
+
+    return false;
   };
 
   const onFinishFailed = (errorInfo) => {
@@ -151,17 +184,17 @@ const Edit = (props) => {
           </FormItem>
 
           <FormItem {...formEditorLayout} label="课程说明" name="description">
-            <BraftEditor placeholder="请输入课程说明" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入课程说明" className="my-editor" />
           </FormItem>
           <FormItem {...formEditorLayout} label="授课条件" name="condition">
-            <BraftEditor placeholder="请输入授课条件" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入授课条件" className="my-editor" />
           </FormItem>
           <FormItem {...formEditorLayout} label="课程器材" name="equipment">
-            <BraftEditor placeholder="请输入课程器材" className="my-editor" />
+            <BraftEditor media={media()} placeholder="请输入课程器材" className="my-editor" />
           </FormItem>
 
-          <FormItem {...formEditorLayout} label="课程附件" name="docPaths">
-            <Upload.Dragger>
+          <FormItem {...formEditorLayout} label="课程附件">
+            <Upload.Dragger fileList={fileList} action="#" beforeUpload={handleBeforeUpload}>
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>

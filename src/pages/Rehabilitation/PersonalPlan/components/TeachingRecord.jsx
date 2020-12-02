@@ -40,8 +40,12 @@ const TeachingRecord = ({ patientId, classId, tab }) => {
           key={index}
           header={
             <div style={{ textAlign: 'center' }}>
-              {moment(item.startTime).format('YYYY-MM-DD')}至
-              {moment(item.endTime).format('YYYY-MM-DD')}
+              {item.startTime && (
+                <>
+                  {moment(item.startTime).format('YYYY-MM-DD')} 至 
+                  { moment(item.endTime).format('YYYY-MM-DD')}
+                </>
+              )}
               &nbsp;&nbsp;{item.className}
             </div>
           }
