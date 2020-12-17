@@ -5,9 +5,28 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 
-function SingleSelect({ onChange, scaleOptions, RenderOptionContent }) {
+/**
+ *
+ * horizontal:水平
+ * vertical:垂直
+ */
+
+function SingleSelect({ onChange, scaleOptions, RenderOptionContent, config = {} }) {
+  
+  const getRadioGroupStyle = () => {
+    const { direction = 'vertical' } = config;
+
+    let styles = { margin: 20 };
+
+    if (direction === 'horizontal') {
+      styles = { ...styles, flexDirection: 'row' };
+    }
+
+    return styles;
+  };
+
   return (
-    <RadioGroup style={{ margin: 20 }} onChange={onChange}>
+    <RadioGroup style={{ ...getRadioGroupStyle() }} onChange={onChange}>
       {scaleOptions.map(option => (
         <FormControlLabel
           style={{
@@ -16,6 +35,7 @@ function SingleSelect({ onChange, scaleOptions, RenderOptionContent }) {
             border: '1px solid rgb(237,237,237)',
             borderRadius: '5px',
             cursor: 'pointer',
+            minWidth: '100px',
           }}
           key={`${option.optionScore}`}
           value={`${option.option}`}

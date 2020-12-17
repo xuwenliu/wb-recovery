@@ -115,6 +115,8 @@ function FMFM(props) {
   const level = getTargetItem(state); // 現在的水平
   const { min, max } = getRange(model, level); // 訓練範圍
 
+  console.log('state:', state, 'min:', min, 'mix:', max);
+
   const filter = ({ item }) => {
     const { 难度值 } = JSON.parse(item.questionContent);
     if (难度值 === undefined) {
@@ -122,6 +124,7 @@ function FMFM(props) {
     }
 
     if (item.questionNo >= min && item.questionNo <= max) {
+      console.log(item.questionNo, '难度值:', 难度值, true);
       return true;
     }
 

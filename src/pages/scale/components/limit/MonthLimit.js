@@ -6,20 +6,11 @@ import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/picker
 import DateFnsUtils from '@date-io/date-fns';
 import { getMonthByBirthday } from '@/pages/scale/util/age';
 import { makeStyles } from '@material-ui/core/styles';
+import styles from '@/utils/publicStyles'
 
 const useStyles = makeStyles({
-  formControl: {
-    display: 'block',
-    margin: 20,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        width: 230,
-      },
-    },
-  },
-  lineControl: {
-    margin: 20,
-  },
+  formControl: styles.formControl,
+  lineControl: styles.lineControl,
 });
 
 function dateFromISO(isoDateString) {

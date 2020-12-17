@@ -11,7 +11,7 @@ import {
   Button,
   message,
   Tabs,
-  Descriptions,
+  DatePicker,
 } from 'antd';
 import ProTable from '@ant-design/pro-table';
 import { connect } from 'umi';
@@ -32,6 +32,8 @@ import BodyTemperatureSelect from './components/BodyTemperatureSelect';
 import ChartsPer from '@/components/ChartsPer';
 import ChartsStand from '@/components/ChartsStand';
 
+import { getAuth } from '@/utils/utils';
+
 const formItemLayout3 = {
   labelCol: { span: 6 },
   wrapperCol: {
@@ -46,7 +48,6 @@ const layout = {
 
 const HealthCheckup = ({ dispatch, submitting }) => {
   const actionRef = useRef();
-
   const [form] = Form.useForm();
   const [baseInfo, setBaseInfo] = useState();
   const [patientId, setPatientId] = useState('771739876879560704');
@@ -213,7 +214,10 @@ const HealthCheckup = ({ dispatch, submitting }) => {
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item label="就诊日期">{moment().format('YYYY-MM-DD')}</Form.Item>
+                  <Form.Item label="就诊日期" name="visitingTime" initialValue={moment()}>
+                    {/* {moment().format('YYYY-MM-DD')} */}
+                    <DatePicker />
+                  </Form.Item>
                 </Col>
                 <Col span={6}>
                   <Form.Item label="就诊间隔">{baseInfo?.betweenTime}个月</Form.Item>
@@ -353,9 +357,17 @@ const HealthCheckup = ({ dispatch, submitting }) => {
                 src="https://img14.360buyimg.com/uba/s260x260_jfs/t1/32118/11/559/2782/5c3d81ecEbda0c0f1/5f2b637d11817204.png"
               />
               <div className="submit">
-                <Button onClick={handleSubmit} loading={submitting} type="primary" className="mr8">
-                  生长曲线计算
-                </Button>
+                {getAuth(8)?.canEdit && (
+                  <Button
+                    onClick={handleSubmit}
+                    loading={submitting}
+                    type="primary"
+                    className="mr8"
+                  >
+                    生长曲线计算
+                  </Button>
+                )}
+
                 <Button type="primary" onClick={handleGetBaseInfo}>
                   显示基本资料
                 </Button>
@@ -366,27 +378,30 @@ const HealthCheckup = ({ dispatch, submitting }) => {
       </Card>
       <Card style={{ marginTop: 20 }}>
         <Tabs defaultActiveKey="1">
-          <Tabs.TabPane tab="体格检查记录" key="1">
-            <ProTable
-              actionRef={actionRef}
-              rowKey="id"
-              request={(params, sorter, filter) => getPhysiqueList({ ...params, body: patientId })}
-              columns={columns}
-              search={false}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="百分位曲线图" key="2">
-            <ChartsPer
-              gender={baseInfo?.genderName}
-              graphData={graphData}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="标准差单位曲线图" key="3">
-            <ChartsStand
-              gender={baseInfo?.genderName}
-              graphData={graphData}
-            />
-          </Tabs.TabPane>
+          {getAuth(8) && (
+            <Tabs.TabPane tab="体格检查记录" key="1">
+              <ProTable
+                actionRef={actionRef}
+                rowKey="id"
+                request={(params, sorter, filter) =>
+                  getPhysiqueList({ ...params, body: patientId })
+                }
+                columns={columns}
+                search={false}
+              />
+            </Tabs.TabPane>
+          )}
+
+          {getAuth(9) && (
+            <Tabs.TabPane tab="百分位曲线图" key="2">
+              <ChartsPer gender={baseInfo?.genderName} graphData={graphData} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(10) && (
+            <Tabs.TabPane tab="标准差单位曲线图" key="3">
+              <ChartsStand gender={baseInfo?.genderName} graphData={graphData} />
+            </Tabs.TabPane>
+          )}
         </Tabs>
       </Card>
     </PageContainer>

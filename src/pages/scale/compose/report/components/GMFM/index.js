@@ -17,22 +17,16 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import { Chart, Geom, Axis, Guide } from 'bizcharts';
-
+import { Chart, Geom, Axis, Guide, Tooltip, Legend } from 'bizcharts';
+import DataSet from '@antv/data-set';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
 import GMFM66 from './GMFM-66';
 
+import { defaultBlock } from '@/utils/publicStyles';
+
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock,
 });
 
 const columns = [
@@ -117,8 +111,6 @@ function Page(props) {
               min: (SCORE * 1 - ERROR * 2).toFixed(2),
               max: (SCORE * 1 + ERROR * 2).toFixed(2),
             }; // 標準分加減兩個標準差
-
-            console.log('total:', total);
           }
         });
       });
@@ -127,7 +119,37 @@ function Page(props) {
 
   const { scaleName, data, chartData, total } = buildModel();
 
-  console.log('data:', sortData(data));
+  const obj = {};
+  const obj1 = {};
+  const arr = [];
+  chartData.forEach(item => {
+    const key = `${item.name}`;
+    const value = item.原始分;
+    const value1 = item.标准分;
+    obj[key] = value;
+    obj1[key] = value1;
+  });
+  arr.push(
+    {
+      name: '原始分',
+      ...obj,
+    },
+    {
+      name: '标准分',
+      ...obj1,
+    }
+  );
+
+  const ds = new DataSet();
+  const dv = ds.createView().source(arr);
+  dv.transform({
+    type: 'fold',
+    fields: ['卧位与翻身', '坐位', '爬与跪', '站立位', '行走、跑、跳'],
+    // 展开字段集
+    key: '项目',
+    // key字段
+    value: '分数', // value字段
+  });
 
   useEffect(() => {
     setWidth(body.current.clientWidth * 0.9);
@@ -137,7 +159,7 @@ function Page(props) {
   return (
     <div ref={body}>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>个案信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -146,17 +168,33 @@ function Page(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>评估内容</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <Grid container spacing={2}>
             <Paper style={{ width: '100%', margin: '1%', paddingTop: '5px' }} variant="outlined">
               <Grid item>
-                <Chart data={sortData(chartData)} forceFit>
-                  <Axis name="name" />
-                  <Axis name="结果" />
-                  <Geom type="interval" position="name*结果" />
+                <Chart data={dv} forceFit>
+                  <Axis name="项目" />
+                  <Axis name="分数" />
+                  <Legend />
+                  <Tooltip
+                    crosshairs={{
+                      type: 'y',
+                    }}
+                  />
+                  <Geom
+                    type="interval"
+                    position="项目*分数"
+                    color="name"
+                    adjust={[
+                      {
+                        type: 'dodge',
+                        marginRatio: 1 / 32,
+                      },
+                    ]}
+                  />
                   <Guide>
                     <Guide.Region
                       // start={['min', 8]} // 辅助框起始位置，值为原始数据值，支持 callback

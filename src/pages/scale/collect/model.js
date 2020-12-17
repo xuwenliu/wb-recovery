@@ -1,6 +1,6 @@
 import { buildAnswer } from '@/pages/scale/util/utils';
 
-import { getScaleCompose, saveAndCreateReport , getReport } from '../service/compose';
+import { getScaleCompose, saveAndCreateReport, getReport } from '../service/compose';
 
 export default {
   namespace: 'scaleCollect',
@@ -16,13 +16,19 @@ export default {
         payload: { report },
       });
     },
-    *fetchCompose({ payload }, { call, put }) {
+    *fetchCompose({ payload, callback }, { call, put }) {
       const response = yield call(getScaleCompose, payload);
 
       yield put({
         type: 'save',
         payload: { compose: response },
       });
+
+      if (callback) {
+        callback({ ...response, 
+          explanation: 'test...' 
+        });
+      }
     },
     *submitAnswer({ payload, callback }, { call, put }) {
       /**

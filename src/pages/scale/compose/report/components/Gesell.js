@@ -9,7 +9,6 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -18,11 +17,8 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
-import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
-
-import { Chart, Geom, Axis, Guide } from 'bizcharts';
-
-import { format } from 'date-fns';
+import { Chart, Geom, Axis, Guide, Legend, Tooltip } from 'bizcharts';
+import DataSet from '@antv/data-set';
 
 /**
 const cols = {
@@ -33,50 +29,23 @@ const cols = {
   },
 };
  */
+import { defaultBlock } from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock,
 });
 
 const columns = [
-  { id: 'scaleName', label: '名称', minWidth: 170 },
-  { id: '相当月龄', label: '相当月龄', minWidth: 100 },
-  { id: '发育商', label: '发育商', minWidth: 100 },
+  { id: 'item', label: '测试能区', minWidth: 170 },
+  { id: '发育月龄', label: '相当月龄', minWidth: 100 },
+  { id: '发育商', label: '发育商（DQ）', minWidth: 100 },
+  { id: 'explain', label: '评价', minWidth: 100 },
 ];
-
-const getInfo = (reportDate, report) => {
-  const { scaleType, scaleName, scoringResults } = report;
-
-  const info = {
-    scaleType,
-    scaleName,
-    date: format(reportDate, 'yyyy-MM-dd'),
-  };
-
-  scoringResults.forEach(({ scoreName, score }) => {
-    // eslint-disable-next-line no-restricted-globals
-    if (isNaN(score)) {
-      info[scoreName] = score;
-    } else {
-      info[scoreName] = score * 1;
-    }
-  });
-
-  return info;
-};
 
 function Page(props) {
   const classes = useStyles();
 
-  const { reportDate, reports, user, testeeInfo, suggests } = props;
+  const { reportDate, user, testeeInfo, totalReport } = props;
 
   const buildModel = () => {
     const model = {
@@ -86,23 +55,71 @@ function Page(props) {
 
     const { data } = model;
 
-    reports
-      .filter(a => a.scaleName !== '评估状态')
-      .sort((a, b) => a.scaleType.localeCompare(b.scaleType, 'zh-CN'))
-      .forEach(report => {
-        const info = getInfo(reportDate, report);
-        data.push(info);
+    const map = {};
+
+    totalReport.scoringResults
+      // 排序會讓相同項目排在一起
+      .sort((a, b) => a.scoreName.localeCompare(b.scoreName, 'zh-CN'))
+      .forEach(result => {
+        const { scoreName, score, scoreExplain } = result;
+        const [item, name] = scoreName.split('|');
+        const list = map[item] || {};
+
+        if (name === '发育商' || name === '发育月龄' || name === '实际年龄') {
+          list[name] = score;
+          if (name === '发育商') {
+            list.explain = scoreExplain.join('');
+          }
+          map[item] = list;
+        }
+        // data.push(info);
       });
+
+    Object.keys(map).forEach(name => {
+      data.push({ item: name, ...map[name] });
+    });
+
+    console.log('data:', data);
 
     return model;
   };
 
   const { data } = buildModel();
 
+  const obj = {};
+  const obj1 = {};
+  const arr = [];
+  data.forEach(item => {
+    obj[`${item.item}`] = item.实际年龄;
+    obj1[`${item.item}`] = item.发育月龄;
+  });
+  arr.push(
+    {
+      name: '实际年龄',
+      ...obj,
+    },
+    {
+      name: '发育月龄',
+      ...obj1,
+    }
+  );
+  console.log('arr:', arr);
+  const ds = new DataSet();
+  const dv = ds.createView().source(arr);
+  dv.transform({
+    type: 'fold',
+    fields: ['大运动', '个人——社会', '适应性', '语言'],
+    // 展开字段集
+    key: '项目',
+    // key字段
+    value: '分数', // value字段
+  });
+  console.log('dv:', dv);
+
   return (
     <div>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>个案信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -111,17 +128,33 @@ function Page(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>评估结果</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <Grid container spacing={2}>
             <Paper style={{ width: '100%', margin: '1%', paddingTop: '5px' }} variant="outlined">
               <Grid item>
-                <Chart data={data} forceFit>
-                  <Axis name="scaleName" />
-                  <Axis name="发育商" />
-                  <Geom type="interval" position="scaleName*发育商" shape="square" />
+                <Chart data={dv} height={300} forceFit>
+                  <Axis name="项目" />
+                  <Axis name="分数" />
+                  <Legend />
+                  <Tooltip
+                    crosshairs={{
+                      type: 'y',
+                    }}
+                  />
+                  <Geom
+                    type="interval"
+                    position="项目*分数"
+                    color="name"
+                    adjust={[
+                      {
+                        type: 'dodge',
+                        marginRatio: 1 / 32,
+                      },
+                    ]}
+                  />
                   <Guide>
                     <Guide.Region
                       // start={['min', 8]} // 辅助框起始位置，值为原始数据值，支持 callback
@@ -158,10 +191,7 @@ function Page(props) {
                           {columns.map(column => {
                             return (
                               <TableCell key={column.id} align={column.align}>
-                                {
-                                  column.label === '发育商' ?
-                                  `${row[column.id]  } %` : row[column.id] 
-                                }
+                                {column.label === '发育商' ? `${row[column.id]} %` : row[column.id]}
                               </TableCell>
                             );
                           })}

@@ -71,9 +71,9 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
   }, [value.large, value.medium]);
 
   return (
-    <>
+    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
       <Select
-        style={{ width: '30%', marginRight: 8 }}
+        style={{ width: '31%' }}
         value={value.large || large}
         onChange={(id) => onLargeChange(id, false)}
         placeholder="请选择大类"
@@ -85,7 +85,7 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
         ))}
       </Select>
       <Select
-        style={{ width: '30%', marginRight: 8 }}
+        style={{ width: '31%' }}
         value={value.medium || medium}
         onChange={(id) => onMediumChange(id, false)}
         placeholder="请选择中类"
@@ -97,7 +97,7 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
         ))}
       </Select>
       <Select
-        style={{ width: '30%', marginRight: 8 }}
+        style={{ width: '31%' }}
         value={value.small || small}
         onChange={onSmallChange}
         placeholder="请选择小类"
@@ -108,7 +108,7 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
           </Option>
         ))}
       </Select>
-    </>
+    </div>
   );
 };
 

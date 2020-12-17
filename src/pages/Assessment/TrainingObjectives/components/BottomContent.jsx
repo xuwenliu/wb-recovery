@@ -5,6 +5,8 @@ import { connect } from 'umi';
 import './index.less';
 import { getComprehensiveAllSection } from '@/pages/Function/ColumnLocation/service';
 import { getTrainAndTargetInfo } from '@/pages/Assessment/TrainingObjectives/service';
+import { getAuth } from '@/utils/utils';
+
 const layout = {
   labelCol: {
     span: 8,
@@ -209,12 +211,14 @@ const BottomContent = ({ patientId, submitting, dispatch }) => {
                 </Form.Item>
               </Input.Group>
             </Form.Item>
-            <Form.Item {...layout} wrapperCol={{ offset: 8 }}>
-              <Button className="mr8" htmlType="submit" loading={submitting} type="primary">
-                提交
-              </Button>
-              <Button onClick={cancel}>取消</Button>
-            </Form.Item>
+            {getAuth()?.canEdit && (
+              <Form.Item {...layout} wrapperCol={{ offset: 8 }}>
+                <Button className="mr8" htmlType="submit" loading={submitting} type="primary">
+                  提交
+                </Button>
+                <Button onClick={cancel}>取消</Button>
+              </Form.Item>
+            )}
           </Card>
         </Col>
         <Col span={11} offset={1}>

@@ -28,16 +28,13 @@ class SecurityLayout extends React.Component {
 
     // const isLogin = currentUser && currentUser.userid;
     const isLogin = localStorage.getItem('token');
-    const queryString = stringify({
-      redirect: window.location.href,
-    });
 
     if ((!isLogin && loading) || !isReady) {
       return <PageLoading />;
     }
 
     if (!isLogin && window.location.pathname !== '/user/login') {
-      return <Redirect to={`/user/login?${queryString}`} />;
+      return <Redirect to={`/user/login`} />;
     }
 
     return children;

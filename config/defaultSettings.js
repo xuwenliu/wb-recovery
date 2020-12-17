@@ -6,11 +6,24 @@ const proSettings = {
   fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  menu: {
-    locale: true,
-  },
   title: '健康训练管理操作系统',
   pwa: false,
   iconfontUrl: '',
+
+  /**
+   * add by dave
+   */
+  theme: {
+    palette: {
+      primary: {
+        main: '#FFA000',
+        contrastText: '#000',
+      },
+      secondary: {
+        main: '#ffa726',
+        contrastText: '#000000',
+      },
+    },
+  },
 };
 export default proSettings;

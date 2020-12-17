@@ -30,8 +30,8 @@ import {
 } from '@/pages/MedicalExamination/DiagnosisPrescription/service';
 
 import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
-import { getSpecialAssessMembers } from '../service';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
+import { getSpecialAssessMembers, getPlanInfo } from '../service';
 
 import MainTellLevelSelect from '@/pages/MedicalExamination/DiagnosisPrescription/components/MainTellLevelSelect';
 import InitialJudgeSelect from '@/pages/MedicalExamination/DiagnosisPrescription/components/InitialJudgeSelect';
@@ -73,7 +73,6 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
   const [loading, setLoading] = useState(true);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [selectedData, setSelectedData] = useState([]);
 
   const [dataSource, setDataSource] = useState([]); // 个案评估小组
   const [allProblemList, setAllProblemList] = useState([]); // 就诊问题
@@ -108,21 +107,19 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
 
   const rowSelection = {
     selectedRowKeys,
-    onChange: (keys, rows) => {
+    onChange: (keys) => {
       setSelectedRowKeys(keys);
-      setSelectedData(rows);
     },
   };
   const save = () => {
     if (!info.id) {
       return message.info('请先获取患者信息');
     }
-    const employeeIds = selectedData?.map((item) => item.id);
     const isNeedReview = form.getFieldValue('isNeedReview');
     const reviewTime = form.getFieldValue('reviewTime');
 
     const postData = {
-      employeeIds,
+      employeeIds: selectedRowKeys,
       isNeedReview,
       reviewTime: reviewTime ? moment(reviewTime).valueOf() : 0,
       patientId: info.id,
@@ -327,6 +324,17 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
     );
   };
 
+  const queryPlanInfo = async () => {
+    const res = await getPlanInfo({
+      patientId: info.id,
+    });
+    if (res) {
+      res.reviewTime = res.reviewTime ? moment(res.reviewTime) : moment();
+      form.setFieldsValue(res);
+      setSelectedRowKeys(res.employeeIds);
+    }
+  };
+
   const queryEditInfo = async () => {
     if (!info.id) return;
 
@@ -431,7 +439,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
     onPrescriptionChange(visitingPrescriptionCreateBos);
 
     const data = {
-      otherProblem: values.visitingProblemVos[0]?.other,
+      otherProblem: values.visitingProblemVos ? values.visitingProblemVos[0]?.other : '',
       visitingProblemCreateBos, // 就诊问题
       visitingMainTellCreateBos, // 主诉
       visitingHpiCreateBos, // 现病史
@@ -449,9 +457,15 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
       dsm,
       icf,
       visitingPrescriptionCreateBos, // 治疗处方
-      time: values.visitingPrescriptionConnectVos[0]?.time,
-      timeType: values.visitingPrescriptionConnectVos[0]?.timeType,
-      otherPrescription: values.visitingPrescriptionConnectVos[0]?.other,
+      time: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.time
+        : null,
+      timeType: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.timeType
+        : null,
+      otherPrescription: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.other
+        : '',
       doctorSuggestion: BraftEditor.createEditorState(values.doctorSuggestion),
     };
     form.setFieldsValue(data);
@@ -465,7 +479,9 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
     queryAllPrescription();
     querySpecialAssessMembers();
     if (info.id) {
+      form.resetFields();
       queryEditInfo();
+      queryPlanInfo(); // 个案评估小组信息
     }
   }, [info.id]);
 
@@ -486,13 +502,15 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
                 dataIndex: 'title',
               },
             }}
-            rowKey="title"
+            rowKey="id"
             rowSelection={rowSelection}
             dataSource={dataSource}
           />
-          <Button loading={submitting} type="primary" onClick={save}>
-            保留设置
-          </Button>
+          {getAuth(22)?.canEdit && (
+            <Button loading={submitting} type="primary" onClick={save}>
+              保留设置
+            </Button>
+          )}
         </div>
       </Form.Item>
 
@@ -932,11 +950,17 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {} }) => {
         {getErrorInfo(error)}
         <Button
           type="primary"
-          onClick={() =>
+          onClick={() => {
+            if (!info.caseCodeV) {
+              return message.info('请先查看患者信息');
+            }
             history.push({
               pathname: '/assessment/teamassessment',
-            })
-          }
+              query: {
+                code: info.caseCodeV,
+              },
+            });
+          }}
         >
           进入小组评估
         </Button>

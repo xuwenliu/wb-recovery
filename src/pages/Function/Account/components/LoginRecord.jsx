@@ -1,33 +1,37 @@
 import React, { useState, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
 import { getLoginRecord } from '../service';
+import moment from 'moment';
 
 const LoginRecord = (props) => {
   const actionRef = useRef();
   const columns = [
     {
       title: '登录时间',
-      dataIndex: 'createDocumentTime',
-      valueType: 'dateRange',
+      dataIndex: 'createTime',
+      search: false,
+      render: (_, record) => {
+        return moment(record.createTime).format('YYYY-MM-DD HH:mm:ss');
+      },
     },
     {
       title: '登录IP',
-      dataIndex: 'name',
+      dataIndex: 'ipAddress',
       search: false,
     },
-    {
-      title: '登录设备',
-      dataIndex: 'code',
-      search: false,
-    },
+    // {
+    //   title: '登录设备',
+    //   dataIndex: 'device',
+    //   search: false,
+    // },
     {
       title: '登录时长',
-      dataIndex: 'content',
+      dataIndex: 'duration',
       search: false,
     },
     {
       title: '登录地点',
-      dataIndex: 'content',
+      dataIndex: 'location',
       search: false,
     },
 

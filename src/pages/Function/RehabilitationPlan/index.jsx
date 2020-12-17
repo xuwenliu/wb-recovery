@@ -6,6 +6,7 @@ import ProList from '@ant-design/pro-list';
 import { getComprehensiveAllSection } from '@/pages/Function/ColumnLocation/service';
 import { getAllPackage } from './service';
 import { getAllClass } from '@/pages/Educational/Curriculum/service';
+import { getAuth } from '@/utils/utils';
 const { confirm } = Modal;
 const layout = {
   labelCol: {
@@ -18,6 +19,7 @@ const RehabilitationPlan = ({
   createSavePackageSubmitting,
   createUpdatePackageClassSubmitting,
 }) => {
+  const auth = getAuth();
   const [form] = Form.useForm();
   const [formClass] = Form.useForm();
 
@@ -244,9 +246,11 @@ const RehabilitationPlan = ({
             rowKey="id"
             headerTitle="套餐名称"
             toolBarRender={() => [
-              <Button onClick={() => setVisible(true)} size="small" key="1" type="primary">
-                新增
-              </Button>,
+              auth?.canEdit && (
+                <Button onClick={() => setVisible(true)} size="small" key="1" type="primary">
+                  新增
+                </Button>
+              ),
             ]}
             dataSource={groupData}
             metas={{
@@ -256,12 +260,16 @@ const RehabilitationPlan = ({
               subTitle: {},
               actions: {
                 render: (_, record) => [
-                  <a key="1" onClick={() => handleUpdate(record)}>
-                    编辑
-                  </a>,
-                  <a key="2" onClick={() => handleRemove(record)}>
-                    删除
-                  </a>,
+                  auth?.canEdit && (
+                    <a key="1" onClick={() => handleUpdate(record)}>
+                      编辑
+                    </a>
+                  ),
+                  auth?.canEdit && (
+                    <a key="2" onClick={() => handleRemove(record)}>
+                      删除
+                    </a>
+                  ),
                   <a key="3" onClick={() => handleView(record)}>
                     查看课程
                   </a>,
@@ -292,7 +300,7 @@ const RehabilitationPlan = ({
                 subTitle: {},
                 actions: {
                   render: (_, record) => [
-                    selectedRowKeys.includes(record.classId) && (
+                    auth?.canEdit && selectedRowKeys.includes(record.classId) && (
                       <a key="1" onClick={() => handleClassUpdate(record)}>
                         编辑频次时间
                       </a>

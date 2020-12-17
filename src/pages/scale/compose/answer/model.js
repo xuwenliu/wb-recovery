@@ -1,5 +1,5 @@
 import { getGuide, createReport } from '@/pages/scale/service/compose';
-import { Toast } from 'antd-mobile';
+// import { loading, hide  } from '@/utils/toast';
 
 const getData = ({ guide, current }) => {
   const { code, scaleName, names = [], totalReport, reports } = guide;
@@ -31,9 +31,9 @@ const getData = ({ guide, current }) => {
 
   const ret = [];
 
-  Object.keys(data).forEach(key => {
+  Object.keys(data).forEach((key) => {
     ret.push(data[key]);
-    data[key].finish = data[key].scales.findIndex(i => i.finish === false) === -1;
+    data[key].finish = data[key].scales.findIndex((i) => i.finish === false) === -1;
   });
 
   const result = {
@@ -46,7 +46,7 @@ const getData = ({ guide, current }) => {
     reports,
   };
 
-  result.items.forEach(item => {
+  result.items.forEach((item) => {
     if (result.current === item.name) {
       result.scales = [...item.scales];
     }
@@ -61,28 +61,18 @@ export default {
   state: {},
 
   effects: {
-    *fetchGuide(
-      {
-        payload: { compose, id, current },
-      },
-      { call, put }
-    ) {
+    *fetchGuide({ payload: { compose, id, current } }, { call, put }) {
       const guide = yield call(getGuide, { compose, id });
       yield put({
         type: 'save',
         payload: { data: getData({ guide, current }) },
       });
     },
-    *changeCurrent(
-      {
-        payload: { current },
-      },
-      { select, put }
-    ) {
-      const data = yield select(state => state.scaleComposeAnswer.data);
+    *changeCurrent({ payload: { current } }, { select, put }) {
+      const data = yield select((state) => state.scaleComposeAnswer.data);
 
       data.current = current;
-      data.items.forEach(item => {
+      data.items.forEach((item) => {
         if (data.current === item.name) {
           data.scales = [...item.scales];
         }
@@ -94,9 +84,9 @@ export default {
       });
     },
     *createReport({ payload, callback }, { call }) {
-      Toast.loading('报告产生中...');
+      // loading('报告产生中...');
       const result = yield call(createReport, payload);
-      Toast.hide();
+      // hide();
 
       callback(result);
     },

@@ -25,7 +25,7 @@ const submitLayout = {
     offset: 3,
   },
 };
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import {
   getAllAbility,
   getAllTrainWay,
@@ -364,7 +364,22 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
           </Radio.Group>
         </Form.Item>
 
-        <Form.Item name="mouthActivityBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="mouthActivityBos"
+          dependencies={['mouthActivityLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('mouthActivityLevel') !== 3) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(
@@ -401,7 +416,19 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="mouthActivityTrainBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['mouthActivityTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('mouthActivityTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -477,7 +504,19 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="swallowingTrainBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['swallowingTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('swallowingTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -561,7 +600,19 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="spokenComprehensionBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['spokenComprehensionTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('spokenComprehensionTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -611,7 +662,22 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="训练方向">
-        <Form.Item name="spokenAbilityBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="spokenAbilityBos"
+          dependencies={['spokenAbilityTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('spokenAbilityTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(
@@ -642,7 +708,22 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="训练方向">
-        <Form.Item name="talkTrainBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="talkTrainBos"
+          dependencies={['talkTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('talkTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, talkTrainListNames, setTalkTrainListNames, 'otherTalkTrain')
@@ -660,13 +741,14 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="建议目标" name="proposalTarget">
         <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
-
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

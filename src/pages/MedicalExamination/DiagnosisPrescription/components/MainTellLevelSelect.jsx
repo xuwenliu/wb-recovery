@@ -4,7 +4,7 @@ import { Form, Input, Select } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
 
-const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => {
+const MainTellLevelSelect = ({ form, type, name, label, postFields, rules, timestamp }) => {
   const [checkList1, setCheckList1] = useState([]);
   const [checkList2, setCheckList2] = useState([]);
   const [checkList3, setCheckList3] = useState([]);
@@ -16,11 +16,33 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
     setCheckList1(res.filter((item) => item.type === type)); // 主诉
   };
 
-  const onCheckList1Change = async (parentId) => {
+  const onCheckList1Change = async (parentId, index) => {
+    if (index || index == 0) {
+      // 一级切换把后面的设置为空
+      let newValue = form.getFieldValue(name);
+      newValue[index] = {
+        ...newValue[index],
+        [postFields[1]]: '',
+        [postFields[2]]: '',
+      };
+      form.setFields([{ name, value: newValue }]);
+      setCheckList2([]);
+      setCheckList3([]);
+    }
     const res = await getCheckChildren({ parentId });
     setCheckList2(res);
   };
-  const onCheckList2Change = async (parentId) => {
+  const onCheckList2Change = async (parentId, index) => {
+    if (index || index == 0) {
+      // 二级切换把后面的设置为空
+      let newValue = form.getFieldValue(name);
+      newValue[index] = {
+        ...newValue[index],
+        [postFields[2]]: '',
+      };
+      form.setFields([{ name, value: newValue }]);
+      setCheckList3([]);
+    }
     const res = await getCheckChildren({ parentId });
     setCheckList3(res);
   };
@@ -42,8 +64,7 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
   }, []);
   useEffect(() => {
     const value = form.getFieldValue(name);
-    console.log('主诉',value);
-    if (value) {
+    if (value && value.length != 0) {
       value.forEach((item) => {
         if (item[postFields[0]]) {
           onCheckList1Change(item[postFields[0]]);
@@ -52,8 +73,22 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
           }
         }
       });
+    } else {
+      // 获取的患者没有进行过操作则，默认显示一条数据
+      form.setFields([
+        {
+          name,
+          value: [
+            {
+              [postFields[0]]: '',
+              [postFields[1]]: '',
+              [postFields[2]]: '',
+            },
+          ],
+        },
+      ]);
     }
-  }, [form.getFieldValue(name)]);
+  }, [form.getFieldValue(name), timestamp]);
   return (
     <Form.List name={name}>
       {(fields, { add, remove }) => (
@@ -76,7 +111,7 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
                     rules={rules}
                     fieldKey={[field.fieldKey, postFields[0]]}
                   >
-                    <Select onChange={onCheckList1Change} placeholder="请选择">
+                    <Select onChange={(val) => onCheckList1Change(val, index)}>
                       {checkList1.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -95,10 +130,9 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
                   <Form.Item
                     {...field}
                     name={[field.name, postFields[1]]}
-                    rules={rules}
                     fieldKey={[field.fieldKey, postFields[1]]}
                   >
-                    <Select onChange={onCheckList2Change} placeholder="请选择">
+                    <Select onChange={(val) => onCheckList2Change(val, index)}>
                       {checkList2.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -117,10 +151,9 @@ const MainTellLevelSelect = ({ form, type, name, label, postFields, rules }) => 
                   <Form.Item
                     {...field}
                     name={[field.name, postFields[2]]}
-                    rules={rules}
                     fieldKey={[field.fieldKey, postFields[2]]}
                   >
-                    <Select placeholder="请选择">
+                    <Select>
                       {checkList3.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}

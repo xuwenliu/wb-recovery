@@ -11,7 +11,7 @@ function Page({ user = {}, name, id, dispatch }) {
   const download = () => {
     const url = window.document.location.href;
     let page = replace(url, 'scale/compose/report', 'scale/compose/print');
-    page = replace(url, 'localhost', '192.168.10.105');
+    page = replace(url, 'localhost', 'cr.ts-health.cn');
 
     console.log(page);
 

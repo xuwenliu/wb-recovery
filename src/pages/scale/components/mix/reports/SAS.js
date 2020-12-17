@@ -4,20 +4,9 @@ import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import { Chart, Geom, Axis } from 'bizcharts';
-
+import { root1 } from '@/utils/publicStyles'
 const useStyles = makeStyles(theme => ({
-  root: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    '& > *': {
-      margin: theme.spacing(1),
-      padding: theme.spacing(2),
-      width: '100%',
-    },
-    lineControl: {
-      paddingTop: '20px',
-    },
-  },
+  root: root1
 }));
 
 const buildReport = report => {

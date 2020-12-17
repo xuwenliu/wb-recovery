@@ -3,6 +3,7 @@ import { Form, Checkbox, Button, Input, message } from 'antd';
 import { getAllClass } from '@/pages/Educational/Curriculum/service';
 import { connect } from 'umi';
 import { getEvaluationSingle } from '../service';
+import { getAuth } from '@/utils/utils';
 
 function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatch }) {
   console.log('list', list);
@@ -114,15 +115,22 @@ function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatc
       <Form.Item wrapperCol={{ offset: 2 }} label="课程选择" name="classIds">
         <Checkbox.Group options={classList}></Checkbox.Group>
       </Form.Item>
-      <Form.Item wrapperCol={{ offset: 2 }}>
-        <Button loading={submitting} onClick={() => form?.submit()} className="mr8" type="primary">
-          提交
-        </Button>
-        <Button onClick={cancel} className="mr8">
-          清空
-        </Button>
-        {/* <Button type="primary">打印</Button> */}
-      </Form.Item>
+      {getAuth(35)?.canEdit && (
+        <Form.Item wrapperCol={{ offset: 2 }}>
+          <Button
+            loading={submitting}
+            onClick={() => form?.submit()}
+            className="mr8"
+            type="primary"
+          >
+            提交
+          </Button>
+          <Button onClick={cancel} className="mr8">
+            清空
+          </Button>
+          {/* <Button type="primary">打印</Button> */}
+        </Form.Item>
+      )}
     </Form>
   );
 }

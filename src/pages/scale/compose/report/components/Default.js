@@ -10,17 +10,10 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 
 import DefaultReportTable from './DefaultReportTable';
+import {defaultBlock} from '@/utils/publicStyles'
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
 
 function Page(props) {

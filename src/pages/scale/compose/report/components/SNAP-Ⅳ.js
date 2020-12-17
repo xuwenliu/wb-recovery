@@ -17,26 +17,51 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
+import { defaultBlock } from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock,
 });
+
+/**
+   注意力分散：教师2.56 父母1.78
+   多动/冲动：教师1.78 父母1.44
+   注意力分散+多动/冲动：教师2.00 父母1.67  
+   对立违抗：教师1.38 父母1.88
+ */
+
+const sortIndex = {
+  注意力分散: 1,
+  '多动/冲动': 2,
+  '注意力分散+多动/冲动': 3,
+  对立违抗性障碍: 4,
+  品行障碍: 5,
+  创伤后应激障碍: 6,
+  适应障碍: 7,
+};
+
+const ref = {
+  'SNAP-Ⅳ-家长评估量表': {
+    注意力分散: 1.78,
+    '多动/冲动': 1.44,
+    对立违抗性障碍: 1.88,
+    '注意力分散+多动/冲动': 1.67,
+  },
+  'SNAP-Ⅳ-教师评估量表': {
+    注意力分散: 2.56,
+    '多动/冲动': 1.78,
+    对立违抗性障碍: 1.38,
+    '注意力分散+多动/冲动': 2.0,
+  },
+};
 
 function Page(props) {
   const classes = useStyles();
 
   const { reports, user, testeeInfo } = props;
+  const [report] = reports;
 
   const getRecords = () => {
-    const [report] = reports;
     const records = [];
     report.scoringResults.forEach(({ scoreName, score }) => {
       const [name, field] = scoreName.split('.');
@@ -48,10 +73,23 @@ function Page(props) {
         });
       }
     });
-    return records;
+
+    return records.sort((a, b) => {
+      return sortIndex[a.name] - sortIndex[b.name];
+    });
   };
 
+  /**
+   * 注意力分散+多动 是否等於 注意力不集中+多动/冲动
+   * 分數是否等於 [注意力分散+多动] 相加
+   */
+
   const records = getRecords();
+
+  const mapping = ref[report.scaleName];
+
+  console.log('mapping:', mapping);
+  console.log('records:', records);
 
   return (
     <div>
@@ -75,6 +113,7 @@ function Page(props) {
                 <TableRow>
                   <TableCell>项目</TableCell>
                   <TableCell align="center">分值</TableCell>
+                  <TableCell align="center">结果</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -84,6 +123,9 @@ function Page(props) {
                       {row.name}
                     </TableCell>
                     <TableCell align="center">{row.average}</TableCell>
+                    <TableCell align="center">
+                      {row.average > mapping[row.name] && '阴性'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

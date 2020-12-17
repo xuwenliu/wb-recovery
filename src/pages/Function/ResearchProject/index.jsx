@@ -11,6 +11,7 @@ import {
 } from '@/pages/Function/ResearchProject/service';
 
 import { getEmployeeAllList } from '@/pages/Function/Employee/service';
+import { getAuth } from '@/utils/utils';
 
 import { connect } from 'umi';
 const FormItem = Form.Item;
@@ -41,6 +42,7 @@ const formItemLayout = {
 };
 
 const ResearchProject = (props) => {
+  const auth = getAuth();
   const { submitting } = props;
   const actionRef = useRef();
   const [form] = Form.useForm();
@@ -257,9 +259,17 @@ const ResearchProject = (props) => {
       valueType: 'option',
       render: (_, record) => (
         <>
-          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
-            编辑
-          </Button>
+          {auth?.canEdit && (
+            <Button
+              onClick={() => handleUpdate(record)}
+              size="small"
+              type="primary"
+              className="mr8"
+            >
+              编辑
+            </Button>
+          )}
+
           <Button size="small" onClick={() => handleUpdate(record, 1)} type="success">
             查看详情
           </Button>
@@ -278,9 +288,11 @@ const ResearchProject = (props) => {
             labelWidth: 100,
           }}
           toolBarRender={() => [
-            <Button key="add" type="primary" onClick={() => setVisible(true)}>
-              <PlusOutlined /> 新增
-            </Button>,
+            auth?.canEdit && (
+              <Button key="add" type="primary" onClick={() => setVisible(true)}>
+                <PlusOutlined /> 新增
+              </Button>
+            ),
           ]}
           request={(params, sorter, filter) => queryProjectList(params)}
           columns={columns}
@@ -291,12 +303,16 @@ const ResearchProject = (props) => {
           onOk={handleOk}
           onCancel={handleCancel}
           footer={[
-            <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
-              确定
-            </Button>,
-            <Button key="back" onClick={handleCancel}>
-              取消
-            </Button>,
+            auth?.canEdit && updateId !== 1 && (
+              <Button key="submit" type="primary" loading={submitting} onClick={handleOk}>
+                确定
+              </Button>
+            ),
+            auth?.canEdit && (
+              <Button key="back" onClick={handleCancel}>
+                取消
+              </Button>
+            ),
             ,
           ]}
         >

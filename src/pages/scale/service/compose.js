@@ -194,7 +194,6 @@ export async function fetchRecord() {
 
 export async function manage({ values = {}, pagination = { page: 0, size: 8 } }) {
   const { page, size } = pagination;
-  console.log(values);
   const url = `/api/scale/compose/manage?page=${page}&size=${size}`;
   return request(url, {
     headers: {

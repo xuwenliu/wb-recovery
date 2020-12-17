@@ -5,7 +5,7 @@ import { connect, history } from 'umi';
 import BaseInfoShow from '@/components/BaseInfoShow';
 import xiaozu from '@/assets/img/xiaozu.png';
 import './index.less';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import { getAllDiseaseReason, getAllDisease, getGroupAssessSingle } from './service';
 
 const haveOrNoList = [
@@ -123,7 +123,21 @@ const TeamAssessment = ({ submitting, dispatch }) => {
 
     setDiseaseReasonBosNames(nameList);
   };
-
+  const onSetNerveDiseaseNoChange = (e) => {
+    if (!e.target.value) {
+      form.setFields([
+        {
+          name: 'nerveDisease',
+          value: [],
+        },
+        {
+          name: 'otherNerveDisease',
+          value: '',
+        },
+      ]);
+      setNerveDiseaseNames([]);
+    }
+  };
   const onNerveDiseaseChange = (arrId, noClear) => {
     console.log('arrId', arrId);
     const nameList = [];
@@ -151,7 +165,25 @@ const TeamAssessment = ({ submitting, dispatch }) => {
 
     setNerveDiseaseNames(nameList);
   };
-
+  const onSetSenseDiseaseNoChange = (e) => {
+    if (!e.target.value) {
+      form.setFields([
+        {
+          name: 'senseDisease',
+          value: [],
+        },
+        {
+          name: 'hearing',
+          value: '',
+        },
+        {
+          name: 'vision',
+          value: '',
+        },
+      ]);
+      setSenseDiseaseNames([]);
+    }
+  };
   const onSenseDiseaseChange = (arrId, noClear) => {
     const nameList = [];
     arrId.forEach((item) => {
@@ -186,6 +218,21 @@ const TeamAssessment = ({ submitting, dispatch }) => {
     setSenseDiseaseNames(nameList);
   };
 
+  const onSetHaveGeneticDiseaseNoChange = (e) => {
+    if (!e.target.value) {
+      form.setFields([
+        {
+          name: 'geneticDisease',
+          value: [],
+        },
+        {
+          name: 'otherGeneticDisease',
+          value: '',
+        },
+      ]);
+      setGeneticDiseaseNames([]);
+    }
+  }
   const onGeneticDiseaseChange = (arrId, noClear) => {
     const nameList = [];
     arrId.forEach((item) => {
@@ -559,7 +606,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
           <Col span={11} offset={1}>
             <Card bordered={false} className="card-title" title="神经相关疾病">
               <Form.Item name="haveNerveDisease">
-                <Radio.Group>
+                <Radio.Group onChange={onSetNerveDiseaseNoChange}>
                   {haveOrNoList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -587,7 +634,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
           <Col span={7}>
             <Card bordered={false} className="card-title" title="感官异常">
               <Form.Item name="haveSenseDisease">
-                <Radio.Group>
+                <Radio.Group onChange={onSetSenseDiseaseNoChange}>
                   {haveOrNoList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -617,7 +664,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
           <Col span={7} offset={1}>
             <Card bordered={false} className="card-title" title="遗传、先天症候群">
               <Form.Item name="haveGeneticDisease">
-                <Radio.Group style={{ marginBottom: 8 }}>
+                <Radio.Group onChange={onSetHaveGeneticDiseaseNoChange} style={{ marginBottom: 8 }}>
                   {haveOrNoList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -759,20 +806,30 @@ const TeamAssessment = ({ submitting, dispatch }) => {
         </Row>
       </Form>
       <FooterToolbar>
-        <Button
-          className="mr8"
-          type="primary"
-          onClick={() =>
-            history.push({
-              pathname: '/assessment/trainingobjectives',
-            })
-          }
-        >
-          进入训练目标
-        </Button>
-        <Button loading={submitting} onClick={submit} type="primary">
-          提交
-        </Button>
+        <>
+          <Button
+            className="mr8"
+            type="primary"
+            onClick={() => {
+              if (!info?.caseCodeV) {
+                return message.info('请先查看患者信息');
+              }
+              history.push({
+                pathname: '/assessment/trainingobjectives',
+                query: {
+                  code: info.caseCodeV,
+                },
+              });
+            }}
+          >
+            进入训练目标
+          </Button>
+          {getAuth()?.canEdit && (
+            <Button loading={submitting} onClick={submit} type="primary">
+              提交
+            </Button>
+          )}
+        </>
       </FooterToolbar>
     </PageContainer>
   );

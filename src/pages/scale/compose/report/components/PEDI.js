@@ -24,17 +24,14 @@ import Slider from '@material-ui/core/Slider';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
 
+import {defaultBlock} from '@/utils/publicStyles'
+
+import Slider2 from '../Slider';
+
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
+
 
 const marks = [
   {
@@ -93,10 +90,10 @@ const scoreScope = {
 
 // // N,C,R,E 排序
 const sortMapping = {
-  '无环境改造（N）':1,
-  '一般孩子所设计（C）':2,
-  '复健辅具（R）':3,
-  '延伸性（E）':4,
+  '无环境改造（N）': 1,
+  '一般孩子所设计（C）': 2,
+  '复健辅具（R）': 3,
+  '延伸性（E）': 4,
 };
 
 // 环境改造
@@ -109,7 +106,7 @@ const getTerraforming = report => {
     result.items.push({ scoreName, score });
   });
 
-  result.items.sort((a, b) => sortMapping[a.scoreName] - (sortMapping[b.scoreName]) )
+  result.items.sort((a, b) => sortMapping[a.scoreName] - sortMapping[b.scoreName]);
 
   return result;
 };
@@ -197,7 +194,6 @@ const getScoreCompose = report => {
 
 function Report(props) {
   const classes = useStyles();
-
   const { reports, user, testeeInfo, suggests } = props;
 
   const buildModel = () => {
@@ -249,11 +245,12 @@ function Report(props) {
           expandIcon={<ExpandMoreIcon />}
           aria-controls="panel1a-content"
           id="panel1a-header"
-        > 
+        >
           <Typography className={classes.heading}>分 数 总 结</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <TableContainer component={Paper} >
+          <hr /><Slider2 /><hr />
+          <TableContainer component={Paper}>
             <Table className={classes.table} size="small" aria-label="simple table">
               <TableHead>
                 <TableRow>
@@ -415,8 +412,8 @@ function Report(props) {
 
       {suggests && (
         <ExpansionPanel defaultExpanded>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography className={classes.heading}>训练目标</Typography>
+          <ExpansionPanelSummary>
+            <Typography className={classes.heading}>可发展技能</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.root}>
             <ScaleSuggestList items={suggests} />

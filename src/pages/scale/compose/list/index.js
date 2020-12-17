@@ -1,6 +1,6 @@
 import React, { useEffect, Fragment } from 'react';
 
-import styles from '@/utils/publicstyle';
+import styles from '@/utils/classStyle';
 
 import router from '@/utils/router';
 import List from '@material-ui/core/List';
@@ -163,15 +163,18 @@ function Index({
                       }}
                     >
                       <ListItemAvatar>
-                        {record.reportDate ? (
+                        {/* {record.reportDate ? (
                           <Avatar style={styles.avatar}>
                             <AssignmentTurnedInIcon />
                           </Avatar>
                         ) : (
                           <Avatar>
-                            <AssignmentLateIcon />
+                            <AssignmentLateIcon  />
                           </Avatar>
-                        )}
+                          )} */}
+                        <Avatar>
+                          <AssignmentLateIcon  />
+                        </Avatar>
                       </ListItemAvatar>
                       <ListItemText
                         style={styles.lineControl}

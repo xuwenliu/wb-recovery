@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { message, Form, Checkbox, Radio, Input, Button } from 'antd';
 import { connect } from 'umi';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import {
   getAllTrainWay,
   getTrainAdaptationInfo,
@@ -202,7 +202,22 @@ const Tab3 = ({ patientId, submitting, dispatch }) => {
             <Checkbox>临床晤谈</Checkbox>
           </Form.Item>
         </div>
-        <Form.Item name="abilityBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="abilityBos"
+          dependencies={['liftAbilityLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('liftAbilityLevel') !== 3) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, abilityListNames, setAbilityListNames, 'otherAbility')
@@ -230,7 +245,22 @@ const Tab3 = ({ patientId, submitting, dispatch }) => {
         </Radio.Group>
       </Form.Item>
       <Form.Item label="训练方向">
-        <Form.Item name="trainWayBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="trainWayBos"
+          dependencies={['liftAbilityTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('liftAbilityTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, trainWayListNames, setTrainWayListNames, 'other')
@@ -247,12 +277,14 @@ const Tab3 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="建议目标" name="proposalTarget">
         <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

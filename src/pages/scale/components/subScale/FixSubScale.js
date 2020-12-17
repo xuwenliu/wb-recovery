@@ -4,15 +4,10 @@ import Button from '@material-ui/core/Button';
 import CheckIcon from '@material-ui/icons/Check';
 import Grid from '@material-ui/core/Grid';
 import ButtonGroup from '@material-ui/core/ButtonGroup';
-
+import {rootflexGrow, paperCenter} from '@/utils/publicStyles'
 const useStyles = makeStyles(theme => ({
-  root: {
-    flexGrow: 1,
-  },
-  paper: {
-    padding: theme.spacing(1),
-    textAlign: 'center',
-  },
+  root: rootflexGrow,
+  paper: paperCenter,
 }));
 
 function FixSubScale(props) {

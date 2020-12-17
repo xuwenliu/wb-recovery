@@ -25,7 +25,7 @@ const submitLayout = {
     offset: 3,
   },
 };
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import {
   getAllAbility,
   getAllTrainWay,
@@ -322,7 +322,19 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="earAbilityTrainBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['earAbilityTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('earAbilityTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -366,7 +378,22 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
             <Checkbox>临床晤谈</Checkbox>
           </Form.Item>
         </div>
-        <Form.Item name="aboutClothesBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="aboutClothesBos"
+          dependencies={['aboutClothesAbilityLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('aboutClothesAbilityLevel') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(
@@ -403,7 +430,19 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="aboutClothesTrainBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['aboutClothesTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('aboutClothesTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -450,7 +489,22 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="盥洗">
-        <Form.Item name="washAbilityBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="washAbilityBos"
+          dependencies={['washAbilityLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('washAbilityLevel') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(
@@ -471,7 +525,22 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="如厕">
-        <Form.Item name="toiletBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="toiletBos"
+          dependencies={['washAbilityLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('washAbilityLevel') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, toiletListNames, setToiletListNames, 'otherToilet')
@@ -503,7 +572,19 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="训练方向">
         <Form.Item
           name="washAbilityTrainBos"
-          rules={[{ required: true, message: '请选择训练方向' }]}
+          dependencies={['washAbilityTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('washAbilityTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
         >
           <Checkbox.Group
             onChange={(arrId) =>
@@ -527,13 +608,14 @@ const Tab5 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="建议目标" name="proposalTarget">
         <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
-
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

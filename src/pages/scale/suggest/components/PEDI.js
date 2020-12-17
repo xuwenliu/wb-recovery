@@ -11,7 +11,7 @@ function PEDI(props) {
   const [example, setExample] = React.useState();
 
   const getStatus = (standard, score) => {
-    if (score * 1 === standard) {
+    if (score * 1 <= standard) {
       return 'error';
     }
   };

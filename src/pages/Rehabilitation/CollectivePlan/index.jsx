@@ -6,6 +6,7 @@ import { PageContainer } from '@ant-design/pro-layout';
 import { history, connect } from 'umi';
 
 import { getCollectiveEduPage } from './service';
+import { getAuth } from '@/utils/utils';
 
 const CollectivePlan = ({ dispatch }) => {
   const actionRef = useRef();
@@ -62,18 +63,24 @@ const CollectivePlan = ({ dispatch }) => {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
-      render: (_, record) => (
-        <>
-          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
-            <Button danger size="small" type="primary">
-              删除
+      render: (_, record) =>
+        getAuth()?.canEdit && (
+          <>
+            <Button
+              onClick={() => handleUpdate(record)}
+              size="small"
+              type="primary"
+              className="mr8"
+            >
+              编辑
             </Button>
-          </Popconfirm>
-        </>
-      ),
+            <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
+              <Button danger size="small" type="primary">
+                删除
+              </Button>
+            </Popconfirm>
+          </>
+        ),
     },
   ];
 
@@ -84,9 +91,11 @@ const CollectivePlan = ({ dispatch }) => {
         rowKey="id"
         search={false}
         toolBarRender={() => [
-          <Button key="add" type="primary" onClick={() => handleAdd()}>
-            <PlusOutlined /> 新增
-          </Button>,
+          getAuth()?.canEdit && (
+            <Button key="add" type="primary" onClick={() => handleAdd()}>
+              <PlusOutlined /> 新增
+            </Button>
+          ),
         ]}
         request={(params, sorter, filter) => getCollectiveEduPage(params)}
         columns={columns}

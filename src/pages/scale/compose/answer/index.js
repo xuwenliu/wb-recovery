@@ -24,7 +24,7 @@ import LoadingBox from '@/components/LoadingBox';
 
 import Button from '@material-ui/core/Button';
 
-import styles from '@/utils/publicstyle';
+import styles from '@/utils/classStyle';
 
 // import Report from '../components/PDMS';
 
@@ -41,13 +41,14 @@ function Page(props) {
   const { code, scaleName, items = [], scales = [], progress = {} } = data;
 
   const fetch = (params = {}) => {
+    console.log('fetch...', params);
     dispatch({
       type: 'scaleComposeAnswer/fetchGuide',
       payload: { ...params },
     });
   };
 
-  const changeCurrent = value => {
+  const changeCurrent = (value) => {
     dispatch({
       type: 'scaleComposeAnswer/changeCurrent',
       payload: { current: value },
@@ -58,7 +59,7 @@ function Page(props) {
     });
   };
 
-  const next = subScale => {
+  const next = (subScale) => {
     router.push({
       pathname: '/scale/compose/answer/single',
       query: { compose, id, subScale, name: scaleName },
@@ -88,7 +89,7 @@ function Page(props) {
     };
   }, []);
 
-  const step = items.findIndex(i => i.name === data.current);
+  const step = items.findIndex((i) => i.name === data.current);
 
   return (
     <>
@@ -96,7 +97,7 @@ function Page(props) {
       <LoadingBox loading={loading} data={scales}>
         {items.length > 1 && (
           <Stepper nonLinear activeStep={step}>
-            {items.map(item => (
+            {items.map((item) => (
               <Step key={item.name} completed={item.finish}>
                 <StepButton
                   onClick={() => {
@@ -114,14 +115,16 @@ function Page(props) {
           component="nav"
           style={{ margin: 30 }}
           subheader={
-            <ListSubheader>
-              <Alert style={{ marginTop: 15 }} severity="warning">
-                必須填寫全部量表 ({progress.count} / {progress.total} )
-              </Alert>
-            </ListSubheader>
+            progress.count !== progress.total && (
+              <ListSubheader>
+                <Alert style={{ marginTop: 15 }} severity="warning">
+                  必須填寫全部量表 ({progress.count} / {progress.total} )
+                </Alert>
+              </ListSubheader>
+            )
           }
         >
-          {scales.map(scale => (
+          {scales.map((scale) => (
             <ListItem
               button
               style={{ backgroundColor: '#ffffff', marginTop: 20 }}

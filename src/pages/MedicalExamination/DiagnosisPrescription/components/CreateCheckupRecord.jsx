@@ -16,19 +16,28 @@ import {
   getLastVisiting,
   getVisitingSingle,
 } from '@/pages/MedicalExamination/DiagnosisPrescription/service';
-import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import {
+  getCheckAll,
+  getCheckChildren,
+  getAllImportSection,
+} from '@/pages/Function/ColumnLocation/service';
+
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import moment from 'moment';
 import MainTellLevelSelect from './MainTellLevelSelect';
 import InitialJudgeSelect from './InitialJudgeSelect';
+import ScaleViewModal from '@/components/Scale/ScaleViewModal';
+
 
 import why from '@/assets/img/why.png';
 import chufang from '@/assets/img/chufang.png';
 import jianyi from '@/assets/img/jianyi.png';
+import pingding from '@/assets/img/pingding.png';
+
 
 const layout = {
   labelCol: {
-    span: 2,
+    span: 3,
   },
 };
 let numArr = [];
@@ -75,6 +84,8 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
   const [outpatientList, setOutpatientList] = useState([]); // 门诊复查
   const [allPrescriptionList, setAllPrescriptionList] = useState([]); // 治疗处方
   const [allPrescriptionNameList, setAllPrescriptionNameList] = useState([]); // 治疗处方
+  const [showDataType, setShowDataType] = useState([]); // 医学诊断-下面需要显示的类型[5,6,7]
+  const [timestamp, setTimestamp] = useState(0);
 
   const [moreInfo, setMoreInfo] = useState({
     isAsphyxia: false,
@@ -82,6 +93,8 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     isHealth: false,
     isWeak: false,
   });
+  const [tools, setTools] = useState([]);
+
 
   const queryAllProblem = async () => {
     const res = await getAllProblem();
@@ -180,6 +193,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
 
   // 个人史下拉切换
   const personalChange = async (parentId) => {
+    form.setFields([{ name: 'personalLevel2Id', value: '' }]);
     const res = await getCheckChildren({ parentId });
     if (res) {
       setPersonal2List(res);
@@ -196,6 +210,20 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     });
 
     setAllPrescriptionList(options);
+  };
+
+  // 医学诊断 下面的显示内容
+  const queryAllImportSection = async () => {
+    const res = await getAllImportSection();
+    if (res) {
+      const types = [];
+      res?.forEach((item) => {
+        if (item.isShow) {
+          types.push(item.type);
+        }
+      });
+      setShowDataType(types);
+    }
   };
 
   // 就诊问题 - 选了其他处理
@@ -368,7 +396,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     values.visitingDangerConnectVos?.forEach((item) => {
       visitingDangerConnectCreateBos.push(item.dangerId);
     });
-    //医师初步判断
+    //医学诊断
 
     const icd = values.visitingJudgmentVos?.filter((item) => item.judgmentType === 5);
     const dsm = values.visitingJudgmentVos?.filter((item) => item.judgmentType === 6);
@@ -382,7 +410,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     onPrescriptionChange(visitingPrescriptionCreateBos);
 
     const data = {
-      otherProblem: values.visitingProblemVos[0]?.other,
+      otherProblem: values.visitingProblemVos ? values.visitingProblemVos[0]?.other : '',
       visitingProblemCreateBos, // 就诊问题
       visitingMainTellCreateBos, // 主诉
       visitingHpiCreateBos, // 现病史
@@ -400,16 +428,24 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
       dsm,
       icf,
       visitingPrescriptionCreateBos, // 治疗处方
-      time: values.visitingPrescriptionConnectVos[0]?.time,
-      timeType: values.visitingPrescriptionConnectVos[0]?.timeType,
-      otherPrescription: values.visitingPrescriptionConnectVos[0]?.other,
+      time: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.time
+        : null,
+      timeType: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.timeType
+        : null,
+      otherPrescription: values.visitingPrescriptionConnectVos
+        ? values.visitingPrescriptionConnectVos[0]?.other
+        : '',
       doctorSuggestion: BraftEditor.createEditorState(values.doctorSuggestion),
     };
     form.setFieldsValue(data);
+    setTimestamp(moment().valueOf());
   };
 
   const onFinish = (values) => {
     console.log(values);
+    console.log("tools",tools);
     setError([]);
 
     // 就诊问题
@@ -470,8 +506,10 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
       });
     });
 
-    // 医师初步判断
-    const visitingJudgmentCreateBos = values.icd.concat(values.dsm).concat(values.icf);
+    // 医学诊断
+    const visitingJudgmentCreateBos = (values.icd || [])
+      .concat(values.dsm || [])
+      .concat(values.icf || []);
 
     // 治疗处方
     const visitingPrescriptionCreateBos = [];
@@ -500,7 +538,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
       visitingFamilyHistoryCreateBos, // 家族史
       familyInfectiousDiseaseCreateBos, // 传染病
       visitingDangerConnectCreateBos, // 高危因素
-      visitingJudgmentCreateBos, // 医师初步判断
+      visitingJudgmentCreateBos, // 医学诊断
       visitingPrescriptionCreateBos, // 治疗处方
       doctorSuggestion: values.doctorSuggestion?.toHTML(), // 医生建议
     };
@@ -525,6 +563,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     queryAllVaccine();
     queryEnums();
     queryAllPrescription();
+    queryAllImportSection();
     if (info.id || recordId) {
       queryEditInfo();
     }
@@ -601,7 +640,9 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     });
 
     const visitingJudgmentVos = copyText.visitingJudgmentVos?.map((item) => {
-      item.judgmentLevelName = `${item.judgmentLevel1Name}-${item.judgmentLevel2Name}-${item.judgmentLevel3Name}-${item.judgmentLevel4Name}`;
+      item.judgmentLevelName = `${item.judgmentLevel1Name}-${item.judgmentLevel2Name || '无'}-${
+        item.judgmentLevel3Name || '无'
+      }-${item.judgmentLevel4Name || '无'}`;
       return item;
     });
     const icdNames = visitingJudgmentVos
@@ -652,7 +693,13 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
   };
 
   return (
-    <Form {...layout} form={form} onFinish={onFinish} onFinishFailed={onFinishFailed}>
+    <Form
+      hideRequiredMark
+      {...layout}
+      form={form}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+    >
       {showCopyBtn && (
         <Button type="primary" onClick={handelCopyText}>
           复制本页文档内容
@@ -663,7 +710,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
 
         <Card loading={loading} style={{ background: '#F2F3F7', marginTop: 20 }}>
           <Form.Item
-            label="就诊问题"
+            label="就诊问题 (必填)"
             name="visitingProblemCreateBos"
             rules={[
               {
@@ -691,8 +738,9 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
               <Input placeholder="请输入其他就诊问题" />
             </Form.Item>
           )}
-          <Form.Item label="主诉">
+          <Form.Item label="主诉 (必填)">
             <MainTellLevelSelect
+              timestamp={timestamp}
               form={form}
               type={2}
               name="visitingMainTellCreateBos"
@@ -710,8 +758,9 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
               ]}
             />
           </Form.Item>
-          <Form.Item label="现病史">
+          <Form.Item label="现病史 (必填)">
             <MainTellLevelSelect
+              timestamp={timestamp}
               form={form}
               type={3}
               name="visitingHpiCreateBos"
@@ -852,73 +901,113 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
         </Card>
 
         <Card
-          loading={loading}
           bordered={false}
           title={
             <>
-              <Image preview={false} className="mr8" src={why} width={30} height={30} />
-              医师初步判断
+              <Image preview={false} className="mr8" src={pingding} width={30} height={30} />
+              评估工具
             </>
           }
         >
-          <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
-            <InitialJudgeSelect
-              type={5}
-              form={form}
-              name="icd"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择',
-                },
-              ]}
-              postFields={[
-                'judgmentLevel1Id',
-                'judgmentLevel2Id',
-                'judgmentLevel3Id',
-                'judgmentLevel4Id',
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="DSM5" labelCol={{ span: 2 }}>
-            <InitialJudgeSelect
-              type={6}
-              form={form}
-              name="dsm"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择',
-                },
-              ]}
-              postFields={[
-                'judgmentLevel1Id',
-                'judgmentLevel2Id',
-                'judgmentLevel3Id',
-                'judgmentLevel4Id',
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
-            <InitialJudgeSelect
-              type={7}
-              form={form}
-              name="icf"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择',
-                },
-              ]}
-              postFields={[
-                'judgmentLevel1Id',
-                'judgmentLevel2Id',
-                'judgmentLevel3Id',
-                'judgmentLevel4Id',
-              ]}
+          <Form.Item
+            name="tool"
+            rules={[
+              {
+                required: true,
+                message: '请选择评估工具',
+              },
+            ]}
+          >
+            <ScaleViewModal
+              value={tools}
+              onChange={(value) => {
+                setTools(value);
+              }}
             />
           </Form.Item>
         </Card>
+
+        {/* 有一项存在才显示 医学诊断*/}
+        {showDataType.length !== 0 && (
+          <Card
+            loading={loading}
+            bordered={false}
+            title={
+              <>
+                <Image preview={false} className="mr8" src={why} width={30} height={30} />
+                医学诊断 (必填)
+              </>
+            }
+          >
+            {showDataType.includes(5) && (
+              <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
+                <InitialJudgeSelect
+                  timestamp={timestamp}
+                  type={5}
+                  form={form}
+                  name="icd"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择',
+                    },
+                  ]}
+                  postFields={[
+                    'judgmentLevel1Id',
+                    'judgmentLevel2Id',
+                    'judgmentLevel3Id',
+                    'judgmentLevel4Id',
+                  ]}
+                />
+              </Form.Item>
+            )}
+
+            {showDataType.includes(6) && (
+              <Form.Item label="DSM5" labelCol={{ span: 2 }}>
+                <InitialJudgeSelect
+                  timestamp={timestamp}
+                  type={6}
+                  form={form}
+                  name="dsm"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择',
+                    },
+                  ]}
+                  postFields={[
+                    'judgmentLevel1Id',
+                    'judgmentLevel2Id',
+                    'judgmentLevel3Id',
+                    'judgmentLevel4Id',
+                  ]}
+                />
+              </Form.Item>
+            )}
+            {showDataType.includes(7) && (
+              <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
+                <InitialJudgeSelect
+                  timestamp={timestamp}
+                  type={7}
+                  form={form}
+                  name="icf"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择',
+                    },
+                  ]}
+                  postFields={[
+                    'judgmentLevel1Id',
+                    'judgmentLevel2Id',
+                    'judgmentLevel3Id',
+                    'judgmentLevel4Id',
+                  ]}
+                />
+              </Form.Item>
+            )}
+          </Card>
+        )}
 
         <Card
           loading={loading}
@@ -926,7 +1015,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
           title={
             <>
               <Image preview={false} className="mr8" src={chufang} width={30} height={30} />
-              治疗处方
+              治疗处方 (必填)
             </>
           }
         >
@@ -1016,7 +1105,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
           title={
             <>
               <Image preview={false} className="mr8" src={jianyi} width={30} height={30} />
-              医生建议
+              医生建议 (必填)
             </>
           }
         >
@@ -1035,7 +1124,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
       </div>
       <FooterToolbar>
         {getErrorInfo(error)}
-        {!recordId && (
+        {getAuth(12)?.canEdit && !recordId && (
           <>
             <Button className="mr8" type="primary">
               截取HIS医嘱

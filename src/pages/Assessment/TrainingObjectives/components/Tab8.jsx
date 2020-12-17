@@ -25,7 +25,7 @@ const submitLayout = {
     offset: 3,
   },
 };
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 
 import { getAllAssistive, getTrainEnvInfo } from '@/pages/Assessment/TrainingObjectives/service';
 
@@ -235,7 +235,10 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="上肢副木与辅具">
-        <Form.Item name="upBos" rules={[{ required: true, message: '请选择上肢副木与辅具' }]}>
+        <Form.Item
+          name="upBos"
+          // rules={[{ required: true, message: '请选择上肢副木与辅具' }]}
+        >
           <Checkbox.Group
             onChange={(arrId) => onHandleChange(arrId, upListNames, setUpListNames, 'otherUp')}
             options={upList}
@@ -249,9 +252,14 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="下肢副木与辅具">
-        <Form.Item name="downBos" rules={[{ required: true, message: '请选择下肢副木与辅具' }]}>
+        <Form.Item
+          name="downBos"
+          // rules={[{ required: true, message: '请选择下肢副木与辅具' }]}
+        >
           <Checkbox.Group
-            onChange={(arrId) => onHandleChange(arrId, downListNames, setDownListNames, 'otherDown')}
+            onChange={(arrId) =>
+              onHandleChange(arrId, downListNames, setDownListNames, 'otherDown')
+            }
             options={downList}
           ></Checkbox.Group>
         </Form.Item>
@@ -263,7 +271,10 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="摆位辅具">
-        <Form.Item name="bWBos" rules={[{ required: true, message: '请选择摆位辅具' }]}>
+        <Form.Item
+          name="bWBos"
+          // rules={[{ required: true, message: '请选择摆位辅具' }]}
+        >
           <Checkbox.Group
             onChange={(arrId) => onHandleChange(arrId, bWListNames, setBWListNames, 'otherBw')}
             options={bWList}
@@ -277,7 +288,10 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="移位辅具">
-        <Form.Item name="yWBos" rules={[{ required: true, message: '请选择移位辅具' }]}>
+        <Form.Item
+          name="yWBos"
+          // rules={[{ required: true, message: '请选择移位辅具' }]}
+        >
           <Checkbox.Group
             onChange={(arrId) => onHandleChange(arrId, yWListNames, setYWListNames, 'otherYw')}
             options={yWList}
@@ -291,10 +305,18 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="沟通辅具">
-        <Form.Item name="communicateBos" rules={[{ required: true, message: '请选择沟通辅具' }]}>
+        <Form.Item
+          name="communicateBos"
+          // rules={[{ required: true, message: '请选择沟通辅具' }]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
-              onHandleChange(arrId, communicateListNames, setCommunicateListNames, 'otherCommunicate')
+              onHandleChange(
+                arrId,
+                communicateListNames,
+                setCommunicateListNames,
+                'otherCommunicate',
+              )
             }
             options={communicateList}
           ></Checkbox.Group>
@@ -307,9 +329,14 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="日常生活辅具">
-        <Form.Item name="liveBos" rules={[{ required: true, message: '请选择日常生活辅具' }]}>
+        <Form.Item
+          name="liveBos"
+          // rules={[{ required: true, message: '请选择日常生活辅具' }]}
+        >
           <Checkbox.Group
-            onChange={(arrId) => onHandleChange(arrId, liveListNames, setLiveListNames, 'otherLive')}
+            onChange={(arrId) =>
+              onHandleChange(arrId, liveListNames, setLiveListNames, 'otherLive')
+            }
             options={liveList}
           ></Checkbox.Group>
         </Form.Item>
@@ -321,7 +348,10 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="视、听觉辅具">
-        <Form.Item name="seeBos" rules={[{ required: true, message: '请选择视、听觉辅具' }]}>
+        <Form.Item
+          name="seeBos"
+          // rules={[{ required: true, message: '请选择视、听觉辅具' }]}
+        >
           <Checkbox.Group
             onChange={(arrId) => onHandleChange(arrId, seeListNames, setSeeListNames, 'otherSee')}
             options={seeList}
@@ -333,13 +363,14 @@ const Tab8 = ({ patientId, submitting, dispatch }) => {
           </Form.Item>
         )}
       </Form.Item>
-
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

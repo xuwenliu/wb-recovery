@@ -1,21 +1,22 @@
-import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
+import { Form, Card, Button, Modal, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
+import ProList from '@ant-design/pro-list';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+
 import {
   getParentSectionAll,
   createParent,
   getParentSectionChildren,
+  removeParentBasicSection,
 } from '@/pages/Function/ColumnLocation/service';
 import { getCommonEnums } from '@/services/common';
-
-const formItemLayout = {
-  labelCol: { span: 10 },
-  wrapperCol: { span: 14 },
-};
+import { getAuth } from '@/utils/utils';
 
 const ParentCard = () => {
   const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
-  const [name, setName] = useState('');
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [parentInfo, setParentInfo] = useState();
   const [form] = Form.useForm();
 
@@ -30,24 +31,60 @@ const ParentCard = () => {
       const newCommon = commonArr
         .map((item) => {
           item.list = [];
+          item.type = item.code;
+          item.name = item.codeCn;
+          item.expandable = true;
+          item.isAdd = true;
+          item.isRemove = false;
           res.forEach((sub) => {
-            if (item.code === sub.type) {
+            sub.expandable = sub.type === 13;
+            sub.isAdd = sub.type === 13;
+            sub.isRemove = true;
+            if (item.type === sub.type) {
               item.list.push(sub);
             }
           });
           return item;
         })
-        .sort((a, b) => a.ordianl - b.ordianl);
+        .sort((a, b) => a.ordianl - b.ordianl)
+        .filter((item) => item.type != 14 && item.type != 15); // 去掉后端返回的职业中类和职业小类-做成子集
       setParentSection(newCommon);
     }
   };
 
-  const queryParentSectionChildren = async (parentId, nextCode) => {
+  const queryParentSectionChildren = async (parentId, code, grandParentId) => {
     const res = await getParentSectionChildren({ parentId });
     if (res) {
       const newParentSection = parentSection.map((item) => {
-        if (item.code === nextCode) {
-          item.list = res;
+        if (item.type === code) {
+          item.list.map((sub) => {
+            // grandParentId 当选择添加职业小类时的职业大类id
+            if (grandParentId && sub.id === grandParentId) {
+              sub.list?.map((xx) => {
+                xx.expandable = true;
+                xx.isAdd = true;
+                xx.isRemove = true;
+                if (xx.id === parentId) {
+                  xx.list = res?.map((bb) => {
+                    bb.isRemove = true;
+                    bb.list = res;
+                    return bb;
+                  });
+                }
+                return xx;
+              });
+            } else {
+              if (sub.id === parentId) {
+                sub.list = res?.map((xx) => {
+                  xx.expandable = true;
+                  xx.isAdd = true;
+                  xx.isRemove = true;
+                  return xx;
+                });
+              }
+            }
+            return sub;
+          });
         }
         return item;
       });
@@ -59,117 +96,114 @@ const ParentCard = () => {
     queryParentSectionAll();
   }, []);
 
-  const selectChange = (parentId, item) => {
-    if (!parentId) return;
-    const nextCode = item.code + 1;
-    // setParentInfo({
-    //   ...item,
-    //   parentId,
-    // });
-    // 如果选择了职业种类-大类，请求职业种类-中类
-    if (item.code === 13) {
-      setParentInfo({
-        ...item,
-        parentId1: parentId,
-      });
-      form.setFields([
-        {
-          name: 'PROFESSION_MEDIUM',
-          value: '',
-        },
-        {
-          name: 'PROFESSION_SMALL',
-          value: '',
-        },
-      ]);
-      const newParentSection = parentSection.map((sub) => {
-        // 切换大类的时候把中类和小类下拉框数据置空
-        if (sub.code === nextCode || sub.code === nextCode + 1) {
-          sub.list = [];
+  const handleRemove = (item) => {
+    Modal.confirm({
+      title: `确定删除【${item.name}】吗？`,
+      icon: <ExclamationCircleOutlined />,
+      onOk: async () => {
+        const res = await removeParentBasicSection({
+          id: item.id,
+        });
+        if (res) {
+          message.success('删除成功');
+          queryParentSectionAll();
         }
-        return sub;
-      });
-      setParentSection(newParentSection);
-
-      queryParentSectionChildren(parentId, nextCode);
-    }
-    // 如果选择了职业种类-中类，请求职业种类-小类
-    if (item.code === 14) {
-      setParentInfo({
-        ...item,
-        parentId1: parentInfo.parentId1,
-        parentId2: parentId,
-      });
-      form.setFields([
-        {
-          name: 'PROFESSION_SMALL',
-          value: '',
-        },
-      ]);
-      const newParentSection = parentSection.map((sub) => {
-        // 切换中类的时候把小类下拉框数据置空
-        if (sub.code === nextCode) {
-          sub.list = [];
-        }
-        return sub;
-      });
-      setParentSection(newParentSection);
-      queryParentSectionChildren(parentId, nextCode);
-    }
+      },
+    });
+    console.log(item);
   };
-  const addItem = async (item) => {
-    if (!name) {
-      message.error('请输入需要添加的名称');
-      return;
-    }
-    let postData = {
-      name,
-      type: item.code,
-    };
 
-    if (item.code === 14) {
-      // 职业种类-中类
-      if (!parentInfo || parentInfo.code !== 13) {
-        message.error('请先选择职业种类-大类');
-        return;
-      }
-      postData = {
-        name,
-        parentId: parentInfo.parentId1,
-        type: item.code,
+  // 新增
+  const handleAdd = (item, bool) => {
+    setIsModalVisible(true);
+    if (bool) {
+      item.type += 1; // 职业种类添加需要添加到下一个type上
+    }
+    setParentInfo(item);
+  };
+
+  // 取消
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  // 确定
+  const handleOk = async () => {
+    const values = await form.validateFields();
+    if (values) {
+      const getValues = form.getFieldsValue();
+      const postData = {
+        ...getValues,
+        type: parentInfo.type,
+        parentId: parentInfo.id,
       };
-    }
-
-    if (item.code === 15) {
-      // 职业种类-小类
-      if (!parentInfo || parentInfo.code !== 14) {
-        message.error('请先选择职业种类-中类');
-        return;
-      }
-      postData = {
-        name,
-        parentId: parentInfo.parentId2,
-        type: item.code,
-      };
-    }
-
-    const res = await createParent(postData);
-    if (res) {
-      message.success('新增成功');
-      setName('');
-      if (item.code === 14) {
-        // 职业种类-中类
-        queryParentSectionChildren(parentInfo.parentId1, item.code);
-      } else if (item.code === 15) {
-        // 职业种类-小类
-        queryParentSectionChildren(parentInfo.parentId1, item.code - 1);
-        queryParentSectionChildren(parentInfo.parentId2, item.code);
-      } else {
+      const res = await createParent(postData);
+      if (res) {
+        message.success('新增成功');
         queryParentSectionAll();
+        handleCancel();
       }
     }
-    console.log(res);
   };
+
+  const getProList = (item) => {
+    return (
+      <ProList
+        rowKey="id"
+        split
+        expandable={{
+          rowExpandable: (record) => record.expandable,
+          expandedRowKeys,
+          onExpandedRowsChange: (expandedRows) => {
+            setExpandedRowKeys(expandedRows);
+            const parentId = expandedRows.slice(-1)[0];
+            if (typeof parentId === 'string') {
+              // "771434237741989888"
+              queryParentSectionChildren(parentId, item.type, item.id);
+            }
+          },
+        }}
+        dataSource={item.list}
+        metas={{
+          title: {
+            dataIndex: 'name',
+          },
+          description: {
+            render: (_, record) => {
+              return record.list && getProList(record);
+            },
+          },
+          actions: {
+            render: (_, record) => [
+              getAuth()?.canEdit && record.isRemove && (
+                <Button
+                  onClick={() => handleRemove(record)}
+                  key="remove"
+                  danger
+                  type="primary"
+                  size="small"
+                >
+                  删除
+                </Button>
+              ),
+              getAuth()?.canEdit && record.isAdd && (
+                <Button
+                  onClick={() => handleAdd(record, true)}
+                  key="add"
+                  type="primary"
+                  size="small"
+                >
+                  新增
+                </Button>
+              ),
+            ],
+          },
+        }}
+      />
+    );
+  };
+
   return (
     <Card
       loading={loading}
@@ -179,56 +213,42 @@ const ParentCard = () => {
       }}
       bordered={false}
     >
-      <Form
-        form={form}
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
+      <ProList
+        rowKey="type"
+        split
+        expandable={{
+          expandedRowKeys,
+          onExpandedRowsChange: setExpandedRowKeys,
         }}
-      >
-        {parentSection.map((item) => {
-          return (
-            <Col key={item.ordianl} span={6}>
-              <Form.Item {...formItemLayout} label={item.codeCn}>
-                <Select
-                  allowClear
-                  onChange={(e) => selectChange(e, item)}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '4px 0' }} />
-                      <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                        <Input
-                          style={{ flex: 'auto' }}
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                        <a
-                          style={{
-                            flex: 'none',
-                            padding: '8px',
-                            display: 'block',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => addItem(item)}
-                        >
-                          新增
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {item.list.map((sub) => (
-                    <Select.Option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          );
-        })}
-      </Form>
+        dataSource={parentSection}
+        metas={{
+          title: {
+            dataIndex: 'name',
+          },
+          description: {
+            render: (_, record) => {
+              return record.list && getProList(record);
+            },
+          },
+          actions: {
+            render: (_, record) => [
+              getAuth()?.canEdit && (
+                <Button onClick={() => handleAdd(record)} type="primary" size="small">
+                  新增
+                </Button>
+              ),
+            ],
+          },
+        }}
+      />
+
+      <Modal title="编辑" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+        <Form form={form}>
+          <Form.Item name="name" rules={[{ required: true, message: '请输入内容' }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 };

@@ -19,21 +19,22 @@ import Paper from '@material-ui/core/Paper';
 import { uniqueId } from 'lodash/util';
 
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
+import { defaultBlock } from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
+  ...defaultBlock,
   tableCellWidth: {
     width: '15%',
   },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
 });
+
+const cols = {
+  score: {
+    min: 0,
+    max: 100,
+    ticks: [0, 20, 40, 60, 80, 100],
+  },
+};
 
 function Page(props) {
   const classes = useStyles();
@@ -95,7 +96,7 @@ function Page(props) {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <div>
-            总分：{report.score} {report.scoreExplain.join()}
+            <p style={{ margin: '10px' }}>{report.scoreExplain.join()}</p>
             <p style={{ margin: '10px' }}>具體情況請諮詢專家</p>
           </div>
         </ExpansionPanelDetails>

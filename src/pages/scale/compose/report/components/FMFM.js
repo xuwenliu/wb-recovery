@@ -22,18 +22,12 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
+import {defaultBlock} from '@/utils/publicStyles'
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
+
 
 const sortMapping = {
   视觉追踪: 1,

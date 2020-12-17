@@ -18,16 +18,19 @@ import View1 from './View1';
 import View2 from './View2';
 import View3 from './View3';
 
+import Chart1 from './components/Chart1';
+import Chart2 from './components/Chart2';
+import Chart3 from './components/Chart3';
+import Chart4 from './components/Chart4';
+import Chart5 from './components/Chart5';
+import Chart6 from './components/Chart6';
+import Chart7 from './components/Chart7';
+import Chart8 from './components/Chart8';
+
+import { defaultBlock } from '@/utils/publicStyles';
+
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock,
 });
 
 function Page(props) {
@@ -86,10 +89,26 @@ function Page(props) {
 
       <ExpansionPanel defaultExpanded>
         <ExpansionPanelSummary>
+          <Typography className={classes.heading}>综合发展侧面图</Typography>
+        </ExpansionPanelSummary>
+        <ExpansionPanelDetails className={classes.root}>
+          <Chart1 list={data} />
+        </ExpansionPanelDetails>
+      </ExpansionPanel>
+
+      <ExpansionPanel defaultExpanded>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>综合发展侧面图(三)</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <View3 data={data} />;
+          <Chart2 list={data} />
+          <Chart3 list={data} />
+          <Chart4 list={data} />
+          <Chart5 list={data} />
+          <Chart6 list={data} />
+          <Chart7 list={data} />
+          <Chart8 list={data} />
         </ExpansionPanelDetails>
       </ExpansionPanel>
 

@@ -2,7 +2,7 @@ import React, { useEffect, Fragment } from 'react';
 import { connect } from 'dva';
 import router from '@/utils/router';
 import { makeStyles } from '@material-ui/core/styles';
-import styles from '@/utils/publicstyle';
+import styles from '@/utils/classStyle';
 
 import Paper from '@material-ui/core/Paper';
 import List from '@material-ui/core/List';
@@ -122,15 +122,15 @@ function Page(props) {
         <div className={classes.demo}>
           <Paper elevation={0}>
             {record.works.map((work, index) => (
-              <Fragment key={work.id}>
-                <List>
-                  <ListItem
-                    onClick={() => {
-                      answer(work.target);
-                    }}
-                  >
-                    <ListItemAvatar>
-                      {work.finish ? (
+              <List key={index}>
+                <ListItem
+                  onClick={() => {
+                    if(work.finish) return
+                    answer(work.target);
+                  }}
+                >
+                  <ListItemAvatar>
+                    {work.finish ? (
                         <Avatar style={styles.avatar}>
                           <AssignmentTurnedInIcon />
                         </Avatar>
@@ -138,16 +138,30 @@ function Page(props) {
                         <Avatar>
                           <AssignmentIcon />
                         </Avatar>
-                      )}
-                    </ListItemAvatar>
-                    <ListItemText primary={work.name} />
-                    <ListItemSecondaryAction>
-                      <ChevronRightIcon />
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                  {index < record.works.length - 1 ? <Divider variant="middle" /> : null}
-                </List>
-              </Fragment>
+                        )}
+                    {/* <Avatar>
+                      <AssignmentIcon />
+                    </Avatar> */}
+                  </ListItemAvatar>
+                  <ListItemText primary={work.name} />
+                  <ListItemSecondaryAction>
+                    {/* <ChevronRightIcon /> */}
+                    {work.finish ? (
+                      ''
+                    ) : (
+                      <Button
+                        key="answer"
+                        onClick={() => {
+                          answer(work.target);
+                        }}
+                      >
+                        答题
+                      </Button>
+                    )}
+                  </ListItemSecondaryAction>
+                </ListItem>
+                {index < record.works.length - 1 ? <Divider variant="middle" /> : null}
+              </List>
             ))}
           </Paper>
         </div>

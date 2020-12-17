@@ -14,7 +14,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import BraftEditor from 'braft-editor';
-import { media } from '@/utils/utils';
+import { media, getAuth } from '@/utils/utils';
 import { truncate } from 'lodash';
 
 import { history, connect } from 'umi';
@@ -115,7 +115,6 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
     return () => {};
   }, [user.visitingCodeV]);
 
-  
   const onCheck = (checkedKeys, subIndex, name) => {
     const setValue = form.getFieldValue(name);
     setValue[subIndex].targets = checkedKeys;
@@ -365,9 +364,11 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
             labelWidth: 80,
           }}
           toolBarRender={() => [
-            <Button key="add" type="primary" onClick={() => handleAdd()}>
-              编辑教案
-            </Button>,
+            getAuth(40)?.canEdit && (
+              <Button key="add" type="primary" onClick={() => handleAdd()}>
+                编辑教案
+              </Button>
+            ),
           ]}
           request={(params, sorter, filter) => querySpecialPage(params)}
           columns={columns}
@@ -686,5 +687,5 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
 };
 
 export default connect(({ loading }) => ({
-  submitting: loading.effects['rehabilitationAndPersonalPlan/create'],
+  submitting: loading.effects['rehabilitationAndPersonalPlan/update'],
 }))(TeachingProgram);

@@ -4,14 +4,33 @@
  * https://github.com/ant-design/ant-design-pro-layout
  */
 import ProLayout, { DefaultFooter } from '@ant-design/pro-layout';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useIntl, connect, history } from 'umi';
-import { GithubOutlined } from '@ant-design/icons';
+import {
+  GithubOutlined,
+  TeamOutlined,
+  FundViewOutlined,
+  HourglassOutlined,
+  MedicineBoxOutlined,
+  FileOutlined,
+  ScheduleOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import { Result, Button, Avatar } from 'antd';
 import Authorized from '@/utils/Authorized';
 import RightContent from '@/components/GlobalHeader/RightContent';
 import { getMatchMenu } from '@umijs/route-utils';
 import logo from '../assets/img/logo.png';
+
+const iconEnum = {
+  team: <TeamOutlined />,
+  fundView: <FundViewOutlined />,
+  hourglass: <HourglassOutlined />,
+  medicineBox: <MedicineBoxOutlined />,
+  file: <FileOutlined />,
+  schedule: <ScheduleOutlined />,
+  setting: <SettingOutlined />,
+};
 
 /**
  * add material theme
@@ -33,18 +52,6 @@ const noMatch = (
     }
   />
 );
-
-/**
- * use Authorized check all menu item
- */
-const menuDataRender = (menuList) =>
-  menuList.map((item) => {
-    const localItem = {
-      ...item,
-      children: item.children ? menuDataRender(item.children) : undefined,
-    };
-    return Authorized.check(item.authority, localItem, null);
-  });
 
 const defaultFooterDom = (
   <DefaultFooter
@@ -80,13 +87,19 @@ const BasicLayout = (props) => {
     location = {
       pathname: '/',
     },
+    menuData, // 后台服务器返回的菜单数据
     collapsed,
+    loading,
   } = props;
   const menuDataRef = useRef([]);
   useEffect(() => {
     if (dispatch) {
       dispatch({
         type: 'user/fetchCurrent',
+      });
+      dispatch({
+        // 调用后台请求，获取菜单
+        type: 'user/getMenuData',
       });
     }
   }, []);
@@ -111,28 +124,30 @@ const BasicLayout = (props) => {
     [location.pathname],
   );
   const { formatMessage } = useIntl();
+
+  /**
+   * use Authorized check all menu item
+   */
+  const menuDataRender = (menuList) => {
+    return menuList.map((item) => {
+      if (item.type === 2) {
+        item.hideChildrenInMenu = true;
+      }
+      const localItem = {
+        ...item,
+        name: item.title,
+        icon: iconEnum[item.icon],
+        children: item.children ? menuDataRender(item.children) : undefined,
+      };
+      return Authorized.check(item.authority, localItem, null);
+    });
+  };
+
   return (
     <ProLayout
       logo={logo}
       formatMessage={formatMessage}
       onCollapse={handleMenuCollapse}
-      // menuHeaderRender={(logoDom, titleDom) => (
-      //   <Link to="/">
-      //     <Avatar shape="square" size={30} src={logo} />
-      //     {!collapsed && (
-      //       <span
-      //         style={{
-      //           fontSize: 14,
-      //           marginLeft: 4,
-      //           color: '#000',
-      //         }}
-      //       >
-      //         康复训练管理操作系统
-      //         {/* <FormattedMessage id="common.blog.manager" /> */}
-      //       </span>
-      //     )}
-      //   </Link>
-      // )}
       onMenuHeaderClick={() => history.push('/')}
       menuItemRender={(menuItemProps, defaultDom) => {
         if (menuItemProps.isUrl || !menuItemProps.path) {
@@ -141,15 +156,17 @@ const BasicLayout = (props) => {
 
         return <Link to={menuItemProps.path}>{defaultDom}</Link>;
       }}
-      breadcrumbRender={(routers = []) => [
-        {
-          path: '/',
-          breadcrumbName: formatMessage({
-            id: 'menu.home',
-          }),
-        },
-        ...routers,
-      ]}
+      breadcrumbRender={(routers = []) => {
+        return [
+          {
+            path: '/',
+            breadcrumbName: formatMessage({
+              id: 'menu.home',
+            }),
+          },
+          ...routers,
+        ];
+      }}
       itemRender={(route, params, routes, paths) => {
         const first = routes.indexOf(route) === 0;
         return first ? (
@@ -158,8 +175,11 @@ const BasicLayout = (props) => {
           <span>{route.breadcrumbName}</span>
         );
       }}
-      footerRender={() => defaultFooterDom}
-      menuDataRender={menuDataRender}
+      menu={{
+        loading,
+        locale: false,
+      }}
+      menuDataRender={() => menuDataRender(menuData)}
       rightContentRender={() => <RightContent />}
       postMenuData={(menuData) => {
         menuDataRef.current = menuData || [];
@@ -175,7 +195,9 @@ const BasicLayout = (props) => {
   );
 };
 
-export default connect(({ global, settings }) => ({
+export default connect(({ global, settings, user }) => ({
   collapsed: global.collapsed,
   settings,
+  menuData: user.menuData, // connect连接menu
+  loading: user.loading, // 引入loading
 }))(BasicLayout);

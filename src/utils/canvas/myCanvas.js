@@ -160,13 +160,26 @@ var muBan = function (HB, VB, STH, STV) {
     is_dash,
     sign,
   ) {
-    var x, x1, x2, y, y1, y2;
+    var x, x1, x2, x3, y, y1, y2;
     ctx.beginPath();
     y1 = s_num - (arr[0][1] - s_value) / per_v;
-    ctx.moveTo(this.STH, y1 * this.VB + this.STV);
-    if (is_arc) {
-      ctx.arc(this.STH, y1 * this.VB + this.STV, 1.5, 0, 2 * Math.PI);
+    if (arr[0][0] == 0) {
+      ctx.moveTo(this.STH, y1 * this.VB + this.STV);
+      if (is_arc) {
+        ctx.arc(this.STH, y1 * this.VB + this.STV, 1.5, 0, 2 * Math.PI);
+      }
+    } else {
+      if (wh == 218) {
+        //2~18岁
+        x3 = (arr[0][0] - 2) * 2; //2岁起算，每半岁一个数据
+      } else if (wh == 36) {
+        //0~36月
+        x3 = arr[0][0];
+      }
+      ctx.moveTo((x3 * this.HB) / per_h + this.STH, y1 * this.VB + this.STV);
+      ctx.arc((x3 * this.HB) / per_h + this.STH, y1 * this.VB + this.STV, 1.5, 0, 2 * Math.PI);
     }
+
     for (var j = 1, len = arr.length; j < len; j++) {
       x = arr[j][0];
       if (wh == 218) {
@@ -175,6 +188,7 @@ var muBan = function (HB, VB, STH, STV) {
       } else if (wh == 36) {
         //0~36月
         x1 = x;
+        //					x1 = (x-45)		//
       }
       y = arr[j][1];
       y1 = s_num - (y - s_value) / per_v;

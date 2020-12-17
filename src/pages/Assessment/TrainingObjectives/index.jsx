@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
-import { Card, Image, Row, Col, Checkbox, Radio, Input, Button, Tabs } from 'antd';
+import { Card, Image, message, Col, Checkbox, Radio, Input, Button, Tabs } from 'antd';
 import { history } from 'umi';
 const { TabPane } = Tabs;
 import Tab1 from './components/Tab1';
@@ -102,11 +102,17 @@ const TrainingObjectives = () => {
       <FooterToolbar>
         <Button
           type="primary"
-          onClick={() =>
+          onClick={() => {
+            if (!info?.caseCodeV) {
+              return message.info('请先查看患者信息');
+            }
             history.push({
               pathname: '/assessment/evaluationcourses',
-            })
-          }
+              query: {
+                code: info.caseCodeV,
+              },
+            });
+          }}
         >
           进入教学课程评量
         </Button>

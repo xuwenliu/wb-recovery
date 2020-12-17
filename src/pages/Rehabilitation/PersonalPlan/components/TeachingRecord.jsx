@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { List, Card, Input, message } from 'antd';
 import moment from 'moment';
 import { getAllEduRecord, saveEditRecord } from '@/pages/Rehabilitation/PersonalPlan/service';
+import { getAuth } from '@/utils/utils';
 
 const TeachingRecord = ({ patientId, classId, tab }) => {
   const [data, setData] = useState([]);
@@ -42,8 +43,8 @@ const TeachingRecord = ({ patientId, classId, tab }) => {
             <div style={{ textAlign: 'center' }}>
               {item.startTime && (
                 <>
-                  {moment(item.startTime).format('YYYY-MM-DD')} 至 
-                  { moment(item.endTime).format('YYYY-MM-DD')}
+                  {moment(item.startTime).format('YYYY-MM-DD')} 至
+                  {moment(item.endTime).format('YYYY-MM-DD')}
                 </>
               )}
               &nbsp;&nbsp;{item.className}
@@ -57,7 +58,7 @@ const TeachingRecord = ({ patientId, classId, tab }) => {
             <List.Item>
               <Card title={sub.sort}>
                 <Input
-                  disabled={sub.isDone}
+                  disabled={getAuth(41)?.canEdit && sub.isDone}
                   value={sub.description}
                   onChange={(e) => onRecordChange(e, index, subIndex)}
                   onBlur={() => handleSaveRecord(sub)}

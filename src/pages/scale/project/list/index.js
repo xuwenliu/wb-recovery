@@ -58,14 +58,13 @@ function Page(props) {
       });
     };
   }, []);
-
+  console.log(records)
   return (
-    <Fragment>
+    <div style={{ marginTop: '-58px' }}>
       {!loading &&
         records &&
         records.map(({ id, name, description, code }) => (
-          <div style={{ marginTop: '-58px' }}>
-            <Card key={id} raised className={classes.card}>
+            <Card key={code} raised className={classes.card}>
               <CardActionArea>
                 <CardMedia className={classes.media} image="/images/1.jpg" />
                 <CardContent>
@@ -89,9 +88,8 @@ function Page(props) {
                 </Button>
               </CardActions>
             </Card>
-          </div>
         ))}
-    </Fragment>
+    </div>
   );
 }
 

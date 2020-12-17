@@ -5,8 +5,10 @@ import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import ProTable from '@ant-design/pro-table';
 import { getSitePage } from './service';
 import { history, connect } from 'umi';
+import { getAuth } from '@/utils/utils';
 
 const Place = ({ dispatch }) => {
+  const auth = getAuth();
   const actionRef = useRef();
   const columns = [
     {
@@ -49,18 +51,24 @@ const Place = ({ dispatch }) => {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
-      render: (_, record) => (
-        <>
-          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
-            <Button danger size="small" type="primary">
-              删除
+      render: (_, record) =>
+        auth?.canEdit && (
+          <>
+            <Button
+              onClick={() => handleUpdate(record)}
+              size="small"
+              type="primary"
+              className="mr8"
+            >
+              编辑
             </Button>
-          </Popconfirm>
-        </>
-      ),
+            <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
+              <Button danger size="small" type="primary">
+                删除
+              </Button>
+            </Popconfirm>
+          </>
+        ),
     },
   ];
 
@@ -105,9 +113,11 @@ const Place = ({ dispatch }) => {
           labelWidth: 80,
         }}
         toolBarRender={() => [
-          <Button key="add" type="primary" onClick={() => handleAdd()}>
-            <PlusOutlined /> 新增
-          </Button>,
+          auth?.canEdit && (
+            <Button key="add" type="primary" onClick={() => handleAdd()}>
+              <PlusOutlined /> 新增
+            </Button>
+          ),
         ]}
         request={(params, sorter, filter) =>
           getSitePage({ ...params, body: { code: params.code, name: params.name } })

@@ -3,7 +3,7 @@ import React from 'react';
 import SingleSelect from '@/pages/scale/components/field/SingleSelect';
 import MultiSelect from '@/pages/scale/components/field/MultiSelect';
 
-function Factory({ questionType, ...others }) {
+function Factory({ questionType, ...others }, ref) {
   
   if (questionType === 'SIG_SELECTION') {
     return <SingleSelect {...others} />;
@@ -16,4 +16,4 @@ function Factory({ questionType, ...others }) {
   return <div />;
 }
 
-export default Factory;
+export default React.forwardRef(Factory);

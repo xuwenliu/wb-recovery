@@ -34,16 +34,10 @@ const cols = {
 };
  */
 
+import {defaultBlock} from '@/utils/publicStyles'
+
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
 
 function Page(props) {

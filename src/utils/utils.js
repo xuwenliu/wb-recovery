@@ -73,3 +73,27 @@ export const media = () => {
     uploadFn,
   };
 };
+
+export const getAuth = (key) => {
+  let menuStr = localStorage.getItem('menu');
+  let menu = [];
+  if (menuStr) {
+    menu = JSON.parse(menuStr);
+  }
+  let auth = null;
+  const getAuthor = (menu, field, value) => {
+    for (let i in menu) {
+      const item = menu[i];
+      if (item[field] == value) {
+        auth = item;
+        break;
+      } else if (item.children) {
+        getAuthor(item.children, field, value);
+      }
+    }
+  };
+  getAuthor(menu, key ? 'key' : 'path', key ? key : location.pathname);
+  console.log('auth', auth);
+
+  return auth;
+};

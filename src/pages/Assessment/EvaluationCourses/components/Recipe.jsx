@@ -8,6 +8,7 @@ import { getComprehensiveAllSection } from '@/pages/Function/ColumnLocation/serv
 import { getAllClass } from '@/pages/Educational/Curriculum/service';
 
 import { getEmployeeAllList } from '@/pages/Function/Employee/service';
+import { getAuth } from '@/utils/utils';
 
 const Recipe = ({ submitting, dispatch, patientId }) => {
   const [form] = Form.useForm();
@@ -44,7 +45,13 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
             // 增选课程
             const classPlanPackageDetailVos2 = values.classPlanPackageDetailVos
               ? values.classPlanPackageDetailVos
-              : [{ classId: null, classTimeId: classTimeList[0]?.id }];
+              : [
+                  {
+                    classId: null,
+                    classTimeId: classTimeList[0]?.id,
+                    cycleTypeId: cycleTypeList[0]?.id,
+                  },
+                ];
             form.setFieldsValue({ classPlanPackageVos, classPlanPackageDetailVos2 });
           },
         });
@@ -61,7 +68,13 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
           },
           {
             name: 'classPlanPackageDetailVos2',
-            value: [{ classId: null, classTimeId: classTimeList[0]?.id }],
+            value: [
+              {
+                classId: null,
+                classTimeId: classTimeList[0]?.id,
+                cycleTypeId: cycleTypeList[0]?.id,
+              },
+            ],
           },
         ]);
       }
@@ -90,13 +103,25 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
       setEmployeeAllList(res);
     }
   };
-
+  const onAllPackageClear = (index) => {
+    form.setFields([
+      {
+        name: 'classPlanPackageVos',
+        value: [
+          {
+            packageId: null,
+            classPlanPackageDetailVos: [],
+          },
+        ],
+      },
+    ]);
+  };
   const onAllPackageChange = (value, index) => {
     const classInfo = allPackage.filter((item) => item.id === value)[0];
     const oldValue = form.getFieldValue('classPlanPackageVos');
     const newItem = {
       ...oldValue[index],
-      classPlanPackageDetailVos: classInfo.classOfPackageVos,
+      classPlanPackageDetailVos: classInfo?.classOfPackageVos,
     };
     const setValues = oldValue.map((item, idx) => {
       if (index === idx) {
@@ -116,6 +141,17 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
     ]);
   };
 
+  const onClassIdChange = (value, index) => {
+    const oldValue = form.getFieldValue('classPlanPackageDetailVos2');
+    oldValue[index].classId = value;
+    form.setFields([
+      {
+        name: 'classPlanPackageDetailVos2',
+        value: oldValue,
+      },
+    ]);
+  };
+
   useEffect(() => {
     queryAllPackage();
     queryAllClass();
@@ -128,27 +164,34 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
     if (!patientId) {
       return message.info('请先查看患者信息');
     }
+
     const postData = [];
-    values.classPlanPackageVos.forEach((item) => {
-      item.classPlanPackageDetailVos.forEach((sub) => {
+    values.classPlanPackageVos?.forEach((item) => {
+      item.classPlanPackageDetailVos?.forEach((sub) => {
         postData.push({
           ...sub,
           patientId,
         });
       });
     });
-    values.classPlanPackageDetailVos2.forEach((sub) => {
-      postData.push({
-        ...sub,
-        patientId,
+    values.classPlanPackageDetailVos2
+      ?.filter((item) => item.classId)
+      ?.forEach((sub) => {
+        postData.push({
+          ...sub,
+          patientId,
+        });
       });
-    });
+    if (postData.length === 0) {
+      return message.info('康复处方或增选课程至少添加一项');
+    }
     dispatch({
       type: 'assessmentAndEvaluationCourses/create',
       payload: postData,
       callback: (res) => {
         if (res) {
           message.success('操作成功');
+          queryComprehensiveAllSection();
         }
       },
     });
@@ -174,9 +217,13 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
                       colon={false}
                       name={[field.name, 'packageId']}
                       fieldKey={[field.fieldKey, 'packageId']}
-                      rules={[{ required: true, message: '请选择套餐' }]}
+                      // rules={[{ required: true, message: '请选择套餐' }]}
                     >
-                      <Select onChange={(val) => onAllPackageChange(val, index)}>
+                      <Select
+                        allowClear
+                        onClear={() => onAllPackageClear(index)}
+                        onChange={(val) => onAllPackageChange(val, index)}
+                      >
                         {allPackage.map((item) => (
                           <Select.Option value={item.id} key={item.id}>
                             {item.name}
@@ -357,9 +404,13 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
                       {...subField}
                       name={[subField.name, 'classId']}
                       fieldKey={[subField.fieldKey, 'classId']}
-                      rules={[{ required: true, message: '请选择课程' }]}
+                      // rules={[{ required: true, message: '请选择课程' }]}
                     >
-                      <Select placeholder="请选择课程">
+                      <Select
+                        allowClear
+                        placeholder="请选择课程"
+                        onChange={(val) => onClassIdChange(val, subIndex)}
+                      >
                         {classList.map((item) => (
                           <Select.Option value={item.id} key={item.id}>
                             {item.name}
@@ -369,21 +420,68 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col offset={1} span={5}>
-                    <Form.Item label="课程频次" style={{ marginBottom: 0 }}>
-                      <div style={{ display: 'flex' }}>
-                        <Form.Item>
+                  {form.getFieldValue('classPlanPackageDetailVos2')[subIndex]?.classId && (
+                    <>
+                      <Col offset={1} span={5}>
+                        <Form.Item label="课程频次" style={{ marginBottom: 0 }}>
+                          <div style={{ display: 'flex' }}>
+                            <Form.Item>
+                              <Input
+                                value={1}
+                                disabled
+                                addonAfter={
+                                  <Form.Item
+                                    initialValue={cycleTypeList[0]?.id}
+                                    noStyle
+                                    name={[subField.name, 'cycleTypeId']}
+                                  >
+                                    <Select>
+                                      {cycleTypeList.map((item) => (
+                                        <Select.Option key={item.id} value={item.id}>
+                                          {item.name}
+                                        </Select.Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                }
+                              />
+                            </Form.Item>
+                            <Form.Item
+                              name={[subField.name, 'cycle']}
+                              rules={[
+                                { required: true, message: '请输入' },
+                                {
+                                  pattern: /^[0-9]*$/,
+                                  message: '请输入数字',
+                                },
+                              ]}
+                            >
+                              <Input addonAfter="次" />
+                            </Form.Item>
+                          </div>
+                        </Form.Item>
+                      </Col>
+                      <Col offset={1} span={3}>
+                        <Form.Item
+                          label="课程时间"
+                          name={[subField.name, 'onceClassTime']}
+                          rules={[
+                            { required: true, message: '请输入课程时间' },
+                            {
+                              pattern: /^[0-9]*$/,
+                              message: '请输入数字',
+                            },
+                          ]}
+                        >
                           <Input
-                            value={1}
-                            disabled
                             addonAfter={
                               <Form.Item
-                                initialValue={cycleTypeList[0]?.id}
+                                initialValue={classTimeList[0]?.id}
                                 noStyle
-                                name={[subField.name, 'cycleTypeId']}
+                                name={[subField.name, 'classTimeId']}
                               >
                                 <Select>
-                                  {cycleTypeList.map((item) => (
+                                  {classTimeList.map((item) => (
                                     <Select.Option key={item.id} value={item.id}>
                                       {item.name}
                                     </Select.Option>
@@ -393,100 +491,59 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
                             }
                           />
                         </Form.Item>
+                      </Col>
+                      <Col offset={1} span={4}>
                         <Form.Item
-                          name={[subField.name, 'cycle']}
-                          rules={[
-                            { required: true, message: '请输入' },
-                            {
-                              pattern: /^[0-9]*$/,
-                              message: '请输入数字',
-                            },
-                          ]}
+                          label="执行人"
+                          {...subField}
+                          name={[subField.name, 'executionId']}
+                          fieldKey={[subField.fieldKey, 'executionId']}
+                          rules={[{ required: true, message: '请选择执行人' }]}
                         >
-                          <Input addonAfter="次" />
+                          <Select>
+                            {employeeAllList.map((item) => (
+                              <Select.Option value={item.id} key={item.id}>
+                                {item.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
                         </Form.Item>
-                      </div>
-                    </Form.Item>
-                  </Col>
-                  <Col offset={1} span={3}>
-                    <Form.Item
-                      label="课程时间"
-                      name={[subField.name, 'onceClassTime']}
-                      rules={[
-                        { required: true, message: '请输入课程时间' },
-                        {
-                          pattern: /^[0-9]*$/,
-                          message: '请输入数字',
-                        },
-                      ]}
-                    >
-                      <Input
-                        addonAfter={
-                          <Form.Item
-                            initialValue={classTimeList[0]?.id}
-                            noStyle
-                            name={[subField.name, 'classTimeId']}
-                          >
-                            <Select>
-                              {classTimeList.map((item) => (
-                                <Select.Option key={item.id} value={item.id}>
-                                  {item.name}
-                                </Select.Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                        }
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col offset={1} span={4}>
-                    <Form.Item
-                      label="执行人"
-                      {...subField}
-                      name={[subField.name, 'executionId']}
-                      fieldKey={[subField.fieldKey, 'executionId']}
-                      rules={[{ required: true, message: '请选择执行人' }]}
-                    >
-                      <Select>
-                        {employeeAllList.map((item) => (
-                          <Select.Option value={item.id} key={item.id}>
-                            {item.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col offset={1} span={4} style={{ display: 'flex', alignItems: 'center' }}>
-                    {form.getFieldValue('classPlanPackageDetailVos2').length > 1 && (
-                      <MinusCircleOutlined
-                        style={{ marginTop: 0 }}
-                        className="reduce"
-                        onClick={() => {
-                          remove(subField.name);
-                        }}
-                      />
-                    )}
-                    {form.getFieldValue('classPlanPackageDetailVos2').length - 1 === subIndex && (
-                      <PlusCircleOutlined
-                        style={{ marginTop: 0 }}
-                        className="add"
-                        onClick={() => {
-                          add();
-                        }}
-                      />
-                    )}
-                  </Col>
+                      </Col>
+                      <Col offset={1} span={4} style={{ display: 'flex', alignItems: 'center' }}>
+                        {form.getFieldValue('classPlanPackageDetailVos2').length > 1 && (
+                          <MinusCircleOutlined
+                            style={{ marginTop: 0 }}
+                            className="reduce"
+                            onClick={() => {
+                              remove(subField.name);
+                            }}
+                          />
+                        )}
+                        {form.getFieldValue('classPlanPackageDetailVos2').length - 1 ===
+                          subIndex && (
+                          <PlusCircleOutlined
+                            style={{ marginTop: 0 }}
+                            className="add"
+                            onClick={() => {
+                              add();
+                            }}
+                          />
+                        )}
+                      </Col>
+                    </>
+                  )}
                 </Row>
               ))}
             </>
           )}
         </Form.List>
-      
       </Form>
       <FooterToolbar>
-        <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
-          提交
-        </Button>
+        {getAuth(36)?.canEdit && (
+          <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
+            提交
+          </Button>
+        )}
       </FooterToolbar>
     </>
   );

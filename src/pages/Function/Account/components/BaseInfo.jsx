@@ -4,6 +4,7 @@ import CitySelect from '../../../Patriarch/ChildrenRecord/Edit/components/CitySe
 import { getUserInfo } from '../service';
 import { connect } from 'umi';
 import moment from 'moment';
+import { getAuth } from '@/utils/utils';
 const layout = {
   labelCol: {
     span: 3,
@@ -29,7 +30,7 @@ const BaseInfo = ({ submitting, dispatch }) => {
     if (values) {
       const setData = {
         ...values,
-        createTime: moment(values.createTime),
+        createTime: values.createTime ? moment(values.createTime) : null,
         job: values.roleVos?.map((item) => item.name).join(' '),
         regionAddress: {
           province: values.provinceCode,
@@ -98,8 +99,11 @@ const BaseInfo = ({ submitting, dispatch }) => {
       <Form.Item name="nickName" label="账户昵称">
         <Input className="ml4" placeholder="请输入账户昵称" />
       </Form.Item>
-      <Form.Item name="account" label="账户账号">
-        <Input className="ml4" placeholder="请输入账户账号" />
+      <Form.Item name="account" label="账号">
+        <Input className="ml4" placeholder="请输入账号" />
+      </Form.Item>
+      <Form.Item name="code" label="员工编号">
+        <Input className="ml4" disabled />
       </Form.Item>
 
       <Form.Item name="job" label="员工职位">
@@ -107,12 +111,7 @@ const BaseInfo = ({ submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item name="createTime" label="创建日期">
-        <DatePicker
-          disabled
-          style={{ width: '50%' }}
-          className="ml4"
-          placeholder="请选择创建日期"
-        />
+        <DatePicker disabled style={{ width: '50%' }} className="ml4" placeholder=" " />
       </Form.Item>
       <Form.Item
         name="mobile"
@@ -133,13 +132,14 @@ const BaseInfo = ({ submitting, dispatch }) => {
       <Form.Item {...citySelectLayout} label="现居住地址" name="nowAddress">
         <CitySelect />
       </Form.Item>
-
-      <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 3 }}>
-        <Button loading={submitting} className="mr8" type="primary" htmlType="submit">
-          确定
-        </Button>
-        <Button onClick={cancel}>重置</Button>
-      </Form.Item>
+      {getAuth(60)?.canEdit && (
+        <Form.Item wrapperCol={{ ...layout.wrapperCol, offset: 3 }}>
+          <Button loading={submitting} className="mr8" type="primary" htmlType="submit">
+            确定
+          </Button>
+          <Button onClick={cancel}>重置</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

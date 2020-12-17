@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Input, Row, Col, message, Button } from 'antd';
 import { getFakeCaptcha } from '@/services/login';
 import { updatePasswords } from '../service';
+import { getAuth } from '@/utils/utils';
 
 const formItemLayout = {
   labelCol: {
@@ -13,7 +14,7 @@ const formItemLayout = {
 };
 const tailFormItemLayout = {
   wrapperCol: {
-    span: 2,
+    span: 4,
     offset: 2,
   },
 };
@@ -170,7 +171,7 @@ const Password = () => {
       )}
 
       <Form.Item {...tailFormItemLayout}>
-        {step === 1 && (
+        {getAuth(61)?.canEdit && step === 1 && (
           <Button onClick={handleNextStep} type="primary">
             下一步
           </Button>

@@ -11,6 +11,7 @@ import BaseInfo from '@/pages/MedicalExamination/DiagnosisPrescription/component
 import ChartsPer from '@/components/ChartsPer';
 import ChartsStand from '@/components/ChartsStand';
 import { getPhysiqueGraphData } from '@/pages/MedicalExamination/HealthCheckup/service';
+import { getAuth } from '@/utils/utils';
 
 const CaseAssessmentPlanning = () => {
   const [patientId, setPatientId] = useState();
@@ -40,28 +41,43 @@ const CaseAssessmentPlanning = () => {
       <BaseInfoShow onPatientIdChange={onPatientIdChange} onAllInfoChange={onAllInfoChange} />
       <Card style={{ marginTop: 20 }}>
         <Tabs defaultActiveKey="1">
-          <Tabs.TabPane tab="个案评估规划" key="1">
-            <CaseAssessmentRecord info={info} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="体格检查记录" key="2">
-            <HealthCheckupRecordList patientId={patientId} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="百分位曲线图" key="3">
-            <ChartsPer gender={info?.genderName} graphData={graphData} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="标准差单位曲线图" key="4">
-            <ChartsStand gender={info?.genderName} graphData={graphData} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="基本资料" key="5">
-            <BaseInfo patientId={patientId} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="检核自评" key="6"></Tabs.TabPane>
-          <Tabs.TabPane tab="就诊记录" key="7">
-            <MedicalRecordList patientId={patientId} />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="测评记录" key="8">
-            <AssessmentRecordList />
-          </Tabs.TabPane>
+          {getAuth(22) && (
+            <Tabs.TabPane tab="个案评估规划" key="1">
+              <CaseAssessmentRecord info={info} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(23) && (
+            <Tabs.TabPane tab="体格检查记录" key="2">
+              <HealthCheckupRecordList patientId={patientId} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(24) && (
+            <Tabs.TabPane tab="百分位曲线图" key="3">
+              <ChartsPer gender={info?.genderName} graphData={graphData} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(25) && (
+            <Tabs.TabPane tab="标准差单位曲线图" key="4">
+              <ChartsStand gender={info?.genderName} graphData={graphData} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(26) && (
+            <Tabs.TabPane tab="基本资料" key="5">
+              <BaseInfo authKey={26} patientId={patientId} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(27) && <Tabs.TabPane tab="检核自评" key="6"></Tabs.TabPane>}
+
+          {getAuth(28) && (
+            <Tabs.TabPane tab="就诊记录" key="7">
+              <MedicalRecordList patientId={patientId} />
+            </Tabs.TabPane>
+          )}
+          {getAuth(29) && (
+            <Tabs.TabPane tab="测评记录" key="8">
+              <AssessmentRecordList />
+            </Tabs.TabPane>
+          )}
         </Tabs>
       </Card>
     </PageContainer>

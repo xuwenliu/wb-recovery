@@ -74,7 +74,7 @@ const CitySelect = ({ value = {}, onChange }) => {
   }, [value.province, value.city]);
 
   return (
-    <>
+    <div style={{ display: 'flex' }}>
       <Select
         value={value.province || province}
         onChange={(id) => onProvinceChange(id, false)}
@@ -114,10 +114,9 @@ const CitySelect = ({ value = {}, onChange }) => {
       <Input
         value={value.place}
         onChange={onPlaceChange}
-        className="address"
         placeholder="请输入详细地址"
       />
-    </>
+    </div>
   );
 };
 

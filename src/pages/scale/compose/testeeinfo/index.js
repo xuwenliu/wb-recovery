@@ -13,24 +13,15 @@ import AutoComplete from '@/components/AutoComplete';
 import SubScale from '../../components/SubScale';
 import { getError } from '@/utils/error';
 import Demographics from '@/pages/scale/components/Demographics';
+import { formControl, lineControl } from '@/utils/publicStyles';
 /**
  * 1.依照人口學變量產生畫面元件
  *
  * 2.依照人口學變量產生子量表清單
  */
 const useStyles = makeStyles({
-  formControl: {
-    display: 'block',
-    margin: 20,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        width: 230,
-      },
-    },
-  },
-  lineControl: {
-    margin: 20,
-  },
+  formControl: formControl,
+  lineControl: lineControl,
 });
 
 function Page({
@@ -160,10 +151,6 @@ function Page({
   }, []);
 
   const subScaleInfo = getSubScaleInfo();
-
-  if (scale) {
-    console.log('scale.limits:', scale.limits);
-  }
 
   return (
     <>

@@ -16,12 +16,33 @@ import moment from 'moment';
 
 const { RangePicker } = DatePicker;
 
-const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
-  const { types, records } = patriarchAssessmentRecord;
+/**
+ * actionRef={actionRef} 加上這一行影響的
+ */
 
-  const actionRef = useRef();
+const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
+  console.log('render start..:', patriarchAssessmentRecord);
+
+  const { types = [], records } = patriarchAssessmentRecord;
+
+  // const actionRef = useRef();
 
   const [report, setReport] = useState();
+
+  const getTypeSelect = () => {
+    console.log('getTypeSelect types:', types.length);
+    return (
+      <Select placeholder="量表类型">
+        {types
+          ? types.map((item) => (
+              <Select.Option value={item.id} key={item.id}>
+                {item.name}
+              </Select.Option>
+            ))
+          : ''}
+      </Select>
+    );
+  };
 
   const columns = [
     {
@@ -50,18 +71,8 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
     {
       title: '量表类型',
       dataIndex: 'scaleName',
-      renderFormItem: () => {
-        return (
-          <Select placeholder="量表类型">
-            {types
-              ? types.map((item) => (
-                  <Select.Option value={item.id} key={item.id}>
-                    {item.name}
-                  </Select.Option>
-                ))
-              : ''}
-          </Select>
-        );
+      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
+        return getTypeSelect();
       },
     },
     {
@@ -96,6 +107,7 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
   ];
 
   const search = (params) => {
+    console.log('search..');
     dispatch({
       type: 'patriarchAssessmentRecord/searchRecords',
       payload: params,
@@ -106,6 +118,7 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
     dispatch({
       type: 'patriarchAssessmentRecord/listType',
     });
+    search();
     return () => {
       dispatch({
         type: 'patriarchAssessmentRecord/clear',
@@ -113,10 +126,10 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
       });
     };
   }, []);
+
   return (
     <PageContainer>
       <ProTable
-        actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 80,

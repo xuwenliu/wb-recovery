@@ -1,10 +1,8 @@
 import { PageContainer } from '@ant-design/pro-layout';
 import React from 'react';
-import './style.less';
 import ParentCard from './components/ParentCard';
 import MedicineCheckCard from './components/MedicineCheckCard';
 import ComprehensiveCard from './components/ComprehensiveCard';
-import ImportDataCard from './components/ImportDataCard';
 
 const ColumnLocation = (props) => {
   return (
@@ -12,7 +10,6 @@ const ColumnLocation = (props) => {
       <ParentCard />
       <MedicineCheckCard />
       <ComprehensiveCard />
-      <ImportDataCard />
     </PageContainer>
   );
 };

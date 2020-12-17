@@ -8,6 +8,8 @@ import {
   getEmployeeAllList,
   getDeptRoles,
 } from '@/pages/Function/Employee/service';
+import { getAuth } from '@/utils/utils';
+
 import { connect } from 'umi';
 const FormItem = Form.Item;
 
@@ -37,6 +39,7 @@ const formItemLayout = {
 
 const Department = (props) => {
   console.log('props', props);
+  const auth = getAuth();
   const { submitting } = props;
   const actionRef = useRef();
   const [form] = Form.useForm();
@@ -188,18 +191,24 @@ const Department = (props) => {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
-      render: (_, record) => (
-        <>
-          <Button onClick={() => handleUpdate(record)} size="small" type="primary" className="mr8">
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
-            <Button danger size="small" type="primary">
-              删除
+      render: (_, record) =>
+        auth?.canEdit && (
+          <>
+            <Button
+              onClick={() => handleUpdate(record)}
+              size="small"
+              type="primary"
+              className="mr8"
+            >
+              编辑
             </Button>
-          </Popconfirm>
-        </>
-      ),
+            <Popconfirm title="确定删除该项数据吗？" onConfirm={() => handleRemove(record)}>
+              <Button danger size="small" type="primary">
+                删除
+              </Button>
+            </Popconfirm>
+          </>
+        ),
     },
   ];
 
@@ -212,9 +221,11 @@ const Department = (props) => {
           labelWidth: 80,
         }}
         toolBarRender={() => [
-          <Button key="add" type="primary" onClick={() => setVisible(true)}>
-            <PlusOutlined /> 新增
-          </Button>,
+          auth?.canEdit && (
+            <Button key="add" type="primary" onClick={() => setVisible(true)}>
+              <PlusOutlined /> 新增
+            </Button>
+          ),
         ]}
         request={(params, sorter, filter) => getDeptList({ ...params, body: params.code })}
         columns={columns}

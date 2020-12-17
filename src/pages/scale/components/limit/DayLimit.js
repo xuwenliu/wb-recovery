@@ -7,6 +7,7 @@ import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/picker
 import DateFnsUtils from '@date-io/date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { getDayByBirthday } from '@/pages/scale/util/age';
+import styles from '@/utils/publicStyles'
 
 function dateFromISO(isoDateString) {
   if (isoDateString.match) {
@@ -17,19 +18,10 @@ function dateFromISO(isoDateString) {
   return new Date(isoDateString);
 }
 
+
 const useStyles = makeStyles({
-  formControl: {
-    display: 'block',
-    margin: 20,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        width: 230,
-      },
-    },
-  },
-  lineControl: {
-    margin: 20,
-  },
+  formControl: styles.formControl,
+  lineControl: styles.lineControl,
 });
 
 function DayLimit({ object = {}, value, onChange }) {

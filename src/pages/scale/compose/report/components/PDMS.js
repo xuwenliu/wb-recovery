@@ -23,6 +23,7 @@ import { uniqueId } from 'lodash/util';
 
 import { Chart, Geom, Axis, Guide } from 'bizcharts';
 import tables from './PDMS-TABLES';
+import { defaultBlock } from '@/utils/publicStyles'
 
 const { Line } = Guide;
 
@@ -60,17 +61,12 @@ const getDate1Level = value => {
   return 0;
 };
 
+
+
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
+
 
 const getValue = value => {
   return value.split('|')[0];

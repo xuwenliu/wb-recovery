@@ -44,11 +44,9 @@ const errorHandler = (error) => {
       description: '您的网络发生异常，无法连接服务器',
       message: '网络异常',
     });
-    /**
     history.replace({
       pathname: `/user/login`,
     });
-     */
   }
 
   return response;
@@ -125,9 +123,6 @@ request.interceptors.response.use(async (response, options) => {
       localStorage.removeItem('token');
       localStorage.removeItem('username');
       localStorage.removeItem('antd-pro-authority');
-      // const queryString = stringify({
-      //   redirect: window.location.href,
-      // });
       history.replace({
         pathname: `/user/login`,
       });

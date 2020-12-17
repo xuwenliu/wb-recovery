@@ -6,14 +6,12 @@ import {
   DatePicker,
   Form,
   Input,
-  Popover,
   Row,
   Select,
   Image,
   Checkbox,
   Radio,
   Divider,
-  Upload,
   message,
 } from 'antd';
 import React, { useState, useEffect } from 'react';
@@ -21,7 +19,7 @@ import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import copy from 'copy-to-clipboard';
 import { connect, history } from 'umi';
 import moment from 'moment';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 
 import chengz from '@/assets/img/chengz.png';
 import chusheng from '@/assets/img/chusheng.png';
@@ -29,7 +27,6 @@ import family from '@/assets/img/family.png';
 import guomin from '@/assets/img/guomin.png';
 import why from '@/assets/img/why.png';
 
-import './style.less';
 const { Option } = Select;
 import CitySelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/CitySelect';
 import ProfessionSelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/ProfessionSelect';
@@ -44,8 +41,11 @@ const FormMoreItemLayout = {
 const FormItemlayout = {
   labelCol: { span: 10 },
 };
+const FormRecordItemlayout = {
+  labelCol: { span: 8 },
+};
 const FormItemCard2layout = {
-  labelCol: { span: 6 },
+  labelCol: { span: 5 },
 };
 
 const filterEmptyObj = (obj) => {
@@ -62,9 +62,12 @@ const disabledGTToday = (current) => {
   return current && current > moment().endOf('day');
 };
 
-const BaseInfo = ({ dispatch, patientId }) => {
+const BaseInfo = ({ submitting, dispatch, patientId, authKey }) => {
+  const [filePaths, setFilePaths] = useState([]);
+
   const [pageLoading, setPageLoading] = useState(true);
   const [form] = Form.useForm();
+  const [error, setError] = useState([]);
 
   const [copyText, setCopyText] = useState('');
   const [genderTypeList, setGenderTypeList] = useState([]);
@@ -110,6 +113,153 @@ const BaseInfo = ({ dispatch, patientId }) => {
 
   const [writePersonName, setWritePersonName] = useState(); // 填写人姓名
 
+  const getErrorInfo = (errors) => {
+    const errorCount = errors.filter((item) => item.errors.length > 0).length;
+
+    if (!errors || errorCount === 0) {
+      return null;
+    }
+    return (
+      <span className="errorIcon">
+        <CloseCircleOutlined />
+        {errorCount}
+      </span>
+    );
+  };
+
+  const onFinish = (values) => {
+    setError([]);
+    // 基本信息
+    const patientBasicInfoCreateBo = {
+      name: copyText.name,
+      gender: copyText.gender,
+      ethnic: copyText.ethnic,
+      birthTime: moment(values.birthTime).valueOf(),
+      createDocumentTime: moment(values.createDocumentTime).valueOf(),
+      idCardCode: values.idCardCode,
+      postCode: values.postCode,
+      provinceCode: values.regionAddress.province,
+      cityCode: values.regionAddress.city,
+      regionCode: values.regionAddress.area,
+      household: values.regionAddress.place,
+
+      nowProvinceCode: values.nowAddress.province,
+      nowCityCode: values.nowAddress.city,
+      nowRegionCode: values.nowAddress.area,
+      nowPlace: values.nowAddress.place,
+      isBehaviorUnusual: values.isBehaviorUnusual, // 行为是否异常
+      writePersonType: copyText.writePersonType, //填写人类型
+      isAgreeTrain: copyText.isAgreeTrain, // 是否同意训练
+      isReal: copyText.isReal, // 是否如实告知
+    };
+
+    // 家庭成员提交的数据
+    const patientFamilyMemberInfoBos = values.patientFamilyMemberInfoBos
+      ?.filter((item) => item.mobile) // 通过联系电话过滤掉没有填写的父亲或者母亲信息
+      .map((item) => {
+        item.professionLargeId = item.profession.large;
+        item.professionMediumId = item.profession.medium;
+        item.professionSmallId = item.profession.small;
+        item.birthYear = moment(item.birthYear).format('YYYY') * 1;
+        if (item.mainCarefulId) {
+          // 选了主要照顾者 就把选了的栏位带上 例如：选了奶奶就把 奶奶 赋给name字段
+          item.name = mainList.filter((sub) => sub.id == item.mainCarefulId)[0].name;
+        }
+        return item;
+      });
+
+    // 家庭状况 提交的数据
+    const patientFamilyInfoBo = {
+      communityType: values.communityType,
+      economicType: values.economicType,
+      educationType: values.educationType,
+      familyType: values.familyType,
+      hukouType: values.hukouType,
+      languageId: values.languageId,
+      languageType: values.languageType,
+      medicalInsuranceType: values.medicalInsuranceType,
+    };
+
+    // 就诊原因 -行为已经放到patientBasicInfoCreateBo里面了
+    const patientPastRecoveryConnectBos = [];
+    values.patientPastRecoveryConnectBos?.map((item) => {
+      if (item === 5) {
+        patientPastRecoveryConnectBos.push({
+          pastRecoveryInfoType: item,
+          other: values.other,
+        });
+      } else {
+        patientPastRecoveryConnectBos.push({
+          pastRecoveryInfoType: item,
+        });
+      }
+    });
+
+    // 成长记录
+    const patientGrowthRecordBo = filterEmptyObj({
+      caTalkTimeId: values.caTalkTimeId,
+      canClimbTimeId: values.canClimbTimeId,
+      feverTimeId: values.feverTimeId,
+      canGainGroundTimeId: values.canGainGroundTimeId,
+      canLaughTimeId: values.canLaughTimeId,
+      canSitTimeId: values.canSitTimeId,
+      canTurnOverTimeId: values.canTurnOverTimeId,
+      canWalkTimeId: values.canWalkTimeId,
+      supportTypeId: values.supportTypeId,
+    });
+
+    // 出生记录
+    const patientBirthRecordBo = filterEmptyObj({
+      birthPlaceType: values.birthPlaceType,
+      birthWeightId: values.birthWeightId,
+      fetusNumId: values.fetusNumId,
+      otherBirthPlace: values.otherBirthPlace,
+      birthPlaceDesc: values.birthPlaceDesc,
+      pregnancyWeeksId: values.pregnancyWeeksId,
+    });
+
+    const birthRecordDangerInfoBos = [];
+    values.birthRecordDangerInfoBos?.map((item) => {
+      birthRecordDangerInfoBos.push({
+        birthDangerInfoId: item,
+      });
+    });
+
+    const postData = {
+      abnormalActionIds: values.abnormalActionIds, //异常行为id集合
+      filePaths, //	患者文档
+      patientAllergyConnectBos: values.patientAllergyConnectBos?.filter((item) => item.allergyId), // 患者过敏史
+      patientBasicInfoCreateBo, // 	患者基本信息创建
+      patientBirthRecordBo, // 患者出生记录
+      birthRecordDangerInfoBos, // 出生记录-患者出生高危因素
+      patientDiseaseBos: values.patientDiseaseBos?.filter((item) => item.diseaseId), // 患者病症
+      patientFamilyDiseaseHistoryBos: values.patientFamilyDiseaseHistoryBos?.filter(
+        (item) => item.diseaseHistoryId,
+      ), // 患者家族病史
+      patientFamilyInfoBo, // 患者家庭信息
+      patientFamilyMemberInfoBos, // 	患者家庭成员信息
+      patientGrowthRecordBo, // 患者成长记录
+      patientPastRecoveryConnectBos, // 既往医疗康复情况
+      patientId, // 患者id-修改用
+    };
+
+    console.log('postData', postData);
+
+    dispatch({
+      type: 'patriarchAndChildrenRecord/create',
+      payload: postData,
+      callback: (res) => {
+        if (res) {
+          message.success('操作成功');
+        }
+      },
+    });
+  };
+
+  const onFinishFailed = (errorInfo) => {
+    setError(errorInfo.errorFields);
+  };
+
   const queryEditInfo = async (id) => {
     dispatch({
       type: 'patriarchAndChildrenRecord/getInfo',
@@ -118,6 +268,7 @@ const BaseInfo = ({ dispatch, patientId }) => {
       },
       callback: (values) => {
         console.log('values', values);
+        setFilePaths(values.patientDocumentVos);
         // 基本信息
         setCopyText(values);
         // TODO-城市三级联动待处理
@@ -125,7 +276,7 @@ const BaseInfo = ({ dispatch, patientId }) => {
           name: values.name,
           gender: values.gender,
           ethnic: values.ethnic,
-          birthTime: moment(values.birthTime),
+          birthTime: moment(values.birthDay),
           createDocumentTime: moment(values.createDocumentTime),
           idCardCode: values.idCardCode,
           postCode: values.postCode,
@@ -649,759 +800,702 @@ const BaseInfo = ({ dispatch, patientId }) => {
     }
   };
   return (
-    <>
-      <Button style={{ marginBottom: 20 }} type="primary" onClick={handelCopyText}>
-        复制本页文档内容
-      </Button>
-      <div className="box">
-        <div className="mask"></div>
-        <Form
-          hideRequiredMark
-          form={form}
-          initialValues={{
-            createDocumentTime: moment(),
-          }}
-        >
-          <Card loading={pageLoading} bordered={false}>
+    <Form
+      form={form}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+      initialValues={{
+        createDocumentTime: moment(),
+        isBehaviorUnusual: false,
+      }}
+    >
+      <Card loading={pageLoading} bordered={false}>
+        <Row>
+          <Col span={15}>
             <Row>
-              <Col span={15}>
-                {/* <Row gutter={16}>
-              <Col lg={8} md={6} sm={24}>
-                <Form.Item
-                  {...FormItemlayout}
-                  label="姓名"
-                  name="name"
-                  rules={[{ required: true, message: '请输入姓名' }]}
-                >
-                  <Input placeholder="请输入姓名" />
-                </Form.Item>
-              </Col>
-              <Col lg={8} md={6} sm={24}>
-                <Form.Item
-                  {...FormItemlayout}
-                  label="性别"
-                  name="gender"
-                  rules={[{ required: true, message: '请选择性别' }]}
-                >
-                  <Select placeholder="请选择性别">
-                    {genderTypeList.map((item) => (
-                      <Option key={item.id} value={item.id}>
-                        {item.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col lg={8} md={6} sm={24}>
-                <Form.Item
-                  {...FormItemlayout}
-                  label="民族"
-                  name="ethnic"
-                  rules={[{ required: true, message: '请选择名族' }]}
-                >
-                  <Select placeholder="请选择民族">
-                    {ethnicList.map((item) => (
-                      <Option key={item.id} value={item.id}>
-                        {item.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row> 
-            <Row gutter={16}>
-              <Col lg={8} md={6} sm={24}>
-                <Form.Item
-                  {...FormItemlayout}
-                  label="出生日期"
-                  name="birthTime"
-                  rules={[{ required: true, message: '请选择出生日期' }]}
-                >
-                  <DatePicker disabledDate={disabledGTToday} />
-                </Form.Item>
-              </Col>
-              <Col lg={8} md={6} sm={24}>
-                <Form.Item
-                  {...FormItemlayout}
-                  label="建档日期"
-                  name="createDocumentTime"
-                  rules={[{ required: true, message: '请选择建档日期' }]}
-                >
-                  <DatePicker />
-                </Form.Item>
-              </Col>
-            </Row>
-            */}
-                <Row>
-                  <Col span={24}>
-                    <Form.Item
-                      {...FormMoreItemLayout}
-                      label="身份证号码"
-                      name="idCardCode"
-                      rules={[
-                        { required: true, message: '请输入身份证号码' },
-                        {
-                          pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/,
-                          message: '身份证格式不正确',
-                        },
-                      ]}
-                    >
-                      <Input style={{ marginLeft: 4 }} placeholder="请输入身份证号码" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={24}>
-                    <Form.Item
-                      {...FormMoreItemLayout}
-                      label="户籍所在地"
-                      name="regionAddress"
-                      rules={[
-                        {
-                          required: true,
-                          message: '请选择户籍所在地',
-                        },
-                        {
-                          validator: checkAddress,
-                        },
-                      ]}
-                    >
-                      <CitySelect />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col span={24}>
-                    <Form.Item
-                      {...FormMoreItemLayout}
-                      label="现居住地址"
-                      name="nowAddress"
-                      rules={[
-                        {
-                          required: true,
-                          message: '请选择现居住地址',
-                        },
-                        {
-                          validator: checkAddress,
-                        },
-                      ]}
-                    >
-                      <CitySelect />
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item
-                      {...FormItemlayout}
-                      label="邮政编码"
-                      name="postCode"
-                      rules={[{ required: true, message: '请输入邮政编码' }]}
-                    >
-                      <Input placeholder="请输入邮政编码" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card>
-
-          <Card
-            loading={pageLoading}
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={family} width={30} height={30} />
-                家庭成员
-              </>
-            }
-            bordered={false}
-          >
-            <Form.List name="patientFamilyMemberInfoBos">
-              {(fields, { add, remove }) => (
-                <>
-                  {fields.map((field, index) => {
-                    return (
-                      <div key={field.key}>
-                        <Row gutter={16}>
-                          <Col span={8}>
-                            {index !== 2 && (
-                              <Form.Item
-                                {...field}
-                                name={[field.name, 'name']}
-                                fieldKey={[field.fieldKey, 'name']}
-                                {...FormItemCard2layout}
-                                label={index === 0 ? '父亲姓名' : '母亲姓名'}
-                                // rules={[{ required: true, message: '请填写姓名' }]}
-                              >
-                                <Input placeholder="请填写姓名" />
-                              </Form.Item>
-                            )}
-
-                            {index === 2 && (
-                              <Form.Item
-                                {...field}
-                                name={[field.name, 'mainCarefulId']}
-                                fieldKey={[field.fieldKey, 'mainCarefulId']}
-                                {...FormItemCard2layout}
-                                label="主要照顾者"
-                                rules={[{ required: true, message: '请选择主要照顾者' }]}
-                              >
-                                <Select placeholder="请选择主要照顾者">
-                                  {mainList.map((item) => (
-                                    <Option key={item.id} value={item.id}>
-                                      {item.name}
-                                    </Option>
-                                  ))}
-                                </Select>
-                              </Form.Item>
-                            )}
-                          </Col>
-                          <Col span={8}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, 'mobile']}
-                              fieldKey={[field.fieldKey, 'mobile']}
-                              {...FormItemCard2layout}
-                              label="联系电话"
-                              rules={
-                                index === 2
-                                  ? [
-                                      { required: true, message: '请填写联系电话' },
-                                      {
-                                        pattern: /^[0-9]*$/,
-                                        message: '请填写正确的电话号码',
-                                      },
-                                    ]
-                                  : null
-                              }
-                            >
-                              <Input placeholder="请填写联系电话" />
-                            </Form.Item>
-                          </Col>
-                          <Col span={8}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, 'birthYear']}
-                              fieldKey={[field.fieldKey, 'birthYear']}
-                              {...FormItemCard2layout}
-                              label="出生年份"
-                              rules={
-                                index === 2 ? [{ required: true, message: '请选择出生年份' }] : null
-                              }
-                            >
-                              <DatePicker
-                                disabledDate={(current) => {
-                                  return current && current > moment().endOf('year');
-                                }}
-                                placeholder="请选择出生年份"
-                                picker="year"
-                              />
-                            </Form.Item>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col span={8}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, 'profession']}
-                              fieldKey={[field.fieldKey, 'profession']}
-                              {...FormItemCard2layout}
-                              label="职业种类"
-                              rules={
-                                index === 2
-                                  ? [
-                                      { required: true, message: '请选择职业种类' },
-                                      {
-                                        validator: checkProfession,
-                                      },
-                                    ]
-                                  : null
-                              }
-                            >
-                              <ProfessionSelect professionList={professionList} />
-                            </Form.Item>
-                          </Col>
-                          <Col span={8}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, 'educationDegreeId']}
-                              fieldKey={[field.fieldKey, 'educationDegreeId']}
-                              {...FormItemCard2layout}
-                              label="文化程度"
-                              rules={
-                                index === 2 ? [{ required: true, message: '请选择文化程度' }] : null
-                              }
-                            >
-                              <Select placeholder="请选择文化程度">
-                                {educationDegreeList.map((item) => (
-                                  <Option key={item.id} value={item.id}>
-                                    {item.name}
-                                  </Option>
-                                ))}
-                              </Select>
-                            </Form.Item>
-                          </Col>
-                        </Row>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </Form.List>
-          </Card>
-
-          <Card
-            loading={pageLoading}
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={family} width={30} height={30} />
-                家庭状况
-              </>
-            }
-            bordered={false}
-          >
-            <Row gutter={16}>
               <Col span={24}>
                 <Form.Item
-                  {...FormMoreItemLayout}
-                  label="家庭模式"
-                  name="familyType"
-                  rules={[{ required: true, message: '请选择家庭模式' }]}
+                  labelCol={{ span: 4 }}
+                  label="邮政编码"
+                  name="postCode"
+                  rules={[{ required: true, message: '请输入邮政编码' }]}
                 >
-                  <Radio.Group>
-                    {familyTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="居住社区"
-                  name="communityType"
-                  rules={[{ required: true, message: '请选择居住社区' }]}
-                >
-                  <Radio.Group>
-                    {communityTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="教养方式"
-                  name="educationType"
-                  rules={[{ required: true, message: '请选择教养方式' }]}
-                >
-                  <Radio.Group>
-                    {educationTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  labelCol={{ span: 9 }}
-                  label="语言环境"
-                  name="languageType"
-                  rules={[{ required: true, message: '请选择语言环境' }]}
-                >
-                  <Radio.Group
-                    onChange={(e) => {
-                      setLanguageTypeShow(e.target.value);
-                      if (e.target.value === 1) {
-                        form.setFields([
-                          {
-                            name: 'languageId',
-                            value: '',
-                          },
-                        ]);
-                      }
-                    }}
-                  >
-                    {languageTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-              <Col span={12} style={{ marginLeft: -100 }}>
-                {languageTypeShow === 2 && (
-                  <Form.Item
-                    style={{ width: 150 }}
-                    name="languageId"
-                    rules={[{ required: true, message: '请选择地方方言' }]}
-                  >
-                    <Select size="small" style={{ width: 100 }} placeholder="请选择地方方言">
-                      {fangLanguageList.map((item) => (
-                        <Option key={item.id} value={item.id}>
-                          {item.name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                )}
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="家庭经济状况"
-                  name="economicType"
-                  rules={[{ required: true, message: '请选择家庭经济状况' }]}
-                >
-                  <Radio.Group>
-                    {economicTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="户口类别"
-                  name="hukouType"
-                  rules={[{ required: true, message: '请选择户口类别' }]}
-                >
-                  <Radio.Group>
-                    {hukouTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="享受医疗保险情况"
-                  name="medicalInsuranceType"
-                  rules={[{ required: true, message: '请选择享受医疗保险情况' }]}
-                >
-                  <Radio.Group>
-                    {medicalInsuranceTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
-
-          <Card
-            loading={pageLoading}
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={why} width={30} height={30} />
-                就诊原因
-              </>
-            }
-            bordered={false}
-          >
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item labelCol={{ span: 9 }} label="行为" name="isBehaviorUnusual">
-                  <Radio.Group onChange={(e) => setIsBehaviorUnusualShow(e.target.value)}>
-                    <Radio value={false}>正常</Radio>
-                    <Radio value={true}>异常</Radio>
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-              <Col span={12} style={{ marginLeft: -100 }}>
-                {isBehaviorUnusualShow && (
-                  <Form.Item name="abnormalActionIds">
-                    <Select mode="multiple" size="small" placeholder="请选择异常情况(可多选)">
-                      {abnormalActionList.map((item) => (
-                        <Option key={item.id} value={item.id}>
-                          {item.name}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                )}
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  {...FormMoreItemLayout}
-                  label="既往医疗康复情况"
-                  name="patientPastRecoveryConnectBos"
-                >
-                  <Checkbox.Group
-                    onChange={(codeArr) => {
-                      setOtherShow(codeArr.includes(5));
-                      if (!codeArr.includes(5)) {
-                        form.setFields([
-                          {
-                            name: 'other',
-                            value: '',
-                          },
-                        ]);
-                      }
-                    }}
-                    options={patientPastRecoveryConnectBosList}
+                  <Input
+                    style={{ width: 'calc(100% - 4px)', marginLeft: 4 }}
+                    placeholder="请输入邮政编码"
                   />
                 </Form.Item>
-                {otherShow && (
-                  <Form.Item {...FormMoreItemLayout} name="other">
-                    <Input />
-                  </Form.Item>
-                )}
               </Col>
             </Row>
-          </Card>
-
-          <Card
-            loading={pageLoading}
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={chengz} width={30} height={30} />
-                成长记录
-              </>
-            }
-            bordered={false}
-          >
             <Row>
-              <Col span={15}>
-                <Row gutter={16}>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="喂养方式" name="supportTypeId">
-                      <Select placeholder="请选择">
-                        {supportTypeList.map((item) => (
-                          <Option key={item.id} value={item.id}>
-                            {item.name}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="高热抽搐" name="feverTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会抬头时间" name="canGainGroundTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会翻身时间" name="canTurnOverTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会爬行时间" name="canClimbTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会笑时间" name="canLaughTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row gutter={16}>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会坐时间" name="canSitTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会走时间" name="canWalkTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                  <Col lg={8} md={6} sm={24}>
-                    <Form.Item {...FormItemlayout} label="会说话时间" name="caTalkTimeId">
-                      <Select placeholder="请选择">{getTimeOption()}</Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
+              <Col span={24}>
+                <Form.Item
+                  labelCol={{ span: 4 }}
+                  label="身份证号码"
+                  name="idCardCode"
+                  rules={[
+                    { required: true, message: '请输入身份证号码' },
+                    {
+                      pattern: /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/,
+                      message: '身份证格式不正确',
+                    },
+                  ]}
+                >
+                  <Input
+                    style={{ width: 'calc(100% - 4px)', marginLeft: 4 }}
+                    placeholder="请输入身份证号码"
+                  />
+                </Form.Item>
               </Col>
             </Row>
-          </Card>
+            <Row>
+              <Col span={24}>
+                <Form.Item
+                  labelCol={{ span: 4 }}
+                  label="户籍所在地"
+                  name="regionAddress"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择户籍所在地',
+                    },
+                    {
+                      validator: checkAddress,
+                    },
+                  ]}
+                >
+                  <CitySelect />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Card
-            loading={pageLoading}
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={chusheng} width={30} height={30} />
-                出生记录
-              </>
-            }
-            bordered={false}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item labelCol={{ span: 5 }} label="出生地点" name="birthPlaceType">
-                  <Radio.Group onChange={(e) => birthPlaceTypeChange(e)}>
-                    {birthPlaceTypeList.map((item) => (
-                      <Radio key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Radio>
-                    ))}
-                  </Radio.Group>
-                </Form.Item>
-              </Col>
-              <Col span={12} style={{ marginLeft: '-22%' }}>
-                {otherBirthPlaceShow === 1 && (
-                  <Form.Item name="birthPlaceDesc">
-                    <Input placeholder="请输入具体医院信息" />
-                  </Form.Item>
-                )}
-                {otherBirthPlaceShow === 3 && (
-                  <Form.Item name="otherBirthPlace">
-                    <Input placeholder="请输入其他出生地点" />
-                  </Form.Item>
-                )}
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col lg={6} md={6} sm={24}>
-                <Form.Item {...FormItemlayout} label="出生孕周" name="pregnancyWeeksId">
-                  <Select placeholder="请选择">
-                    {pregnancyWeeksList.map((item) => (
-                      <Option key={item.id} value={item.id}>
-                        {item.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col lg={6} md={6} sm={24}>
-                <Form.Item {...FormItemlayout} label="出生体重" name="birthWeightId">
-                  <Select placeholder="请选择">
-                    {birthWeightList.map((item) => (
-                      <Option key={item.id} value={item.id}>
-                        {item.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col lg={6} md={6} sm={24}>
-                <Form.Item {...FormItemlayout} label="胎数" name="fetusNumId">
-                  <Select placeholder="请选择">
-                    {fetusNumList.map((item) => (
-                      <Option key={item.id} value={item.id}>
-                        {item.name}
-                      </Option>
-                    ))}
-                  </Select>
+            <Row>
+              <Col span={24}>
+                <Form.Item
+                  labelCol={{ span: 4 }}
+                  label="现居住地址"
+                  name="nowAddress"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择现居住地址',
+                    },
+                    {
+                      validator: checkAddress,
+                    },
+                  ]}
+                >
+                  <CitySelect />
                 </Form.Item>
               </Col>
             </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item labelCol={{ span: 5 }} label="高危因素" name="allBirthDangerInfo">
-                  <Select
-                    onChange={(val) => birthDangerInfoChange(val, false)}
-                    placeholder="请选择"
-                  >
-                    {baseInfoDangerTypeList.map((item) => (
-                      <Option key={item.code} value={item.code}>
-                        {item.codeCn}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col>
-                <Form.Item name="birthRecordDangerInfoBos">
-                  <Checkbox.Group options={birthRecordDangerInfoBosList} />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
+          </Col>
+        </Row>
+      </Card>
 
-          <Card
-            style={{ marginTop: 20 }}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={guomin} width={30} height={30} />
-                过敏史与家族史
-              </>
-            }
-            bordered={false}
-          >
-            <Row gutter={16}>
-              <Col span={16}>
-                <MedicalHistorySelect
-                  form={form}
-                  list={patientAllergyConnectList}
-                  name="patientAllergyConnectBos"
-                  label="过敏史"
-                  postFields={['allergyId', 'description']}
-                />
+      <Card
+        loading={pageLoading}
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={family} width={30} height={30} />
+            家庭成员
+          </>
+        }
+        bordered={false}
+      >
+        <Form.List name="patientFamilyMemberInfoBos">
+          {(fields, { add, remove }) => (
+            <>
+              {fields.map((field, index) => {
+                return (
+                  <div key={field.key}>
+                    <Row>
+                      <Col span={10}>
+                        {index !== 2 && (
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'name']}
+                            fieldKey={[field.fieldKey, 'name']}
+                            {...FormItemCard2layout}
+                            label={index === 0 ? '父亲姓名' : '母亲姓名'}
+                            // rules={[{ required: true, message: '请填写姓名' }]}
+                          >
+                            <Input placeholder="请填写姓名" />
+                          </Form.Item>
+                        )}
+
+                        {index === 2 && (
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'mainCarefulId']}
+                            fieldKey={[field.fieldKey, 'mainCarefulId']}
+                            {...FormItemCard2layout}
+                            label="主要照顾者"
+                            rules={[{ required: true, message: '请选择主要照顾者' }]}
+                          >
+                            <Select placeholder="请选择主要照顾者">
+                              {mainList.map((item) => (
+                                <Option key={item.id} value={item.id}>
+                                  {item.name}
+                                </Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                        )}
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'mobile']}
+                          fieldKey={[field.fieldKey, 'mobile']}
+                          labelCol={{ span: 8 }}
+                          label="联系电话"
+                          rules={
+                            index === 2
+                              ? [
+                                  { required: true, message: '请填写联系电话' },
+                                  {
+                                    pattern: /^[0-9]*$/,
+                                    message: '请填写正确的电话号码',
+                                  },
+                                ]
+                              : null
+                          }
+                        >
+                          <Input placeholder="请填写联系电话" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={8}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'birthYear']}
+                          fieldKey={[field.fieldKey, 'birthYear']}
+                          labelCol={{ span: 7 }}
+                          label="出生年份"
+                          rules={
+                            index === 2 ? [{ required: true, message: '请选择出生年份' }] : null
+                          }
+                        >
+                          <DatePicker
+                            disabledDate={(current) => {
+                              return current && current > moment().endOf('year');
+                            }}
+                            picker="year"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col span={10}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'profession']}
+                          fieldKey={[field.fieldKey, 'profession']}
+                          {...FormItemCard2layout}
+                          label="职业种类"
+                          rules={
+                            index === 2
+                              ? [
+                                  { required: true, message: '请选择职业种类' },
+                                  {
+                                    validator: checkProfession,
+                                  },
+                                ]
+                              : null
+                          }
+                        >
+                          <ProfessionSelect professionList={professionList} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'educationDegreeId']}
+                          fieldKey={[field.fieldKey, 'educationDegreeId']}
+                          labelCol={{ span: 8 }}
+                          label="文化程度"
+                          rules={
+                            index === 2 ? [{ required: true, message: '请选择文化程度' }] : null
+                          }
+                        >
+                          <Select placeholder="请选择文化程度">
+                            {educationDegreeList.map((item) => (
+                              <Option key={item.id} value={item.id}>
+                                {item.name}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                );
+              })}
+            </>
+          )}
+        </Form.List>
+      </Card>
+
+      <Card
+        loading={pageLoading}
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={family} width={30} height={30} />
+            家庭状况
+          </>
+        }
+        bordered={false}
+      >
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="家庭模式"
+              name="familyType"
+              rules={[{ required: true, message: '请选择家庭模式' }]}
+            >
+              <Radio.Group>
+                {familyTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="居住社区"
+              name="communityType"
+              rules={[{ required: true, message: '请选择居住社区' }]}
+            >
+              <Radio.Group>
+                {communityTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="教养方式"
+              name="educationType"
+              rules={[{ required: true, message: '请选择教养方式' }]}
+            >
+              <Radio.Group>
+                {educationTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              labelCol={{ span: 9 }}
+              label="语言环境"
+              name="languageType"
+              rules={[{ required: true, message: '请选择语言环境' }]}
+            >
+              <Radio.Group
+                onChange={(e) => {
+                  setLanguageTypeShow(e.target.value);
+                  if (e.target.value === 1) {
+                    form.setFields([
+                      {
+                        name: 'languageId',
+                        value: '',
+                      },
+                    ]);
+                  }
+                }}
+              >
+                {languageTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+          <Col span={12} style={{ marginLeft: -100 }}>
+            {languageTypeShow === 2 && (
+              <Form.Item
+                style={{ width: 150 }}
+                name="languageId"
+                rules={[{ required: true, message: '请选择地方方言' }]}
+              >
+                <Select size="small" style={{ width: 100 }} placeholder="请选择地方方言">
+                  {fangLanguageList.map((item) => (
+                    <Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            )}
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="家庭经济状况"
+              name="economicType"
+              rules={[{ required: true, message: '请选择家庭经济状况' }]}
+            >
+              <Radio.Group>
+                {economicTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="户口类别"
+              name="hukouType"
+              rules={[{ required: true, message: '请选择户口类别' }]}
+            >
+              <Radio.Group>
+                {hukouTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="享受医疗保险情况"
+              name="medicalInsuranceType"
+              rules={[{ required: true, message: '请选择享受医疗保险情况' }]}
+            >
+              <Radio.Group>
+                {medicalInsuranceTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card
+        loading={pageLoading}
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={why} width={30} height={30} />
+            就诊原因
+          </>
+        }
+        bordered={false}
+      >
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item labelCol={{ span: 9 }} label="行为" name="isBehaviorUnusual">
+              <Radio.Group onChange={(e) => setIsBehaviorUnusualShow(e.target.value)}>
+                <Radio value={false}>正常</Radio>
+                <Radio value={true}>异常</Radio>
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+          <Col span={12} style={{ marginLeft: -100 }}>
+            {isBehaviorUnusualShow && (
+              <Form.Item name="abnormalActionIds">
+                <Select mode="multiple" size="small" placeholder="请选择异常情况(可多选)">
+                  {abnormalActionList.map((item) => (
+                    <Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            )}
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={24}>
+            <Form.Item
+              {...FormMoreItemLayout}
+              label="既往医疗康复情况"
+              name="patientPastRecoveryConnectBos"
+            >
+              <Checkbox.Group
+                onChange={(codeArr) => {
+                  setOtherShow(codeArr.includes(5));
+                  if (!codeArr.includes(5)) {
+                    form.setFields([
+                      {
+                        name: 'other',
+                        value: '',
+                      },
+                    ]);
+                  }
+                }}
+                options={patientPastRecoveryConnectBosList}
+              />
+            </Form.Item>
+            {otherShow && (
+              <Form.Item {...FormMoreItemLayout} name="other">
+                <Input />
+              </Form.Item>
+            )}
+          </Col>
+        </Row>
+      </Card>
+
+      <Card
+        loading={pageLoading}
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={chengz} width={30} height={30} />
+            成长记录
+          </>
+        }
+        bordered={false}
+      >
+        <Row>
+          <Col span={20}>
+            <Row>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="喂养方式" name="supportTypeId">
+                  <Select placeholder="请选择">
+                    {supportTypeList.map((item) => (
+                      <Option key={item.id} value={item.id}>
+                        {item.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="高热抽搐" name="feverTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会抬头时间" name="canGainGroundTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
               </Col>
             </Row>
-            <Divider />
-            <Row gutter={16}>
-              <Col span={16}>
-                <MedicalHistorySelect
-                  form={form}
-                  list={patientFamilyDiseaseHistoryList}
-                  name="patientFamilyDiseaseHistoryBos"
-                  label="家族史"
-                  postFields={['diseaseHistoryId', 'description']}
-                />
+            <Row>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会翻身时间" name="canTurnOverTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会爬行时间" name="canClimbTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会笑时间" name="canLaughTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
               </Col>
             </Row>
-            <Divider />
-            <Row gutter={16}>
-              <Col span={16}>
-                <MedicalHistorySelect
-                  form={form}
-                  list={patientDiseaseList}
-                  name="patientDiseaseBos"
-                  label="病症史"
-                  postFields={['diseaseId', 'description']}
-                />
+            <Row>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会坐时间" name="canSitTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会走时间" name="canWalkTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
+              </Col>
+              <Col span={8}>
+                <Form.Item {...FormRecordItemlayout} label="会说话时间" name="caTalkTimeId">
+                  <Select placeholder="请选择">{getTimeOption()}</Select>
+                </Form.Item>
               </Col>
             </Row>
-          </Card>
-        </Form>
-      </div>
-    </>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card
+        loading={pageLoading}
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={chusheng} width={30} height={30} />
+            出生记录
+          </>
+        }
+        bordered={false}
+      >
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item labelCol={{ span: 5 }} label="出生地点" name="birthPlaceType">
+              <Radio.Group onChange={(e) => birthPlaceTypeChange(e)}>
+                {birthPlaceTypeList.map((item) => (
+                  <Radio key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Radio>
+                ))}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+          <Col span={12} style={{ marginLeft: '-22%' }}>
+            {otherBirthPlaceShow === 1 && (
+              <Form.Item name="birthPlaceDesc">
+                <Input placeholder="请输入具体医院信息" />
+              </Form.Item>
+            )}
+            {otherBirthPlaceShow === 3 && (
+              <Form.Item name="otherBirthPlace">
+                <Input placeholder="请输入其他出生地点" />
+              </Form.Item>
+            )}
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={6}>
+            <Form.Item {...FormItemlayout} label="出生孕周" name="pregnancyWeeksId">
+              <Select placeholder="请选择">
+                {pregnancyWeeksList.map((item) => (
+                  <Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item {...FormItemlayout} label="出生体重" name="birthWeightId">
+              <Select placeholder="请选择">
+                {birthWeightList.map((item) => (
+                  <Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={6}>
+            <Form.Item {...FormItemlayout} label="胎数" name="fetusNumId">
+              <Select placeholder="请选择">
+                {fetusNumList.map((item) => (
+                  <Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item labelCol={{ span: 5 }} label="高危因素" name="allBirthDangerInfo">
+              <Select onChange={(val) => birthDangerInfoChange(val, false)} placeholder="请选择">
+                {baseInfoDangerTypeList.map((item) => (
+                  <Option key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col>
+            <Form.Item name="birthRecordDangerInfoBos">
+              <Checkbox.Group options={birthRecordDangerInfoBosList} />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Card>
+
+      <Card
+        style={{ marginTop: 20 }}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={guomin} width={30} height={30} />
+            过敏史与家族史
+          </>
+        }
+        bordered={false}
+      >
+        <Row gutter={16}>
+          <Col span={16}>
+            <MedicalHistorySelect
+              form={form}
+              list={patientAllergyConnectList}
+              name="patientAllergyConnectBos"
+              label="过敏史"
+              postFields={['allergyId', 'description']}
+            />
+          </Col>
+        </Row>
+        <Divider />
+        <Row gutter={16}>
+          <Col span={16}>
+            <MedicalHistorySelect
+              form={form}
+              list={patientFamilyDiseaseHistoryList}
+              name="patientFamilyDiseaseHistoryBos"
+              label="家族史"
+              postFields={['diseaseHistoryId', 'description']}
+            />
+          </Col>
+        </Row>
+        <Divider />
+        <Row gutter={16}>
+          <Col span={16}>
+            <MedicalHistorySelect
+              form={form}
+              list={patientDiseaseList}
+              name="patientDiseaseBos"
+              label="病症史"
+              postFields={['diseaseId', 'description']}
+            />
+          </Col>
+        </Row>
+      </Card>
+      <FooterToolbar>
+        {getErrorInfo(error)}
+        
+        {getAuth(authKey)?.canEdit && (
+          <>
+            <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
+              提交
+            </Button>
+            <Button style={{ marginBottom: 20 }} type="primary" onClick={handelCopyText}>
+              复制本页文档内容
+            </Button>
+          </>
+        )}
+      </FooterToolbar>
+    </Form>
   );
 };
 

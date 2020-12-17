@@ -536,7 +536,7 @@ const SCORES = {
 };
 
 const sortData = (type, answers) => {
-  console.log(type);
+  // console.log(type);
 
   const mapping = {};
   // 先產生對應 { no:sort }
@@ -559,7 +559,7 @@ const sortData = (type, answers) => {
   answerQuestions.forEach(question => {
     const { title } = JSON.parse(question.questionContent);
 
-    console.log(question.questionNo, ':', title);
+    // console.log(question.questionNo, ':', title);
 
     data.push({
       no: question.questionNo,

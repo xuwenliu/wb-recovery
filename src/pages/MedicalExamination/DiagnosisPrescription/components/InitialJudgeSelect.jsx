@@ -2,40 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, Select } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import {
-  getCheckAll,
-  getCheckTree,
-  getCheckChildren,
-} from '@/pages/Function/ColumnLocation/service';
+import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
 
-const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
+const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timestamp }) => {
   const [checkList1, setCheckList1] = useState([]);
   const [checkList2, setCheckList2] = useState([]);
   const [checkList3, setCheckList3] = useState([]);
   const [checkList4, setCheckList4] = useState([]);
-
-  // 获取下拉信息
-  // const queryCheckTree = async () => {
-  //   const res = await getCheckTree();
-  //   // 5=ICD10 3=现病史
-  //   setCheckList1(res.filter((item) => item.type === type));
-  // };
-
-  // const onCheckList1Change = (parentId) => {
-  //   const children = checkList1.filter((item) => item.id === parentId)[0]?.children;
-  //   setCheckList2(children || []);
-  //   return children;
-  // };
-  // const onCheckList2Change = (parentId, list) => {
-  //   const children = (list || checkList2).filter((item) => item.id === parentId)[0]?.children;
-  //   setCheckList3(children || []);
-  //   return children;
-  // };
-  // const onCheckList3Change = (parentId, list) => {
-  //   const children = (list || checkList3).filter((item) => item.id === parentId)[0]?.children;
-  //   setCheckList4(children || []);
-  //   return children;
-  // };
 
   // 获取下拉信息
   const queryCheckAll = async () => {
@@ -44,15 +17,51 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
     setCheckList1(res.filter((item) => item.type === type));
   };
 
-  const onCheckList1Change = async (parentId) => {
+  const onCheckList1Change = async (parentId, index) => {
+    if (index || index == 0) {
+      // 一级切换把后面的设置为空
+      let newValue = form.getFieldValue(name);
+      newValue[index] = {
+        ...newValue[index],
+        [postFields[1]]: '',
+        [postFields[2]]: '',
+        [postFields[3]]: '',
+      };
+      form.setFields([{ name, value: newValue }]);
+      setCheckList2([]);
+      setCheckList3([]);
+      setCheckList4([]);
+    }
     const res = await getCheckChildren({ parentId });
     setCheckList2(res);
   };
-  const onCheckList2Change = async (parentId) => {
+  const onCheckList2Change = async (parentId, index) => {
+    if (index || index == 0) {
+      // 二级切换把后面的设置为空
+      let newValue = form.getFieldValue(name);
+      newValue[index] = {
+        ...newValue[index],
+        [postFields[2]]: '',
+        [postFields[3]]: '',
+      };
+      form.setFields([{ name, value: newValue }]);
+      setCheckList3([]);
+      setCheckList4([]);
+    }
     const res = await getCheckChildren({ parentId });
     setCheckList3(res);
   };
-  const onCheckList3Change = async (parentId) => {
+  const onCheckList3Change = async (parentId, index) => {
+    if (index || index == 0) {
+      // 三级切换把后面的设置为空
+      let newValue = form.getFieldValue(name);
+      newValue[index] = {
+        ...newValue[index],
+        [postFields[3]]: '',
+      };
+      form.setFields([{ name, value: newValue }]);
+      setCheckList4([]);
+    }
     const res = await getCheckChildren({ parentId });
     setCheckList4(res);
   };
@@ -73,31 +82,11 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
     ]);
 
     queryCheckAll();
-    // queryCheckTree();
   }, []);
-
-  // useEffect(() => {
-  //   const value = form.getFieldValue(name);
-  //   if (value) {
-  //     value.map((item) => {
-  //       let list2 = [];
-  //       let list3 = [];
-  //       if (item[postFields[0]]) {
-  //         list2 = onCheckList1Change(item[postFields[0]]);
-  //       }
-  //       if (item[postFields[1]]) {
-  //         list3 = onCheckList2Change(item[postFields[1]], list2);
-  //       }
-  //       if (item[postFields[2]]) {
-  //         onCheckList3Change(item[postFields[2]], list3);
-  //       }
-  //     });
-  //   }
-  // }, [form.getFieldValue(name)]);
 
   useEffect(() => {
     const value = form.getFieldValue(name);
-    if (value) {
+    if (value && value.length != 0) {
       value.map((item) => {
         if (item[postFields[0]]) {
           onCheckList1Change(item[postFields[0]]);
@@ -109,8 +98,23 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
           onCheckList3Change(item[postFields[2]]);
         }
       });
+    } else {
+      // 获取的患者没有进行过操作则，默认显示一条数据
+      form.setFields([
+        {
+          name,
+          value: [
+            {
+              [postFields[0]]: '',
+              [postFields[1]]: '',
+              [postFields[2]]: '',
+              [postFields[3]]: '',
+            },
+          ],
+        },
+      ]);
     }
-  }, [form.getFieldValue(name)]);
+  }, [form.getFieldValue(name), timestamp]);
 
   return (
     <Form.List name={name}>
@@ -134,7 +138,7 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
                     rules={rules}
                     fieldKey={[field.fieldKey, postFields[0]]}
                   >
-                    <Select onChange={onCheckList1Change} placeholder="请选择">
+                    <Select onChange={(val) => onCheckList1Change(val, index)}>
                       {checkList1.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -153,10 +157,9 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
                   <Form.Item
                     {...field}
                     name={[field.name, postFields[1]]}
-                    rules={rules}
                     fieldKey={[field.fieldKey, postFields[1]]}
                   >
-                    <Select onChange={onCheckList2Change} placeholder="请选择">
+                    <Select onChange={(val) => onCheckList2Change(val, index)}>
                       {checkList2.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -175,10 +178,9 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
                   <Form.Item
                     {...field}
                     name={[field.name, postFields[2]]}
-                    rules={rules}
                     fieldKey={[field.fieldKey, postFields[2]]}
                   >
-                    <Select onChange={onCheckList3Change} placeholder="请选择">
+                    <Select onChange={(val) => onCheckList3Change(val, index)}>
                       {checkList3.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -197,10 +199,9 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules }) => {
                   <Form.Item
                     {...field}
                     name={[field.name, postFields[3]]}
-                    rules={rules}
                     fieldKey={[field.fieldKey, postFields[3]]}
                   >
-                    <Select placeholder="请选择">
+                    <Select>
                       {checkList4.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}

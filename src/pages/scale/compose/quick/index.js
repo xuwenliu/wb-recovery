@@ -15,24 +15,20 @@ import { Paper } from '@material-ui/core';
 import Button from '@/components/Common/Button';
 import AutoComplete from '@/components/AutoComplete';
 
-import SubScale from '../../components/SubScale';
-import { getError } from '@/utils/error';
 import Demographics from '@/pages/scale/components/Demographics';
+import { lineControl, formControl } from '@/utils/publicStyles';
+import SubScale from '../../components/SubScale';
 
+/**
+ * 主要差異在跳轉的地方
+ * 1.答題後要跳轉到哪邊
+ *
+ * 人口學變量有改變
+ *
+ */
 const useStyles = makeStyles({
-  formControl: {
-    display: 'block',
-    margin: 20,
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        width: 230,
-      },
-    },
-    minWidth: 300,
-  },
-  lineControl: {
-    margin: 20,
-  },
+  formControl: formControl,
+  lineControl: lineControl,
 });
 
 function Page({
@@ -57,19 +53,14 @@ function Page({
     });
   };
 
-  const fetchScale = compose => {
+  const fetchScale = (compose) => {
     dispatch({
       type: 'scaleComposeQuick/fetchScale',
       payload: { scaleId: compose },
     });
-
-    dispatch({
-      type: 'scaleComposeQuick/fetchSubScaleNames',
-      payload: { id: compose },
-    });
   };
 
-  const fetchObject = objectId => {
+  const fetchObject = (objectId) => {
     dispatch({
       type: 'scaleComposeQuick/fetchObjectDetail',
       payload: { id: objectId },
@@ -79,7 +70,7 @@ function Page({
   /**
    * 避免短時間內重複查詢
    */
-  const { run: handleSearch } = useDebounceFn(number => {
+  const { run: handleSearch } = useDebounceFn((number) => {
     dispatch({
       type: 'scaleComposeQuick/fetchObject',
       payload: { number },
@@ -93,13 +84,13 @@ function Page({
 
     if (subScales.length > 1) {
       // 多個子量表的答題
-      router.replace({
+      router.push({
         pathname: '/scale/compose/answer',
         query: { compose: scale.id, id },
       });
     } else {
       // 直接打題
-      router.replace({
+      router.push({
         pathname: '/scale/compose/answer/single',
         query: { compose: scale.id, id, subScale: subScales[0] },
       });
@@ -112,7 +103,7 @@ function Page({
         const testeeInfo = [];
         const { subScales } = values;
 
-        Object.keys(values).forEach(key => {
+        Object.keys(values).forEach((key) => {
           if (key !== 'subScales') {
             const v = {};
             v[key] = values[key];
@@ -138,10 +129,10 @@ function Page({
     return { items: [...subScaleNames] };
   };
 
-  const demographicsOnChange = values => {
+  const demographicsOnChange = (values) => {
     // 過濾空白
     const demographics = {};
-    Object.keys(values).forEach(key => {
+    Object.keys(values).forEach((key) => {
       if (values[key] !== '') {
         demographics[key] = values[key];
       }
@@ -149,7 +140,7 @@ function Page({
 
     /** 帶出子量表 */
     dispatch({
-      type: 'scaleComposeTesteeInfo/fetchSubScaleNames',
+      type: 'scaleComposeQuick/fetchSubScaleNames',
       payload: { id: scale.id, demographics },
     });
   };
@@ -176,12 +167,12 @@ function Page({
           <FormControl className={classes.formControl}>
             <InputLabel className={classes.text}>量表</InputLabel>
             <Select
-              onChange={event => {
+              onChange={(event) => {
                 fetchScale(event.target.value);
               }}
             >
-              {scales.content.map(s => (
-                <MenuItem value={s.id} id={s.id}>
+              {scales.content.map((s) => (
+                <MenuItem key={s.id} value={s.id} id={s.id}>
                   {s.scaleName}
                 </MenuItem>
               ))}
@@ -189,8 +180,8 @@ function Page({
           </FormControl>
           <AutoComplete
             label="人员代码"
-            loading={loading}
-            onInputChange={value => {
+            // loading={loading}
+            onInputChange={(value) => {
               const vs = value.split('.');
               if (vs.length === 1) {
                 handleSearch(value);
@@ -199,7 +190,7 @@ function Page({
             onChange={({ value }) => {
               fetchObject(value);
             }}
-            options={objects.content.map(i => {
+            options={objects.content.map((i) => {
               return {
                 value: i.id,
                 label: `${i.number}.${i.name}`,
@@ -220,9 +211,9 @@ function Page({
                 onChange={demographicsOnChange}
               />
               {getFieldDecorator('subScales', {
-                initialValue: subScaleInfo.items,
-                rules: [],
-              })(<SubScale data={subScaleInfo.items} />)}
+                initialValue: scale.choiceType === 'SINGLE' ? [] : subScaleInfo.items,
+                rules: [{ required: true, message: '子量表不可为空' }],
+              })(<SubScale choiceType={scale.choiceType} data={subScaleInfo.items} />)}
 
               {subScaleInfo.alert ? (
                 <Alert style={{ margin: '10px' }} severity="info">

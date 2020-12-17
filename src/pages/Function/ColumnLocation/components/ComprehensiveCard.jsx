@@ -1,20 +1,23 @@
-import { Form, Card, Select, Row, Col, Divider, Input, message } from 'antd';
+import { Form, Card, Button, Modal, Input, message } from 'antd';
 import React, { useState, useEffect } from 'react';
+import ProList from '@ant-design/pro-list';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+
 import {
   getComprehensiveAllSection,
   createComprehensive,
+  removeComprehensive,
 } from '@/pages/Function/ColumnLocation/service';
 import { getCommonEnums } from '@/services/common';
-
-const formItemLayout = {
-  labelCol: { span: 14 },
-  wrapperCol: { span: 10 },
-};
+import { getAuth } from '@/utils/utils';
 
 const ComprehensiveCard = () => {
   const [loading, setLoading] = useState(true);
   const [parentSection, setParentSection] = useState([]);
-  const [name, setName] = useState('');
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [parentInfo, setParentInfo] = useState();
+
   const [form] = Form.useForm();
 
   const queryComprehensiveSectionAll = async () => {
@@ -28,6 +31,8 @@ const ComprehensiveCard = () => {
       const newCommon = commonArr
         .map((item) => {
           item.list = [];
+          item.type = item.code;
+          item.name = item.codeCn;
           res.forEach((sub) => {
             if (item.code === sub.type) {
               item.list.push(sub);
@@ -36,7 +41,7 @@ const ComprehensiveCard = () => {
           return item;
         })
         .sort((a, b) => a.ordianl - b.ordianl);
-        console.log('newCommon',newCommon)
+      console.log('newCommon', newCommon);
       setParentSection(newCommon);
     }
   };
@@ -45,24 +50,93 @@ const ComprehensiveCard = () => {
     queryComprehensiveSectionAll();
   }, []);
 
-  const addItem = async (item) => {
-    if (!name) {
-      message.error('请输入需要添加的名称');
-      return;
-    }
-    let postData = {
-      name,
-      type: item.code,
-    };
-
-    const res = await createComprehensive(postData);
-    if (res) {
-      message.success('新增成功');
-      setName('');
-      queryComprehensiveSectionAll();
-    }
-    console.log(res);
+  const handleRemove = (item) => {
+    Modal.confirm({
+      title: `确定删除【${item.name}】吗？`,
+      icon: <ExclamationCircleOutlined />,
+      onOk: async () => {
+        const res = await removeComprehensive({
+          id: item.id,
+        });
+        if (res) {
+          message.success('删除成功');
+          queryComprehensiveSectionAll();
+        }
+      },
+    });
+    console.log(item);
   };
+
+  // 新增
+  const handleAdd = (item) => {
+    setIsModalVisible(true);
+    setParentInfo(item);
+  };
+
+  // 取消
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  // 确定
+  const handleOk = async () => {
+    const values = await form.validateFields();
+    if (values) {
+      const getValues = form.getFieldsValue();
+      const postData = {
+        ...getValues,
+        type: parentInfo.type,
+      };
+      const res = await createComprehensive(postData);
+      if (res) {
+        message.success('新增成功');
+        queryComprehensiveSectionAll();
+        handleCancel();
+      }
+    }
+  };
+
+  const getProList = (item) => {
+    return (
+      <ProList
+        rowKey="id"
+        split
+        expandable={{
+          rowExpandable: (record) => record.expandable,
+          expandedRowKeys,
+          onExpandedRowsChange: setExpandedRowKeys,
+        }}
+        dataSource={item.list}
+        metas={{
+          title: {
+            dataIndex: 'name',
+          },
+          description: {
+            render: (_, record) => {
+              return record.list && getProList(record);
+            },
+          },
+          actions: {
+            render: (_, record) => [
+              getAuth()?.canEdit && (
+                <Button
+                  onClick={() => handleRemove(record)}
+                  key="remove"
+                  danger
+                  type="primary"
+                  size="small"
+                >
+                  删除
+                </Button>
+              ),
+            ],
+          },
+        }}
+      />
+    );
+  };
+
   return (
     <Card
       loading={loading}
@@ -72,55 +146,42 @@ const ComprehensiveCard = () => {
       }}
       bordered={false}
     >
-      <Form
-        form={form}
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
+      <ProList
+        rowKey="type"
+        split
+        expandable={{
+          expandedRowKeys,
+          onExpandedRowsChange: setExpandedRowKeys,
         }}
-      >
-        {parentSection.map((item, index) => {
-          return (
-            <Col key={index} span={12}>
-              <Form.Item {...formItemLayout} label={item.codeCn}>
-                <Select
-                  allowClear
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '4px 0' }} />
-                      <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                        <Input
-                          style={{ flex: 'auto' }}
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                        <a
-                          style={{
-                            flex: 'none',
-                            padding: '8px',
-                            display: 'block',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => addItem(item)}
-                        >
-                          新增
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {item.list.map((sub) => (
-                    <Select.Option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          );
-        })}
-      </Form>
+        dataSource={parentSection}
+        metas={{
+          title: {
+            dataIndex: 'name',
+          },
+          description: {
+            render: (_, record) => {
+              return record.list && getProList(record);
+            },
+          },
+          actions: {
+            render: (_, record) => [
+              getAuth()?.canEdit && (
+                <Button onClick={() => handleAdd(record)} type="primary" size="small">
+                  新增
+                </Button>
+              ),
+            ],
+          },
+        }}
+      />
+
+      <Modal title="编辑" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+        <Form form={form}>
+          <Form.Item name="name" rules={[{ required: true, message: '请输入内容' }]}>
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Card>
   );
 };

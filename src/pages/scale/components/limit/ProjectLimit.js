@@ -8,7 +8,6 @@ const useStyles = makeStyles({
     display: 'block',
     marginTop: 20,
     marginBottom: 20,
-    // margin: 20
   },
   lineControl: {
     marginTop: 15,

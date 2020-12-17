@@ -7,6 +7,7 @@ import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
 import { connect } from 'umi';
 const FormItem = Form.Item;
 import moment from 'moment';
+import { getProjectAllProject } from '@/pages/Function/ResearchProject/service';
 
 let updateId = '';
 
@@ -60,17 +61,27 @@ const IndividualCase = (props) => {
     setDiseaseTypeList(getSingleEnums('DiseaseType', newArr)); //病因分类
   };
 
+  const queryProjectAllProject = async () => {
+    const res = await getProjectAllProject();
+    if (res) {
+      setAllName(res);
+    }
+  };
+
   const columns = [
     {
       title: '项目名称',
-      dataIndex: 'name',
+      dataIndex: 'projectId',
       hideInTable: true,
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
         return (
-          <Select placeholder="请选择项目名称">
+          <Select
+            onFocus={allName.length === 0 && queryProjectAllProject}
+            placeholder="请选择项目名称"
+          >
             {allName.map((item, index) => (
-              <Select.Option value={item} key={index}>
-                {item}
+              <Select.Option value={item.id} key={item.id}>
+                {item.name}
               </Select.Option>
             ))}
           </Select>
@@ -102,7 +113,11 @@ const IndividualCase = (props) => {
       dataIndex: 'diseaseNames',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
         return (
-          <Select onFocus={diseaseTypeList.length === 0 && queryEnums} placeholder="请选择病因">
+          <Select
+            listHeight={300}
+            onFocus={diseaseTypeList.length === 0 && queryEnums}
+            placeholder="请选择病因"
+          >
             {diseaseTypeList.map((item) => (
               <Select.Option value={item.code} key={item.code}>
                 {item.codeCn}
@@ -111,11 +126,6 @@ const IndividualCase = (props) => {
           </Select>
         );
       },
-    },
-    {
-      title: '所属单位',
-      dataIndex: 'danWei',
-      search: false,
     },
     {
       title: '就诊次数',
@@ -136,18 +146,18 @@ const IndividualCase = (props) => {
       },
     },
 
-    {
-      title: '操作',
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => (
-        <>
-          <Button size="small" onClick={() => handleUpdate(record, 1)} type="success">
-            查看详情
-          </Button>
-        </>
-      ),
-    },
+    // {
+    //   title: '操作',
+    //   dataIndex: 'option',
+    //   valueType: 'option',
+    //   render: (_, record) => (
+    //     <>
+    //       <Button size="small" onClick={() => handleUpdate(record, 1)} type="success">
+    //         查看详情
+    //       </Button>
+    //     </>
+    //   ),
+    // },
   ];
 
   return (

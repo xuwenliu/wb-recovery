@@ -5,7 +5,7 @@ import Avatar from '@material-ui/core/Avatar';
 import { getExampleData } from '@/pages/scale/suggest/utils';
 
 import Paper from '@material-ui/core/Paper';
-import styles from '@/utils/publicstyle';
+import styles from '@/utils/classStyle';
 import { trim } from 'lodash/string';
 import LayoutManager from './LayoutManager';
 import SuggestItem from './SuggestItem';
@@ -29,16 +29,25 @@ function AEPS(props) {
     const refs = [];
 
     const filter = ({ ds, item, index }) => {
-      const { name, tag } = ds;
+      const { tag } = ds;
+      const name = ds.name.trim();
+
+      // console.log('ds [name:',name,'tag:',tag,'] group:',group);
+
+      // console.log('ds [name:',name,']');
 
       if (group.name !== name) {
-        group = { name, targetCount: 0 };
-        // console.log('filter dname:', group.name, tag);
+        group = { name, targetCount: 0 }; // 切換維度
+        console.log('[ds]:', name);
+        // console.log('filter dname:', group.name, tag,'group:',group);
       }
 
+      // CHECK => 目標
       const { check } = JSON.parse(item.questionContent);
 
-      let flag = false;
+      // console.log(group,'check:', check , 'tag:',tag);
+
+      let flag = false; // 預設排除
 
       if (tag === undefined) {
         return false; // 沒有未達標的分數
@@ -149,11 +158,14 @@ function AEPS(props) {
     console.log('**** init once ****');
     const result = getExample();
     setExample(result.example);
+
+    console.log('example:', result.example);
+
     fetchPlan(result.refs);
-    console.log('plans size:', result.refs.length);
+    // console.log('plans size:', result.refs.length);
   }, [model.answers.length]);
 
-  console.log('AEPS render....items:', items);
+  // console.log('AEPS render....items:', items);
 
   return example ? (
     <LayoutManager

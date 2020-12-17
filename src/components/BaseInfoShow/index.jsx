@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Select, Image, Button, Form } from 'antd';
 
-import './index.less';
+import styles from './index.less';
 import moment from 'moment';
 import { getPatientInfoSingle } from '@/pages/Patriarch/ChildrenRecord/service';
 
@@ -61,6 +61,10 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
 
   useEffect(() => {
     queryPhysiqueAllCaseCode();
+    if (window.location.search) {
+      const code = window.location.search.split('?code=')[1];
+      caseCodeVSelectChange(code);
+    }
   }, []);
 
   return (
@@ -74,7 +78,7 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
     >
       <Row>
         <Col span={18}>
-          <Form className="base-show" {...layout}>
+          <Form className={styles.baseShow} {...layout}>
             <Row>
               <Col span={6}>
                 <Form.Item label="病历编号">
@@ -156,7 +160,7 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
           </Form>
         </Col>
         <Col span={6}>
-          <div className="code">
+          <div className={styles.code}>
             <Image
               width={200}
               src="https://img14.360buyimg.com/uba/s260x260_jfs/t1/32118/11/559/2782/5c3d81ecEbda0c0f1/5f2b637d11817204.png"

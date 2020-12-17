@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { createForm } from 'rc-form';
 import Paper from '@material-ui/core/Paper';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Button from '@material-ui/core/Button';
-import Alert from '@/components/Alert';
 import Grid from '@material-ui/core/Grid';
-import Switch from '@material-ui/core/Switch';
+import Avatar from '@material-ui/core/Avatar';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import { useTheme } from '@material-ui/core/styles';
 import { Modal } from 'antd-mobile';
 
+import Factory from '@/pages/scale/components/field/Factory';
+
 const { alert } = Modal;
 
+/**
+ * https://material-ui.com/zh/components/accordion/
+ */
+
 function Page({ model, submit, form }) {
-  const { getFieldDecorator, getFieldError } = form;
+  const { getFieldDecorator } = form;
   const { scaleQuestions } = model;
   const theme = useTheme();
   const mediumScreen = useMediaQuery(theme.mediumScreen);
   const [currentStep, setCurrentStep] = useState(0);
   const [answerValues, setAnswerValues] = useState({});
-
+  const [expanded, setExpanded] = React.useState({});
   const [records, setRecords] = useState([]);
 
   const warpSubmit = () => {
     const newValues = { ...answerValues };
     for (let i = 1; i <= scaleQuestions.length; i += 1) {
-      if (newValues[i] === undefined || newValues[i] === 'false') {
+      if (newValues[i] === undefined || newValues[i] === '') {
         newValues[i] = '1';
-      } else {
-        newValues[i] = '2';
       }
     }
     submit(newValues);
@@ -45,7 +53,7 @@ function Page({ model, submit, form }) {
   const { group, items } = getRecord(currentStep);
 
   const init = () => {
-    const { scaleName, dimensions, scaleQuestions } = model;
+    const { scaleName, dimensions } = model;
     const mp = {};
     scaleQuestions.forEach(question => {
       const { questionNo } = question;
@@ -74,10 +82,25 @@ function Page({ model, submit, form }) {
     setCurrentStep(nextStep);
   };
 
+  const isExpanded = questionNo => {
+    if (expanded[questionNo] === undefined) {
+      return true;
+    }
+
+    return expanded[questionNo];
+  };
+
   const changeAnswer = (questionNo, value) => {
     const v = { ...answerValues };
-    v[questionNo] = value;
+    if (value === undefined) {
+      expanded[questionNo] = true;
+      delete v[questionNo];
+    } else {
+      expanded[questionNo] = false;
+      v[questionNo] = value;
+    }
     setAnswerValues(v);
+    setExpanded(expanded);
   };
 
   const finish = () => {
@@ -187,48 +210,20 @@ function Page({ model, submit, form }) {
     );
   };
 
-  const questions = question => {
-    const { scaleOptions } = question;
+  const mark = ({ questionNo, scaleOptions }) => {
+    const value = answerValues[questionNo];
+    if (value) {
+      const index = scaleOptions.findIndex(i => i.option * 1 === value * 1);
+      if (index !== -1) {
+        return <Avatar>{scaleOptions[index].optionContent}</Avatar>;
+      }
+    }
+  };
 
-    scaleOptions.sort((a, b) => a.option * 1 - b.option * 1);
-
-    const errors = getFieldError(`${question.questionNo}`);
-
-    return [
-      <div key={question.questionNo}>
-        <FormControl style={{ display: 'block' }} key={question.questionNo} component="fieldset">
-          <div
-            style={{
-              marginTop: 10,
-              marginBottom: 10,
-              marginLeft: 20,
-              marginRight: 20,
-              display: 'inline-block',
-            }}
-          >
-            {getFieldDecorator(`${question.questionNo}`, {
-              initialValue: answerValues[`${question.questionNo}`] || '',
-              onChange: e => {
-                changeAnswer(question.questionNo, e.target.value);
-              },
-              rules: [],
-            })(
-              <FormControlLabel
-                value="2"
-                control={<Switch />}
-                label={
-                  <div>
-                    {question.questionNo}.{question.questionContent}
-                  </div>
-                }
-              />
-            )}
-          </div>
-        </FormControl>
-
-        {errors ? <Alert severity="error">{errors.join(',')}</Alert> : null}
-      </div>,
-    ];
+  const changeExpanded = (questionNo, exp) => {
+    const v = { ...expanded };
+    v[questionNo] = !!exp;
+    setExpanded(v);
   };
 
   useEffect(() => {
@@ -250,14 +245,41 @@ function Page({ model, submit, form }) {
       <Paper style={{ paddingBottom: '10px', margin: 10 }} elevation={3}>
         {group && <h3 style={{ paddingTop: 20, paddingLeft: 20 }}>{group}</h3>}
         {items.map(item => (
-          <div>{questions(item)}</div>
+          <ExpansionPanel
+            key={item.questionNo}
+            defaultExpanded
+            expanded={isExpanded(item.questionNo)}
+            onChange={(event, exp) => {
+              changeExpanded(item.questionNo, exp);
+            }}
+          >
+            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+              {mark({ questionNo: item.questionNo, scaleOptions: item.scaleOptions })}{' '}
+              <Typography style={{ marginLeft: '5px', textAlign: 'center' }}>
+                {item.questionContent}
+              </Typography>
+            </ExpansionPanelSummary>
+            <ExpansionPanelDetails>
+              {getFieldDecorator(`${item.questionNo}`, {
+                initialValue: answerValues[`${item.questionNo}`] || '',
+                onChange: e => {
+                  changeAnswer(item.questionNo, e.target.value);
+                },
+                rules: [],
+              })(
+                <Factory
+                  config={{
+                    direction: 'horizontal',
+                  }}
+                  questionType={item.questionType}
+                  scaleOptions={item.scaleOptions.sort((a, b) => a.option * 1 - b.option * 1)}
+                />
+              )}
+            </ExpansionPanelDetails>
+          </ExpansionPanel>
         ))}
       </Paper>
       <div style={mediumScreen ? styleIpad : stylemobile}>{renderButton()}</div>
-      {/**
-         * <ScaleToolbar form={form} submit={submit} answerValues={answerValues}
-        scaleQuestions={scaleQuestions} changeStep={changeStep} currentStep={currentStep} />
-         */}
     </div>
   );
 }

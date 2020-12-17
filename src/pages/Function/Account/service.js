@@ -1,8 +1,9 @@
 import request from 'umi-request';
 
-export async function getLoginRecord(params) {
-  return request('/api/resource/visiting/record', {
-    params,
+export async function getLoginRecord(data) {
+  return request('/api/resource/user/loginRecord', {
+    method: 'POST',
+    data,
   });
 }
 
@@ -26,5 +27,11 @@ export async function updatePasswords(data) {
   return request('/api/resource/user/updatePasswords', {
     method: 'POST',
     data,
+  });
+}
+
+export async function getUserPermissions() {
+  return request('/api/resource/user/permissions', {
+    method: 'POST',
   });
 }

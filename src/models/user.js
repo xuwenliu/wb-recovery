@@ -1,8 +1,12 @@
 import { queryCurrent, query as queryUsers } from '@/services/user';
+import { getUserPermissions } from '@/pages/Function/Account/service';
+
 const UserModel = {
   namespace: 'user',
   state: {
     currentUser: {},
+    menuData: [],
+    loading: true, // loading的初始值为true
   },
   effects: {
     *fetch(_, { call, put }) {
@@ -23,6 +27,19 @@ const UserModel = {
         },
       });
     },
+    *getMenuData({ callback }, { call, put }) {
+      // 每次请求菜单前先把loading设置为true,避免账号切换登录后菜单不会根据账号渲染自己的菜单树
+      yield put({
+        type: 'setLoading',
+        payload: true,
+      });
+      const response = yield call(getUserPermissions);
+      localStorage.setItem('menu', JSON.stringify(response));
+      yield put({
+        type: 'saveMenuData',
+        payload: response,
+      });
+    },
   },
   reducers: {
     saveCurrentUser(state, action) {
@@ -31,7 +48,19 @@ const UserModel = {
         currentUser: action.payload || {},
       };
     },
-
+    saveMenuData(state, action) {
+      return {
+        ...state,
+        menuData: action.payload || [],
+        loading: false, // 后台数据返回了，loading就改成false
+      };
+    },
+    setLoading(state, action) {
+      return {
+        ...state,
+        loading: action.payload,
+      };
+    },
     changeNotifyCount(
       state = {
         currentUser: {},

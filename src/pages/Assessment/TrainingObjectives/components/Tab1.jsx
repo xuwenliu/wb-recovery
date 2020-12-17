@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { message, Form, Checkbox, Radio, Input, Button } from 'antd';
 import { connect } from 'umi';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import {
   getAllTrainWay,
   getRoughActivityInfo,
@@ -122,19 +122,21 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
     let otherFellLevel = '';
 
     // 粗大动作训练 -训练方向
-    values.trainWayVos && values.trainWayVos['1']?.forEach((item) => {
-      roughTrainBos.push(`${item.id}-${item.name}`);
-      if (item.isOther) {
-        otherRoughTrain = item.other;
-      }
-    });
+    values.trainWayVos &&
+      values.trainWayVos['1']?.forEach((item) => {
+        roughTrainBos.push(`${item.id}-${item.name}`);
+        if (item.isOther) {
+          otherRoughTrain = item.other;
+        }
+      });
     // 感觉统合 -训练方向
-    values.trainWayVos && values.trainWayVos['2']?.forEach((item) => {
-      fellLevelBos.push(`${item.id}-${item.name}`);
-      if (item.isOther) {
-        otherFellLevel = item.other;
-      }
-    });
+    values.trainWayVos &&
+      values.trainWayVos['2']?.forEach((item) => {
+        fellLevelBos.push(`${item.id}-${item.name}`);
+        if (item.isOther) {
+          otherFellLevel = item.other;
+        }
+      });
     onRoughTrainChange(roughTrainBos);
     onFellLevelChange(fellLevelBos);
 
@@ -190,7 +192,22 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
         </Radio.Group>
       </Form.Item>
       <Form.Item label="训练方向">
-        <Form.Item name="roughTrainBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="roughTrainBos"
+          dependencies={['roughTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('roughTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={onRoughTrainChange}
             options={roughTrainTypeList}
@@ -216,7 +233,22 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
         </Radio.Group>
       </Form.Item>
       <Form.Item label="训练方向">
-        <Form.Item name="fellLevelBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="fellLevelBos"
+          dependencies={['feelLevel']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('feelLevel') !== 3) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group onChange={onFellLevelChange} options={feelLevelList}></Checkbox.Group>
         </Form.Item>
 
@@ -229,12 +261,14 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="建议目标" name="proposalTarget">
         <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

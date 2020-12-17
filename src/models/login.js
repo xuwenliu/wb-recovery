@@ -20,51 +20,24 @@ const Model = {
         response.type = payload.loginType;
         localStorage.setItem('token', token);
         localStorage.setItem('username', payload.username);
-      }
-
-      yield put({
-        type: 'changeLoginStatus',
-        payload: response,
-      });
-
-      if (response.status === 'ok') {
-        const urlParams = new URL(window.location.href);
-        const params = getPageQuery();
-        let { redirect } = params;
-
-        if (redirect) {
-          const redirectUrlParams = new URL(redirect);
-
-          if (redirectUrlParams.origin === urlParams.origin) {
-            redirect = redirect.substr(urlParams.origin.length);
-
-            if (redirect.match(/^\/.*#/)) {
-              redirect = redirect.substr(redirect.indexOf('#') + 1);
-            }
-          } else {
-            window.location.href = '/';
-            return;
-          }
-        }
-
-        history.replace(redirect || '/');
+        yield put({
+          type: 'changeLoginStatus',
+          payload: response,
+        });
+        history.replace('/');
       }
     },
 
     *logout({ payload }, { call, put }) {
-      const { redirect } = getPageQuery(); // Note: There may be security issues, please note
       const response = yield call(fakeAccountLogout, payload);
       if (response) {
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         localStorage.removeItem('antd-pro-authority');
 
-        if (window.location.pathname !== '/user/login' && !redirect) {
+        if (window.location.pathname !== '/user/login') {
           history.replace({
             pathname: '/user/login',
-            search: stringify({
-              redirect: window.location.href,
-            }),
           });
         }
       }

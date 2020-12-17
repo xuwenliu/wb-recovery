@@ -26,10 +26,9 @@ const MedicalRecordList = ({ patientId }) => {
       ...params,
       body: {
         patientId,
-        jiGou: params.jiGou,
-        problemId: params.problemId, // 就诊内容
-        startTime: params.time ? moment(params.time[0]).valueOf() : null,
-        endTime: params.time ? moment(params.time[1]).valueOf() : null,
+        problemId: params.problemInfo, // 就诊内容
+        startTime: params.createTime ? moment(params.createTime[0]).valueOf() : null,
+        endTime: params.createTime ? moment(params.createTime[1]).valueOf() : null,
       },
     });
     if (res) {
@@ -38,7 +37,9 @@ const MedicalRecordList = ({ patientId }) => {
   };
   const queryAllProblemList = async () => {
     const res = await getAllProblem();
-    setAllProblemList(res);
+    if (res) {
+      setAllProblemList(res);
+    }
   };
 
   const handleViewDetail = (row) => {
@@ -74,8 +75,11 @@ const MedicalRecordList = ({ patientId }) => {
       dataIndex: 'problemInfo',
       renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
         return (
-          <Select placeholder="请选择就诊内容">
-            {allProblemList.map((item, index) => (
+          <Select
+            onFocus={allProblemList.length === 0 && queryAllProblemList}
+            placeholder="请选择就诊内容"
+          >
+            {allProblemList.map((item) => (
               <Select.Option value={item.id} key={item.id}>
                 {item.name}
               </Select.Option>
@@ -88,17 +92,18 @@ const MedicalRecordList = ({ patientId }) => {
     {
       title: '就诊机构',
       dataIndex: 'organizeName',
-      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return (
-          <Select placeholder="请选择就诊机构">
-            {allCode.map((item, index) => (
-              <Select.Option value={item} key={index}>
-                {item}
-              </Select.Option>
-            ))}
-          </Select>
-        );
-      },
+      search: false,
+      // renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
+      //   return (
+      //     <Select placeholder="请选择就诊机构">
+      //       {allCode.map((item, index) => (
+      //         <Select.Option value={item} key={index}>
+      //           {item}
+      //         </Select.Option>
+      //       ))}
+      //     </Select>
+      //   );
+      // },
     },
 
     {
@@ -129,7 +134,6 @@ const MedicalRecordList = ({ patientId }) => {
 
   useEffect(() => {
     if (patientId) {
-      queryAllProblemList();
       actionRef.current?.reload();
     }
   }, [patientId]);

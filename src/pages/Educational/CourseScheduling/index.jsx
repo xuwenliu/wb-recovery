@@ -25,6 +25,7 @@ import { getAllClass } from '@/pages/Educational/Curriculum/service';
 import { getAllPatient, getList, getStatistics } from './service';
 import { getCommonEnums } from '@/services/common';
 import { getAllRole, getEmployeeFindByRole } from '@/pages/Function/Employee/service';
+import { getAuth } from '@/utils/utils';
 
 const layout = {
   labelCol: {
@@ -101,6 +102,7 @@ function buildColumns(result, dataType, field, dotField) {
 }
 
 const CourseScheduling = ({ submitting, dispatch }) => {
+  const auth = getAuth();
   const [form] = Form.useForm();
   const [showClassTop, setShowClassTop] = useState(false);
   const [list, setList] = useState([]);
@@ -279,9 +281,11 @@ const CourseScheduling = ({ submitting, dispatch }) => {
   return (
     <PageContainer
       extra={[
-        <Button key="1" type="primary" onClick={() => setVisible(true)}>
-          新增排课
-        </Button>,
+        auth?.canEdit && (
+          <Button key="1" type="primary" onClick={() => setVisible(true)}>
+            新增排课
+          </Button>
+        ),
       ]}
     >
       <Card>

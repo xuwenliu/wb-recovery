@@ -49,7 +49,7 @@ const UserLayout = (props) => {
           </div>
           {children}
         </div>
-        <DefaultFooter />
+        {/* <DefaultFooter /> */}
       </div>
     </HelmetProvider>
   );

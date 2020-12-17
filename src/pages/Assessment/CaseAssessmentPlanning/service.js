@@ -12,3 +12,9 @@ export async function createSavePlan(data) {
     data,
   });
 }
+// 规划信息
+export async function getPlanInfo(params) {
+  return request('/api/resource/groupAssess/planInfo', {
+    params,
+  });
+}

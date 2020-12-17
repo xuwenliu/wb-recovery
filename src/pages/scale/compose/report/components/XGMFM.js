@@ -23,18 +23,12 @@ import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
 
 // import { format } from 'date-fns';
+import {defaultBlock} from '@/utils/publicStyles'
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  root: {
-    display: 'block',
-  },
-  heading: {
-    fontSize: '18px',
-  },
+  ...defaultBlock
 });
+
 
 const columns = [
   { id: 'name', label: '评估能区', minWidth: 170 },

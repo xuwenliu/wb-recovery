@@ -27,7 +27,6 @@ import family from '@/assets/img/family.png';
 import guomin from '@/assets/img/guomin.png';
 import why from '@/assets/img/why.png';
 
-import './style.less';
 const { Option } = Select;
 import CitySelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/CitySelect';
 import ProfessionSelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/ProfessionSelect';
@@ -43,8 +42,12 @@ const FormMoreItemLayout = {
 const FormItemlayout = {
   labelCol: { span: 10 },
 };
+const FormRecordItemlayout = {
+  labelCol: { span: 8 },
+};
+
 const FormItemCard2layout = {
-  labelCol: { span: 6 },
+  labelCol: { span: 5 },
 };
 
 const filterEmptyObj = (obj) => {
@@ -158,7 +161,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
 
     // 家庭成员提交的数据
     const patientFamilyMemberInfoBos = values.patientFamilyMemberInfoBos
-      ?.filter((item) => item.name) // 过滤掉没有填写的父亲或者母亲信息
+      ?.filter((item) => item.mobile) // 通过联系电话过滤掉没有填写的父亲或者母亲信息
       .map((item) => {
         item.professionLargeId = item.profession.large;
         item.professionMediumId = item.profession.medium;
@@ -265,10 +268,10 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     const res = await fileUpload(formData);
     if (res) {
       setFilePaths([res]);
-      fileList = fileList.map(item => {
+      fileList = fileList.map((item) => {
         item.url = res;
         return item;
-      })
+      });
       setFileList(fileList);
       message.success('文件上传成功');
     } else {
@@ -305,7 +308,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           name: values.name,
           gender: values.gender,
           ethnic: values.ethnic,
-          birthTime: moment(values.birthTime),
+          birthTime: moment(values.birthDay), // 后端返回的字段是birthDay='2020-1-1'
           createDocumentTime: moment(values.createDocumentTime),
           idCardCode: values.idCardCode,
           postCode: values.postCode,
@@ -716,6 +719,41 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     setWritePersonName(writeName);
   };
 
+  // 主要照顾者切换
+  const handleMainChange = (id, index) => {
+    let name = '';
+    let selectItem = null;
+    mainList?.forEach((item) => {
+      if (item.id === id) {
+        name = item.name;
+      }
+    });
+    const obj = {
+      父亲: 1,
+      母亲: 2,
+    };
+    const selectType = obj[name];
+    const setValue = form.getFieldValue('patientFamilyMemberInfoBos');
+    setValue.forEach((item) => {
+      if (item.type === selectType) {
+        selectItem = {
+          ...item,
+          mainCarefulId: id,
+          mainCarefulName: name,
+          type: 3,
+        };
+      }
+    });
+
+    setValue[index] = selectItem;
+    form.setFields([
+      {
+        name: 'patientFamilyMemberInfoBos',
+        value: setValue,
+      },
+    ]);
+  };
+
   return (
     <Form
       form={form}
@@ -723,6 +761,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
       onFinishFailed={onFinishFailed}
       initialValues={{
         createDocumentTime: moment(),
+        isBehaviorUnusual: false,
       }}
     >
       <PageContainer header={{ title: '' }}>
@@ -730,7 +769,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           <Row>
             <Col span={15}>
               <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
+                <Col span={8}>
                   <Form.Item
                     {...FormItemlayout}
                     label="姓名"
@@ -743,7 +782,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     />
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
+                <Col span={8}>
                   <Form.Item
                     {...FormItemlayout}
                     label="性别"
@@ -759,7 +798,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
+                <Col span={8}>
                   <Form.Item
                     {...FormItemlayout}
                     label="民族"
@@ -777,7 +816,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 </Col>
               </Row>
               <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
+                <Col span={8}>
                   <Form.Item
                     {...FormItemlayout}
                     label="出生日期"
@@ -787,7 +826,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     <DatePicker disabledDate={disabledGTToday} />
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
+                <Col span={8}>
                   <Form.Item
                     {...FormItemlayout}
                     label="建档日期"
@@ -795,6 +834,17 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     rules={[{ required: true, message: '请选择建档日期' }]}
                   >
                     <DatePicker />
+                  </Form.Item>
+                </Col>
+
+                <Col span={8}>
+                  <Form.Item
+                    {...FormItemlayout}
+                    label="邮政编码"
+                    name="postCode"
+                    rules={[{ required: true, message: '请输入邮政编码' }]}
+                  >
+                    <Input placeholder="请输入邮政编码" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -812,7 +862,10 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                       },
                     ]}
                   >
-                    <Input style={{ marginLeft: 4 }} placeholder="请输入身份证号码" />
+                    <Input
+                      style={{ width: 'calc(100% - 4px)', marginLeft: 4 }}
+                      placeholder="请输入身份证号码"
+                    />
                   </Form.Item>
                 </Col>
               </Row>
@@ -857,18 +910,6 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                   </Form.Item>
                 </Col>
               </Row>
-              <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item
-                    {...FormItemlayout}
-                    label="邮政编码"
-                    name="postCode"
-                    rules={[{ required: true, message: '请输入邮政编码' }]}
-                  >
-                    <Input placeholder="请输入邮政编码" />
-                  </Form.Item>
-                </Col>
-              </Row>
             </Col>
           </Row>
         </Card>
@@ -890,8 +931,8 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 {fields.map((field, index) => {
                   return (
                     <div key={field.key}>
-                      <Row gutter={16}>
-                        <Col span={8}>
+                      <Row>
+                        <Col span={10}>
                           {index !== 2 && (
                             <Form.Item
                               {...field}
@@ -914,7 +955,10 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                               label="主要照顾者"
                               rules={[{ required: true, message: '请选择主要照顾者' }]}
                             >
-                              <Select placeholder="请选择主要照顾者">
+                              <Select
+                                onChange={(val) => handleMainChange(val, index)}
+                                placeholder="请选择主要照顾者"
+                              >
                                 {mainList.map((item) => (
                                   <Option key={item.id} value={item.id}>
                                     {item.name}
@@ -924,12 +968,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                             </Form.Item>
                           )}
                         </Col>
-                        <Col span={8}>
+                        <Col span={6}>
                           <Form.Item
                             {...field}
                             name={[field.name, 'mobile']}
                             fieldKey={[field.fieldKey, 'mobile']}
-                            {...FormItemCard2layout}
+                            labelCol={{ span: 8 }}
                             label="联系电话"
                             rules={
                               index === 2
@@ -951,7 +995,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                             {...field}
                             name={[field.name, 'birthYear']}
                             fieldKey={[field.fieldKey, 'birthYear']}
-                            {...FormItemCard2layout}
+                            labelCol={{ span: 7 }}
                             label="出生年份"
                             rules={
                               index === 2 ? [{ required: true, message: '请选择出生年份' }] : null
@@ -961,14 +1005,13 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                               disabledDate={(current) => {
                                 return current && current > moment().endOf('year');
                               }}
-                              placeholder="请选择出生年份"
                               picker="year"
                             />
                           </Form.Item>
                         </Col>
                       </Row>
                       <Row>
-                        <Col span={8}>
+                        <Col span={10}>
                           <Form.Item
                             {...field}
                             name={[field.name, 'profession']}
@@ -989,12 +1032,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                             <ProfessionSelect professionList={professionList} />
                           </Form.Item>
                         </Col>
-                        <Col span={8}>
+                        <Col span={6}>
                           <Form.Item
                             {...field}
                             name={[field.name, 'educationDegreeId']}
                             fieldKey={[field.fieldKey, 'educationDegreeId']}
-                            {...FormItemCard2layout}
+                            labelCol={{ span: 8 }}
                             label="文化程度"
                             rules={
                               index === 2 ? [{ required: true, message: '请选择文化程度' }] : null
@@ -1261,10 +1304,10 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           bordered={false}
         >
           <Row>
-            <Col span={15}>
-              <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="喂养方式" name="supportTypeId">
+            <Col span={20}>
+              <Row>
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="喂养方式" name="supportTypeId">
                     <Select placeholder="请选择">
                       {supportTypeList.map((item) => (
                         <Option key={item.id} value={item.id}>
@@ -1274,47 +1317,51 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="高热抽搐" name="feverTimeId">
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="高热抽搐" name="feverTimeId">
                     <Select placeholder="请选择">{getTimeOption()}</Select>
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会抬头时间" name="canGainGroundTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会翻身时间" name="canTurnOverTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
-                  </Form.Item>
-                </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会爬行时间" name="canClimbTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
-                  </Form.Item>
-                </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会笑时间" name="canLaughTimeId">
+                <Col span={8}>
+                  <Form.Item
+                    {...FormRecordItemlayout}
+                    label="会抬头时间"
+                    name="canGainGroundTimeId"
+                  >
                     <Select placeholder="请选择">{getTimeOption()}</Select>
                   </Form.Item>
                 </Col>
               </Row>
-              <Row gutter={16}>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会坐时间" name="canSitTimeId">
+              <Row>
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会翻身时间" name="canTurnOverTimeId">
                     <Select placeholder="请选择">{getTimeOption()}</Select>
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会走时间" name="canWalkTimeId">
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会爬行时间" name="canClimbTimeId">
                     <Select placeholder="请选择">{getTimeOption()}</Select>
                   </Form.Item>
                 </Col>
-                <Col lg={8} md={6} sm={24}>
-                  <Form.Item {...FormItemlayout} label="会说话时间" name="caTalkTimeId">
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会笑时间" name="canLaughTimeId">
+                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会坐时间" name="canSitTimeId">
+                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会走时间" name="canWalkTimeId">
+                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item {...FormRecordItemlayout} label="会说话时间" name="caTalkTimeId">
                     <Select placeholder="请选择">{getTimeOption()}</Select>
                   </Form.Item>
                 </Col>
@@ -1360,7 +1407,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             </Col>
           </Row>
           <Row gutter={16}>
-            <Col lg={6} md={6} sm={24}>
+            <Col span={6}>
               <Form.Item {...FormItemlayout} label="出生孕周" name="pregnancyWeeksId">
                 <Select placeholder="请选择">
                   {pregnancyWeeksList.map((item) => (
@@ -1371,7 +1418,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col lg={6} md={6} sm={24}>
+            <Col span={6}>
               <Form.Item {...FormItemlayout} label="出生体重" name="birthWeightId">
                 <Select placeholder="请选择">
                   {birthWeightList.map((item) => (
@@ -1382,7 +1429,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 </Select>
               </Form.Item>
             </Col>
-            <Col lg={6} md={6} sm={24}>
+            <Col span={6}>
               <Form.Item {...FormItemlayout} label="胎数" name="fetusNumId">
                 <Select placeholder="请选择">
                   {fetusNumList.map((item) => (
@@ -1520,12 +1567,11 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         <Button onClick={() => history.goBack()} icon={<ArrowLeftOutlined />}>
           返回
         </Button>
-        {/* type==2 查看详情-则不显示提交按钮 */}
-        {type != 2 && (
+        {/* {type != 2 && ( */}
           <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
             提交
           </Button>
-        )}
+        {/* )} */}
       </FooterToolbar>
     </Form>
   );

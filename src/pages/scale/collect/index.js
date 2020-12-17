@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'dva';
 import { createForm } from 'rc-form';
 import ScaleAnswer from '@/pages/scale/components/ScaleAnswer';
 import Header from '@/components/AppHeader';
+import Paper from '@material-ui/core/Paper';
 import Result from '@/components/Result';
 import router from '@/utils/router';
 import Button from '@material-ui/core/Button';
+import styles from './index.less'
 
 // import ScaleReport from '@/pages/scale/components/ScaleReport';
 
@@ -23,12 +25,11 @@ function Page(props) {
     dispatch,
     scaleCollect: { compose = { computes: [] }, testeeInfo, report },
   } = props;
-
-  const { computes = [] } = compose;
+  const paperRef = useRef(null);
+  const { computes = [], instruction = '' } = compose;
   const [compute = {}] = computes;
   const { scale } = compute;
-  const [step, setStep] = useState(1);
-
+  const [step, setStep] = useState();
   const {
     match: {
       params: { id },
@@ -42,6 +43,14 @@ function Page(props) {
     dispatch({
       type: 'scaleCollect/fetchCompose',
       payload: { scaleId: id },
+      callback:(resp) => {
+        const { explanation } = resp;
+        if (explanation) {
+          setStep(0);
+        } else {
+          setStep(1);
+        }
+      }
     });
     /**
     dispatch({
@@ -50,7 +59,7 @@ function Page(props) {
     });
      */
   };
-
+  
   const submit = answerValues => {
     dispatch({
       type: 'scaleCollect/submitAnswer',
@@ -71,9 +80,36 @@ function Page(props) {
     };
   }, []);
 
+  const test = true;
+  
+  const getcontent = (text) => {
+    if (paperRef.current) {
+      paperRef.current.innerHTML = text
+    }
+  }
+
   return (
     <div>
       <Header>{scale && scale.scaleName}</Header>
+      {step === 0 && scale && test && (
+        <Paper className={styles.instruction} >
+          <h3>指导语：</h3>
+          <div ref={paperRef} className={styles.content}>
+            {getcontent(instruction)}
+          </div>
+          <Button
+            className={styles.intobutton}
+            variant="contained"
+            color="primary"
+            onClick={() => {
+              setStep(step + 1)
+            }}
+          >
+            继续
+          </Button>
+        </Paper>
+      )}
+
       {step === 1 && scale && <ScaleAnswer model={scale} submit={submit} answer={{}} />}
       {step === 2 && report && (
         <Result

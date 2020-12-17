@@ -1,3 +1,4 @@
+/* eslint-disable no-lonely-if */
 import React, { useState, useEffect } from 'react';
 
 import { useSnackbar } from 'notistack';
@@ -5,6 +6,7 @@ import Scale from '@/pages/scale/components/ScaleAnswer';
 import { Modal } from 'antd-mobile';
 
 import Image from '@/components/Common/Image';
+import { minTime } from 'date-fns';
 
 const { alert } = Modal;
 
@@ -174,7 +176,6 @@ function Page({ model, answer, submit, testeeInfo }) {
           .forEach(({ questionNo, questionInfo }) => {
             if (questionInfo !== '') {
               const { min, max } = getRange(questionInfo);
-
               /**
               console.log(
                 'no:',
@@ -189,9 +190,17 @@ function Page({ model, answer, submit, testeeInfo }) {
               );
                */
 
-              if (value * 1 >= min && value * 1 <= max) {
-                const index = questionNo * 1 - 1;
-                check = index;
+              if (max) {
+                if (value * 1 >= min && value * 1 <= max) {
+                  const index = questionNo * 1 - 1;
+                  check = index;
+                }
+              } else {
+                // console.log('check ',value,min,value*1 === min);
+                if (value * 1 === min) {
+                  const index = questionNo * 1 - 1;
+                  check = index;
+                }
               }
             }
           });

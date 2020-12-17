@@ -16,7 +16,7 @@ import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/picker
 import DateFnsUtils from '@date-io/date-fns';
 import { createForm } from 'rc-form';
 import { formatDateFromTime } from '@/utils/format';
-import styles from '@/utils/publicstyle';
+import styles from '@/utils/classStyle';
 
 function Page({
   dispatch,

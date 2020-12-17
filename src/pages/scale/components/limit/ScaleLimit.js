@@ -8,19 +8,12 @@ import TextField from '@material-ui/core/TextField';
 import Select from '@material-ui/core/Select';
 import Alert from '@/components/Alert';
 import { makeStyles } from '@material-ui/core/styles';
-
+import styles from '@/utils/publicStyles'
 import { uniqueId } from 'lodash/util';
 
 const useStyles = makeStyles({
-  formControl: {
-    display: 'block',
-    marginTop: 20,
-    marginBottom: 20,
-    // margin: 20
-  },
-  lineControl: {
-    margin: 20,
-  },
+  formControl: styles.formControlTB,
+  lineControl:lineControl,
 });
 
 export default function page({ form, object, scale = {} }) {

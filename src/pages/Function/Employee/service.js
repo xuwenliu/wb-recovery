@@ -100,7 +100,7 @@ export async function getRoleList(data) {
     data,
   });
 }
-export async function getRoleAllList() {
+export async function getRoleAllPermissionList() {
   return request('/api/resource/role/allPermission');
 }
 export async function getRoleSingle(data) {

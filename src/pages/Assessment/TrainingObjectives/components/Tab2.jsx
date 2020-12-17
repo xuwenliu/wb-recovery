@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { message, Form, Checkbox, Radio, Input, Button } from 'antd';
 import { connect } from 'umi';
-import { queryCommonAllEnums, getSingleEnums } from '@/utils/utils';
+import { queryCommonAllEnums, getSingleEnums, getAuth } from '@/utils/utils';
 import {
   getAllTrainWay,
   getCarefulActivityInfo,
@@ -96,12 +96,13 @@ const Tab2 = ({ patientId, submitting, dispatch }) => {
     let other = '';
 
     // 精细动作训练 -训练方向
-    values.trainWayVos && values.trainWayVos['3']?.forEach((item) => {
-      trainWayBos.push(`${item.id}-${item.name}`);
-      if (item.isOther) {
-        other = item.other;
-      }
-    });
+    values.trainWayVos &&
+      values.trainWayVos['3']?.forEach((item) => {
+        trainWayBos.push(`${item.id}-${item.name}`);
+        if (item.isOther) {
+          other = item.other;
+        }
+      });
     onTrainWayChange(trainWayBos);
 
     const setData = {
@@ -153,7 +154,22 @@ const Tab2 = ({ patientId, submitting, dispatch }) => {
         </Radio.Group>
       </Form.Item>
       <Form.Item label="训练方向">
-        <Form.Item name="trainWayBos" rules={[{ required: true, message: '请选择训练方向' }]}>
+        <Form.Item
+          name="trainWayBos"
+          dependencies={['carefulTrainType']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('carefulTrainType') !== 1) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择训练方向');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group onChange={onTrainWayChange} options={roughTrainTypeList}></Checkbox.Group>
         </Form.Item>
         {trainWayListNames.includes('其他') && (
@@ -165,12 +181,14 @@ const Tab2 = ({ patientId, submitting, dispatch }) => {
       <Form.Item label="建议目标" name="proposalTarget">
         <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
-      <Form.Item {...submitLayout}>
-        <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
-          确定
-        </Button>
-        <Button onClick={cancel}>取消</Button>
-      </Form.Item>
+      {getAuth()?.canEdit && (
+        <Form.Item {...submitLayout}>
+          <Button htmlType="submit" type="primary" loading={submitting} className="mr8">
+            确定
+          </Button>
+          <Button onClick={cancel}>取消</Button>
+        </Form.Item>
+      )}
     </Form>
   );
 };

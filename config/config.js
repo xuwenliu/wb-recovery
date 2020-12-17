@@ -42,7 +42,6 @@ export default defineConfig({
         {
           path: '/',
           component: '../layouts/BasicLayout',
-          authority: ['admin', 'user'],
           routes: [
             {
               path: '/',
@@ -52,7 +51,6 @@ export default defineConfig({
               name: 'patriarch',
               icon: 'team',
               path: '/patriarch',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'childrenrecord',
@@ -70,7 +68,6 @@ export default defineConfig({
                   name: 'check',
                   icon: 'smile',
                   path: '/patriarch/check',
-                  // component: './Patriarch/Check',
                   component: './scale/compose/quick',
                 },
                 {
@@ -85,13 +82,15 @@ export default defineConfig({
                   path: '/patriarch/assessmentrecord',
                   component: './Patriarch/AssessmentRecord',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'medicalexamination',
               icon: 'fundView',
               path: '/medicalexamination',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'healthcheckup',
@@ -111,13 +110,15 @@ export default defineConfig({
                   component: './MedicalExamination/DiagnosisPrescription/Detail',
                   hideInMenu: true,
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'assessment',
               icon: 'hourglass',
               path: '/assessment',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'caseassessmentplanning',
@@ -143,13 +144,15 @@ export default defineConfig({
                   path: '/assessment/evaluationcourses',
                   component: './Assessment/EvaluationCourses',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'rehabilitation',
               icon: 'medicineBox',
               path: '/rehabilitation',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'personalplan',
@@ -168,13 +171,15 @@ export default defineConfig({
                   path: '/rehabilitation/collectiveplan/edit',
                   component: './Rehabilitation/CollectivePlan/Edit',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'archives',
               icon: 'file',
               path: '/archives',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'childrehabilitation',
@@ -200,13 +205,15 @@ export default defineConfig({
                   path: '/archives/overdue',
                   component: './Archives/Overdue',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'educational',
               icon: 'schedule',
               path: '/educational',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'coursescheduling',
@@ -234,13 +241,15 @@ export default defineConfig({
                   path: '/educational/apply',
                   component: './Educational/Apply',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             {
               name: 'function',
               icon: 'setting',
               path: '/function',
-              authority: ['admin'],
               routes: [
                 {
                   name: 'account',
@@ -297,6 +306,9 @@ export default defineConfig({
                   component: './Function/Place/Edit',
                   hideInMenu: true,
                 },
+                {
+                  component: './404',
+                },
               ],
             },
             /**
@@ -317,15 +329,11 @@ export default defineConfig({
                   path: '/project/detail',
                   component: './project/detail',
                 },
+                {
+                  component: './404',
+                },
               ],
             },
-            /**
-            {
-              name: 'demo',
-              path: '/scale/demo',
-              component: './scale/demo',
-            },
-             */
             {
               path: '/scale/compose/quick',
               Routes: ['src/pages/Authorized'],
