@@ -22,12 +22,11 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
-import {defaultBlock} from '@/utils/publicStyles'
+import { defaultBlock } from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
-  ...defaultBlock
+  ...defaultBlock,
 });
-
 
 const sortMapping = {
   视觉追踪: 1,
@@ -50,7 +49,7 @@ const columns = [
   { id: '难度值', label: '难度值', minWidth: 100 },
 ];
 
-const getInfo = report => {
+const getInfo = (report) => {
   const { scoringResults } = report;
 
   const info = {};
@@ -81,63 +80,61 @@ function Page(props) {
     const model = {
       info: {}, // 受測者資訊
       data: [],
-      chartData: [],
     };
 
-    const { data, chartData } = model;
+    const { data } = model;
 
-    reports.forEach(report => {
+    reports.forEach((report) => {
       const info = getInfo(report);
-      Object.keys(info).forEach(key => {
+      Object.keys(info).forEach((key) => {
         const values = info[key];
         data.push({ name: key, ...values });
-        if (key !== '总分') {
-          chartData.push({ name: key, ...values });
-        }
       });
     });
 
     return model;
   };
 
-  const { data, chartData } = buildModel();
-  console.log('chartData:', chartData)
-  const obj = {}
+  const { data } = buildModel();
+
+  const obj = {};
   const obj1 = {};
-  const arr = []
-  chartData.forEach(item => {
-    const key = `${item.name}`
-    const value = item.原始分
-    const value1 = item.标准分
-    obj[key] = value;
-    obj1[key] = value1
-  })
-  arr.push({
-    name: '原始分',
-    ...obj
-  },
-  {
-    name: '标准分',
-    ...obj1
-  }
-  )
-   console.log('arr:', arr)
-   const ds = new DataSet();
-   const dv = ds.createView().source(arr);
-   dv.transform({
+  const arr = [];
+  data.forEach((item) => {
+    // const key = `${item.name}`
+    // const value = item.原始分
+    // const value1 = item.标准分
+    // obj[key] = value;
+    // obj1[key] = value1
+    obj[`${item.name}`] = item.原始分;
+    obj1[`${item.name}`] = item.标准分;
+  });
+  arr.push(
+    {
+      name: '原始分',
+      ...obj,
+    },
+    {
+      name: '标准分',
+      ...obj1,
+    },
+  );
+  console.log('arr:', arr);
+  const ds = new DataSet();
+  const dv = ds.createView().source(arr);
+  dv.transform({
     type: 'fold',
-    fields: ['视觉追踪','上肢关节活动能力','抓握能力','操作能力','手眼协调'],
+    fields: ['视觉追踪', '上肢关节活动能力', '抓握能力', '操作能力', '手眼协调'],
     // 展开字段集
     key: '项目',
     // key字段
-    value: '分数' // value字段
+    value: '分数', // value字段
   });
-  console.log('dv:', dv)
 
   return (
     <div>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>个案信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -146,7 +143,7 @@ function Page(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>评估内容</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -159,19 +156,19 @@ function Page(props) {
                   <Legend />
                   <Tooltip
                     crosshairs={{
-              type: 'y'
-            }}
+                      type: 'y',
+                    }}
                   />
-                  <Geom 
-                    type="interval" 
+                  <Geom
+                    type="interval"
                     position="项目*分数"
                     color="name"
                     adjust={[
-                    {
-                      type: 'dodge',
-                      marginRatio: 1 / 32
-                    }
-                  ]}
+                      {
+                        type: 'dodge',
+                        marginRatio: 1 / 32,
+                      },
+                    ]}
                   />
                   <Guide>
                     <Guide.Region
@@ -191,7 +188,7 @@ function Page(props) {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      {columns.map(column => (
+                      {columns.map((column) => (
                         <TableCell
                           key={column.id}
                           align={column.align}
@@ -203,11 +200,11 @@ function Page(props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {Object.keys(data.sort(sorting)).map(key => {
+                    {Object.keys(data.sort(sorting)).map((key) => {
                       const row = data[key];
                       return (
                         <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                          {columns.map(column => {
+                          {columns.map((column) => {
                             return (
                               <TableCell key={column.id} align={column.align}>
                                 {row[column.id]}
@@ -226,7 +223,7 @@ function Page(props) {
       </ExpansionPanel>
       {suggests && (
         <ExpansionPanel defaultExpanded>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+          <ExpansionPanelSummary>
             <Typography className={classes.heading}>训练目标</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.root}>

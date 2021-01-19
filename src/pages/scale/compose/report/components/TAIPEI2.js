@@ -8,13 +8,9 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Typography from '@material-ui/core/Typography';
 
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+import Divider from '@material-ui/core/Divider';
 
 import { uniqueId } from 'lodash/util';
 
@@ -26,15 +22,11 @@ const useStyles = makeStyles({
   tableCellWidth: {
     width: '15%',
   },
-});
-
-const cols = {
-  score: {
-    min: 0,
-    max: 100,
-    ticks: [0, 20, 40, 60, 80, 100],
+  content: {
+    padding: 5,
+    letterSpacing: 1,
   },
-};
+});
 
 function Page(props) {
   const classes = useStyles();
@@ -47,10 +39,10 @@ function Page(props) {
       fail: [],
     };
 
-    const [answer] = answers.filter(i => i.scaleName !== '高危因素');
+    const [answer] = answers.filter((i) => i.scaleName !== '高危因素');
 
-    answer.answerQuestions.forEach(q => {
-      const [opt] = q.answerOptions.filter(o => o.option * 1 === q.objectAnswer * 1);
+    answer.answerQuestions.forEach((q) => {
+      const [opt] = q.answerOptions.filter((o) => o.option * 1 === q.objectAnswer * 1);
 
       const value = {
         questionNo: q.questionNo,
@@ -70,7 +62,7 @@ function Page(props) {
   };
 
   const getReport = () => {
-    const [report] = reports.filter(i => i.scaleName !== '高危因素');
+    const [report] = reports.filter((i) => i.scaleName !== '高危因素');
     const [result] = report.scoringResults;
     return result;
   };
@@ -107,17 +99,16 @@ function Page(props) {
           <Typography className={classes.heading}>达标</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <TableContainer component={Paper}>
-            <Table className={classes.table}>
-              <TableBody>
-                {items.success.map(item => (
-                  <TableRow key={uniqueId()}>
-                    <TableCell align="left">{item.questionContent}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {items.success.map((item) => (
+            <Card>
+              <CardContent>
+                <Typography key={uniqueId()} align="left" className={classes.content}>
+                  {item.questionContent}
+                </Typography>
+              </CardContent>
+              <Divider />
+            </Card>
+          ))}
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
@@ -127,17 +118,16 @@ function Page(props) {
             <Typography className={classes.heading}>未达标</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.root}>
-            <TableContainer component={Paper}>
-              <Table className={classes.table}>
-                <TableBody>
-                  {items.fail.map(item => (
-                    <TableRow key={uniqueId()}>
-                      <TableCell align="left">{item.questionContent}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {items.fail.map((item) => (
+              <Card>
+                <CardContent>
+                  <Typography key={uniqueId()} align="left" className={classes.content}>
+                    {item.questionContent}
+                  </Typography>
+                </CardContent>
+                <Divider />
+              </Card>
+            ))}
           </ExpansionPanelDetails>
         </ExpansionPanel>
       )}

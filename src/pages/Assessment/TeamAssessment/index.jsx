@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
-import { Card, Image, Row, Col, Checkbox, Radio, Input, Button, Form, message } from 'antd';
+import { Card, Image, Row, Col, Checkbox, Radio, Input, Button, Form, message, Space } from 'antd';
 import { connect, history } from 'umi';
 import BaseInfoShow from '@/components/BaseInfoShow';
 import xiaozu from '@/assets/img/xiaozu.png';
@@ -61,7 +61,13 @@ const TeamAssessment = ({ submitting, dispatch }) => {
 
   const queryEnums = async () => {
     const newArr = await queryCommonAllEnums();
-    setYesList(getSingleEnums('DiseaseConfirmType', newArr)); //确定 可能
+    const yesData = getSingleEnums('DiseaseConfirmType', newArr); //确定 可能
+    const yesOptions = yesData.filter(item => item.code !== 3).map((item) => {
+      item.label = item.codeCn;
+      item.value = item.code;
+      return item;
+    });
+    setYesList(yesOptions);
     // setAbilityLevelTypeList(getSingleEnums('AbilityLevelType', newArr)); //无异常，疑似发展迟缓，发展迟缓
     setAbnormalTypeList(getSingleEnums('AbnormalType', newArr)); //无异常，异常，疑似异常
 
@@ -78,11 +84,15 @@ const TeamAssessment = ({ submitting, dispatch }) => {
   const queryAllDiseaseReason = async () => {
     const res = await getAllDiseaseReason();
     const options = res?.map((item) => {
-      item.label = item.name;
-      item.value = item.id + '-' + item.name;
+      item.reasonId = item.id;
       return item;
     });
-    setAllDiseaseReason(options);
+    form.setFields([
+      {
+        name: 'diseaseReasonBos',
+        value: options,
+      },
+    ]);
   };
 
   const queryAllDisease = async () => {
@@ -92,7 +102,6 @@ const TeamAssessment = ({ submitting, dispatch }) => {
       item.value = item.id + '-' + item.name;
       return item;
     });
-    console.log('options', options);
     setNerveDiseaseList(options.filter((item) => item.type === 1));
     setSenseDiseaseList(options.filter((item) => item.type === 2));
     setGeneticDiseaseList(options.filter((item) => item.type === 3));
@@ -232,7 +241,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
       ]);
       setGeneticDiseaseNames([]);
     }
-  }
+  };
   const onGeneticDiseaseChange = (arrId, noClear) => {
     const nameList = [];
     arrId.forEach((item) => {
@@ -390,15 +399,9 @@ const TeamAssessment = ({ submitting, dispatch }) => {
     });
 
     // 病因分类
-    const diseaseReasonBos = [];
-    let other = '';
-    values.diseaseReasonConnectVos?.forEach((item) => {
-      diseaseReasonBos.push(`${item.reasonId}-${item.name}`);
-      if (item.isOther) {
-        other = item.other;
-      }
-    });
-    onAllDiseaseReasonChange(diseaseReasonBos, true);
+    if (!values.diseaseReasonConnectVos) {
+      queryAllDiseaseReason();
+    }
 
     // 神经相关疾病
     const nerveDisease = getNerve(
@@ -461,8 +464,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
 
     const setData = {
       diseaseConfirmType: values.diseaseConfirmType, // 病因分类
-      diseaseReasonBos,
-      other,
+      diseaseReasonBos: values.diseaseReasonConnectVos,
       haveNerveDisease: values.haveNerveDisease, //神经相关疾病
       ...nerveDisease,
 
@@ -499,11 +501,11 @@ const TeamAssessment = ({ submitting, dispatch }) => {
     console.log(values);
     const diseaseReasonBos = [];
     values.diseaseReasonBos?.forEach((item) => {
-      const isOther = item.split('-')[1] === '其他';
       const pushData = {
-        reasonId: item.split('-')[0],
-        isOther,
-        other: values.other || '',
+        diseaseConfirmType: item.diseaseConfirmType || 3,
+        reasonId: item.reasonId,
+        isOther: item.other ? true : false,
+        other: item.other || '',
       };
 
       diseaseReasonBos.push(pushData);
@@ -578,9 +580,37 @@ const TeamAssessment = ({ submitting, dispatch }) => {
       </div>
       <Form form={form}>
         <Row>
-          <Col span={11}>
+          <Col span={24}>
             <Card bordered={false} className="card-title" title="病因分类">
-              <Form.Item name="diseaseConfirmType">
+              <Form.List name="diseaseReasonBos">
+                {(fields, { add, remove }) => (
+                  <>
+                    {fields.map((field, index) => (
+                      <Space key={field.key}>
+                        <Form.Item
+                          {...field}
+                          labelCol={{ span: 8 }}
+                          label={form.getFieldValue('diseaseReasonBos')[index].name}
+                          name={[field.name, 'diseaseConfirmType']}
+                          fieldKey={[field.fieldKey, 'diseaseConfirmType']}
+                        >
+                          <Radio.Group options={yesList}></Radio.Group>
+                        </Form.Item>
+                        {form.getFieldValue('diseaseReasonBos')[index].name === '其他' && (
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'other']}
+                            fieldKey={[field.fieldKey, 'other']}
+                          >
+                            <Input />
+                          </Form.Item>
+                        )}
+                      </Space>
+                    ))}
+                  </>
+                )}
+              </Form.List>
+              {/* <Form.Item name="diseaseConfirmType">
                 <Radio.Group>
                   {yesList.map((item) => (
                     <Radio key={item.code} value={item.code}>
@@ -589,6 +619,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
                   ))}
                 </Radio.Group>
               </Form.Item>
+
               <Form.Item name="diseaseReasonBos">
                 <Checkbox.Group
                   onChange={onAllDiseaseReasonChange}
@@ -600,32 +631,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
                 <Form.Item name="other">
                   <Input />
                 </Form.Item>
-              )}
-            </Card>
-          </Col>
-          <Col span={11} offset={1}>
-            <Card bordered={false} className="card-title" title="神经相关疾病">
-              <Form.Item name="haveNerveDisease">
-                <Radio.Group onChange={onSetNerveDiseaseNoChange}>
-                  {haveOrNoList.map((item) => (
-                    <Radio key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Radio>
-                  ))}
-                </Radio.Group>
-              </Form.Item>
-              <Form.Item name="nerveDisease">
-                <Checkbox.Group
-                  onChange={onNerveDiseaseChange}
-                  style={{ margin: '8px 0' }}
-                  options={nerveDiseaseList}
-                ></Checkbox.Group>
-              </Form.Item>
-              {nerveDiseaseNames.includes('其他') && (
-                <Form.Item name="otherNerveDisease">
-                  <Input />
-                </Form.Item>
-              )}
+              )} */}
             </Card>
           </Col>
         </Row>
@@ -779,7 +785,7 @@ const TeamAssessment = ({ submitting, dispatch }) => {
         </Row>
 
         <Row style={{ marginTop: 30 }}>
-          <Col>
+          <Col span={11}>
             <Card bordered={false} className="card-title" title="行为">
               <Form.Item name="activeLevel">
                 <Radio.Group style={{ marginBottom: 8 }}>
@@ -798,6 +804,31 @@ const TeamAssessment = ({ submitting, dispatch }) => {
               </Form.Item>
               {activeLevelNames.includes('其他') && (
                 <Form.Item name="otherActiveLevel">
+                  <Input />
+                </Form.Item>
+              )}
+            </Card>
+          </Col>
+          <Col span={11} offset={1}>
+            <Card bordered={false} className="card-title" title="神经相关疾病">
+              <Form.Item name="haveNerveDisease">
+                <Radio.Group onChange={onSetNerveDiseaseNoChange}>
+                  {haveOrNoList.map((item) => (
+                    <Radio key={item.code} value={item.code}>
+                      {item.codeCn}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+              </Form.Item>
+              <Form.Item name="nerveDisease">
+                <Checkbox.Group
+                  onChange={onNerveDiseaseChange}
+                  style={{ margin: '8px 0' }}
+                  options={nerveDiseaseList}
+                ></Checkbox.Group>
+              </Form.Item>
+              {nerveDiseaseNames.includes('其他') && (
+                <Form.Item name="otherNerveDisease">
                   <Input />
                 </Form.Item>
               )}

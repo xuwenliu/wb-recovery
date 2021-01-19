@@ -1,5 +1,5 @@
 import { getGuide, createReport } from '@/pages/scale/service/compose';
-// import { loading, hide  } from '@/utils/toast';
+import { Toast } from 'antd-mobile';
 
 const getData = ({ guide, current }) => {
   const { code, scaleName, names = [], totalReport, reports } = guide;
@@ -84,9 +84,9 @@ export default {
       });
     },
     *createReport({ payload, callback }, { call }) {
-      // loading('报告产生中...');
+      Toast.loading('报告产生中...');
       const result = yield call(createReport, payload);
-      // hide();
+      Toast.hide();
 
       callback(result);
     },

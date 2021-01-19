@@ -24,7 +24,10 @@ const ParentCard = () => {
     const common = await getCommonEnums({
       enumName: 'ParentSectionType',
     });
+    console.log('common',common)
     const res = await getParentSectionAll();
+    console.log('res',res)
+
     setLoading(false);
     if (common && res) {
       const commonArr = Object.values(common);
@@ -61,7 +64,7 @@ const ParentCard = () => {
             // grandParentId 当选择添加职业小类时的职业大类id
             if (grandParentId && sub.id === grandParentId) {
               sub.list?.map((xx) => {
-                xx.expandable = true;
+                xx.expandable = false;
                 xx.isAdd = true;
                 xx.isRemove = true;
                 if (xx.id === parentId) {
@@ -76,7 +79,7 @@ const ParentCard = () => {
             } else {
               if (sub.id === parentId) {
                 sub.list = res?.map((xx) => {
-                  xx.expandable = true;
+                  xx.expandable = false;
                   xx.isAdd = true;
                   xx.isRemove = true;
                   return xx;

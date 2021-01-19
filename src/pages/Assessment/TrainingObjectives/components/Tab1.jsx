@@ -28,9 +28,6 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
   const [roughTrainTypeList, setRoughTrainTypeList] = useState([]);
   const [roughTrainTypeListNames, setRoughTrainTypeListNames] = useState([]);
 
-  const [feelLevelList, setFeelLevelList] = useState([]);
-  const [feelLevelListNames, setFeelLevelListNames] = useState([]);
-
   const queryEnums = async () => {
     const newArr = await queryCommonAllEnums();
     setAbilityLevelTypeList(getSingleEnums('AbilityLevelType', newArr)); //无异常，疑似发展迟缓，发展迟缓
@@ -45,7 +42,6 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
       return item;
     });
     setRoughTrainTypeList(data.filter((item) => item.type === 1));
-    setFeelLevelList(data.filter((item) => item.type === 2));
   };
 
   const onRoughTrainChange = (arrId) => {
@@ -55,19 +51,11 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
     }
   };
 
-  const onFellLevelChange = (arrId) => {
-    setFeelLevelListNames(arrId.map((item) => item.split('-')[1]));
-    if (!feelLevelListNames.includes('其他')) {
-      form.setFields([{ name: 'otherFellLevel', value: '' }]);
-    }
-  };
-
   const onFinish = (values) => {
     if (!patientId) {
       return message.info('请先获取患者信息');
     }
     const roughTrainBos = [];
-    const fellLevelBos = [];
     values.roughTrainBos?.forEach((item) => {
       roughTrainBos.push({
         trainWayId: item.split('-')[0],
@@ -75,23 +63,12 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
         other: values.otherRoughTrain,
       });
     });
-    values.fellLevelBos?.forEach((item) => {
-      fellLevelBos.push({
-        trainWayId: item.split('-')[0],
-        isOther: item.split('-')[1] === '其他',
-        other: values.otherFellLevel,
-      });
-    });
-
-    const trainWayBos = roughTrainBos.concat(fellLevelBos);
 
     const postData = {
       patientId,
-      feelLevel: values.feelLevel,
-      proposalTarget: values.proposalTarget,
       roughActivityLevel: values.roughActivityLevel,
       roughTrainType: values.roughTrainType,
-      trainWayBos,
+      trainWayBos: roughTrainBos,
     };
     dispatch({
       type: 'assessmentAndTrainingObjectives/createSaveRoughActivity',
@@ -104,7 +81,6 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
 
   const cancel = () => {
     form.resetFields();
-    setFeelLevelListNames([]);
     setRoughTrainTypeListNames([]);
   };
 
@@ -117,9 +93,7 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
     }
 
     const roughTrainBos = [];
-    const fellLevelBos = [];
     let otherRoughTrain = '';
-    let otherFellLevel = '';
 
     // 粗大动作训练 -训练方向
     values.trainWayVos &&
@@ -129,26 +103,14 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
           otherRoughTrain = item.other;
         }
       });
-    // 感觉统合 -训练方向
-    values.trainWayVos &&
-      values.trainWayVos['2']?.forEach((item) => {
-        fellLevelBos.push(`${item.id}-${item.name}`);
-        if (item.isOther) {
-          otherFellLevel = item.other;
-        }
-      });
+
     onRoughTrainChange(roughTrainBos);
-    onFellLevelChange(fellLevelBos);
 
     const setData = {
-      feelLevel: values.feelLevel,
-      proposalTarget: values.proposalTarget,
       roughActivityLevel: values.roughActivityLevel,
       roughTrainType: values.roughTrainType,
       roughTrainBos,
-      fellLevelBos,
       otherRoughTrain,
-      otherFellLevel,
     };
     form.setFieldsValue(setData);
   };
@@ -218,48 +180,6 @@ const Tab1 = ({ patientId, submitting, dispatch }) => {
             <Input />
           </Form.Item>
         )}
-      </Form.Item>
-      <Form.Item
-        label="感觉统合"
-        name="feelLevel"
-        rules={[{ required: true, message: '请选择感觉统合' }]}
-      >
-        <Radio.Group>
-          {abilityLevelTypeList.map((item) => (
-            <Radio key={item.code} value={item.code}>
-              {item.codeCn}
-            </Radio>
-          ))}
-        </Radio.Group>
-      </Form.Item>
-      <Form.Item label="训练方向">
-        <Form.Item
-          name="fellLevelBos"
-          dependencies={['feelLevel']}
-          rules={[
-            ({ getFieldValue }) => ({
-              validator(rule, value) {
-                if (getFieldValue('feelLevel') !== 3) {
-                  if (!value || value.length === 0) {
-                    return Promise.reject('请选择训练方向');
-                  }
-                }
-                return Promise.resolve();
-              },
-            }),
-          ]}
-        >
-          <Checkbox.Group onChange={onFellLevelChange} options={feelLevelList}></Checkbox.Group>
-        </Form.Item>
-
-        {feelLevelListNames.includes('其他') && (
-          <Form.Item name="otherFellLevel">
-            <Input />
-          </Form.Item>
-        )}
-      </Form.Item>
-      <Form.Item label="建议目标" name="proposalTarget">
-        <Input.TextArea rows={4}></Input.TextArea>
       </Form.Item>
       {getAuth()?.canEdit && (
         <Form.Item {...submitLayout}>

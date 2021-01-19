@@ -23,7 +23,7 @@ import { uniqueId } from 'lodash/util';
 
 import { Chart, Geom, Axis, Guide } from 'bizcharts';
 import tables from './PDMS-TABLES';
-import { defaultBlock } from '@/utils/publicStyles'
+import { defaultBlock } from '@/utils/publicStyles';
 
 const { Line } = Guide;
 
@@ -48,7 +48,7 @@ for (let i = cols2.value.min; i <= cols2.value.max; i += 5) {
   cols2.value.ticks.push(i);
 }
 
-const getDate1Level = value => {
+const getDate1Level = (value) => {
   if (value >= 1 && value <= 3) {
     return 1;
   }
@@ -61,14 +61,11 @@ const getDate1Level = value => {
   return 0;
 };
 
-
-
 const useStyles = makeStyles({
-  ...defaultBlock
+  ...defaultBlock,
 });
 
-
-const getValue = value => {
+const getValue = (value) => {
   return value.split('|')[0];
 };
 
@@ -85,7 +82,7 @@ function Page(props) {
 
     const data = {};
 
-    Object.keys(tables).forEach(key => {
+    Object.keys(tables).forEach((key) => {
       columns.push({
         id: key,
         label: key,
@@ -93,7 +90,7 @@ function Page(props) {
 
       const numbers = tables[key];
 
-      Object.keys(numbers).forEach(action => {
+      Object.keys(numbers).forEach((action) => {
         if (data[action] === undefined) {
           data[action] = {};
         }
@@ -130,7 +127,7 @@ function Page(props) {
 
     reports
       .sort((a, b) => a.scaleType.localeCompare(b.scaleType, 'zh-CN'))
-      .forEach(report => {
+      .forEach((report) => {
         const { scaleType, scaleName, scoringResults } = report;
 
         const info = {
@@ -138,7 +135,7 @@ function Page(props) {
           scaleName,
         };
 
-        scoringResults.forEach(result => {
+        scoringResults.forEach((result) => {
           if (result.scoreName === '标准分') {
             const score = 1 * getValue(result.score);
 
@@ -161,7 +158,7 @@ function Page(props) {
         scoreInfo.push(info);
       });
 
-    totalReport.scoringResults.forEach(result => {
+    totalReport.scoringResults.forEach((result) => {
       let name2 = result.scoreName;
       if (result.scoreName.endsWith('商')) {
         name2 = `${result.scoreName.substring(0, result.scoreName.length - 1)}-商`;
@@ -196,7 +193,7 @@ function Page(props) {
   return (
     <div ref={body}>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>受测者信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -205,11 +202,7 @@ function Page(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>第二部分：记录分数</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -227,7 +220,7 @@ function Page(props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scoreInfo.map(row => (
+                {scoreInfo.map((row) => (
                   <TableRow key={uniqueId()}>
                     <TableCell component="th" scope="row">
                       {row.scaleName}
@@ -276,12 +269,8 @@ function Page(props) {
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
+      <ExpansionPanel defaultExpanded>
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>第三部分：分数简图</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -346,21 +335,19 @@ function Page(props) {
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <TableContainer component={Paper}>
-            {
-              /**
-               * https://www.zhihu.com/question/28707490
-               * 要修改旋轉的中心
-               */
-            }
+            {/**
+             * https://www.zhihu.com/question/28707490
+             * 要修改旋轉的中心
+             */}
             <Table
               className={classes.table}
-              style={{ transform2: 'rotate(90deg)', height: `${width*0.9}px` }}
+              style={{ transform2: 'rotate(90deg)', height: `${width * 0.9}px` }}
               size="small"
               aria-label="simple table"
             >
               <TableHead>
                 <TableRow>
-                  {status.columns.map(column => (
+                  {status.columns.map((column) => (
                     <TableCell
                       key={uniqueId()}
                       align={column.align}
@@ -372,12 +359,12 @@ function Page(props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {Object.keys(status.data).map(key => {
+                {Object.keys(status.data).map((key) => {
                   const row = status.data[key];
                   return (
                     <TableRow hover role="checkbox" tabIndex={-1} key={uniqueId()}>
                       <TableCell>{key}</TableCell>
-                      {status.columns.map(column => {
+                      {status.columns.map((column) => {
                         return (
                           <TableCell key={column.id} align={column.align}>
                             {row[column.id]}

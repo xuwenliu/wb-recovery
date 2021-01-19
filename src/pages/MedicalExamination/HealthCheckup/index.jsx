@@ -19,7 +19,10 @@ import { connect } from 'umi';
 import './index.less';
 import moment from 'moment';
 import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
-import { getPatientInfoSingle } from '@/pages/Patriarch/ChildrenRecord/service';
+import {
+  getPatientInfoSingle,
+  getPatientInfoSingleByScan,
+} from '@/pages/Patriarch/ChildrenRecord/service';
 import { getProjectAllProject } from '@/pages/Function/ResearchProject/service';
 import {
   getPhysiquePatientInfo,
@@ -31,6 +34,8 @@ import {
 import BodyTemperatureSelect from './components/BodyTemperatureSelect';
 import ChartsPer from '@/components/ChartsPer';
 import ChartsStand from '@/components/ChartsStand';
+import { getQrCode } from '@/services/common';
+import { initSocket } from '@/utils/utils';
 
 import { getAuth } from '@/utils/utils';
 
@@ -50,12 +55,13 @@ const HealthCheckup = ({ dispatch, submitting }) => {
   const actionRef = useRef();
   const [form] = Form.useForm();
   const [baseInfo, setBaseInfo] = useState();
-  const [patientId, setPatientId] = useState('771739876879560704');
   const [allCode, setAllCode] = useState([]);
   const [graphData, setGraphData] = useState();
+  const [qrCode, setQrCode] = useState();
 
   const [temperatureStateLevel1List, setTemperatureStateLevel1List] = useState([]);
   const [temperatureStateLevel2List, setTemperatureStateLevel2List] = useState([]);
+
   // 获取下拉信息
   const queryCheckAll = async () => {
     const res = await getCheckAll();
@@ -65,7 +71,9 @@ const HealthCheckup = ({ dispatch, submitting }) => {
   // 查询病历编号下拉
   const queryPhysiqueAllCaseCode = async () => {
     const res = await getPhysiqueAllCaseCode();
-    setAllCode(res);
+    if(res && res.length){
+      setAllCode(res);
+    }
   };
   //查询研究编号
   // const queryProjectAllProject = async () => {
@@ -94,13 +102,11 @@ const HealthCheckup = ({ dispatch, submitting }) => {
   const caseCodeVSelectChange = async (code) => {
     const sub = await getPhysiquePatientInfo({ code });
     setBaseInfo(sub);
-    setPatientId(sub.patientId);
     actionRef.current?.reload();
   };
 
-  // 显示基本资料
-  const handleGetBaseInfo = async () => {
-    const res = await getPatientInfoSingle({ patientId });
+  const queryPatientInfoByQrCode = async (code) => {
+    const res = await getPatientInfoSingleByScan({ code });
     const sub = await getPhysiquePatientInfo({ code: res.caseCodeV });
     setBaseInfo({ ...res, ...sub });
   };
@@ -112,7 +118,7 @@ const HealthCheckup = ({ dispatch, submitting }) => {
       const getValues = form.getFieldsValue(); // 获取最新文本值
       const postData = {
         ...getValues,
-        patientId,
+        patientId: baseInfo.patientId,
         visitingTime: moment(getValues.visitingTime).valueOf(),
       };
       dispatch({
@@ -122,6 +128,18 @@ const HealthCheckup = ({ dispatch, submitting }) => {
           actionRef.current?.reload();
           message.success('操作成功');
         },
+      });
+    }
+  };
+
+  // 生成二维码-创建连接
+  const queryQrCode = async () => {
+    const res = await getQrCode();
+    if (res) {
+      setQrCode(res.data);
+      initSocket(res.id, (code) => {
+        // 收到扫码通知
+        queryPatientInfoByQrCode(code);
       });
     }
   };
@@ -163,6 +181,10 @@ const HealthCheckup = ({ dispatch, submitting }) => {
     // queryProjectAllProject();
     queryPhysiqueGraphData();
   }, [baseInfo?.patientId]);
+
+  useEffect(() => {
+    queryQrCode();
+  }, []);
 
   return (
     <PageContainer>
@@ -352,10 +374,7 @@ const HealthCheckup = ({ dispatch, submitting }) => {
           </Col>
           <Col span={6}>
             <div className="code">
-              <Image
-                width={200}
-                src="https://img14.360buyimg.com/uba/s260x260_jfs/t1/32118/11/559/2782/5c3d81ecEbda0c0f1/5f2b637d11817204.png"
-              />
+              <Image width={200} src={qrCode} />
               <div className="submit">
                 {getAuth(8)?.canEdit && (
                   <Button
@@ -367,10 +386,9 @@ const HealthCheckup = ({ dispatch, submitting }) => {
                     生长曲线计算
                   </Button>
                 )}
-
-                <Button type="primary" onClick={handleGetBaseInfo}>
+                {/* <Button type="primary" onClick={handleGetBaseInfo}>
                   显示基本资料
-                </Button>
+                </Button> */}
               </div>
             </div>
           </Col>
@@ -383,9 +401,14 @@ const HealthCheckup = ({ dispatch, submitting }) => {
               <ProTable
                 actionRef={actionRef}
                 rowKey="id"
-                request={(params, sorter, filter) =>
-                  getPhysiqueList({ ...params, body: patientId })
-                }
+                params={{ patientId: baseInfo?.patientId }}
+                request={(params, sorter, filter) => {
+                  if (baseInfo?.patientId) {
+                    return getPhysiqueList({ ...params, body: baseInfo?.patientId });
+                  } else {
+                    return { data: [], total: 0 };
+                  }
+                }}
                 columns={columns}
                 search={false}
               />

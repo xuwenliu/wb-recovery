@@ -3,7 +3,10 @@ import { Card, Row, Col, Select, Image, Button, Form } from 'antd';
 
 import styles from './index.less';
 import moment from 'moment';
-import { getPatientInfoSingle } from '@/pages/Patriarch/ChildrenRecord/service';
+import {
+  getPatientInfoSingle,
+  getPatientInfoSingleByScan,
+} from '@/pages/Patriarch/ChildrenRecord/service';
 
 import {
   getPhysiquePatientInfo,
@@ -12,8 +15,9 @@ import {
 import { getAllCaseCode } from '@/pages/Assessment/TeamAssessment/service';
 import { getSpecialAllCaseCode } from '@/pages/Rehabilitation/PersonalPlan/service';
 import bingli from '@/assets/img/bingli.png';
+import { getQrCode } from '@/services/common';
+import { initSocket } from '@/utils/utils';
 
-let patientId = '771739876879560704';
 const layout = {
   labelCol: {
     span: 10,
@@ -22,23 +26,26 @@ const layout = {
 const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
   const [baseInfo, setBaseInfo] = useState();
   const [allCode, setAllCode] = useState([]);
+  const [qrCode, setQrCode] = useState();
 
   // 查询病历编号下拉
   const queryPhysiqueAllCaseCode = async () => {
     let res = [];
     if (newUrl === 'getAllCaseCode') {
       res = await getAllCaseCode();
-      if (res.length) {
+      if (res && res.length) {
         setAllCode(res);
       }
     } else if (newUrl === 'getSpecialAllCaseCode') {
       res = await getSpecialAllCaseCode();
-      if (res.length) {
+      if (res && res.length) {
         setAllCode(res);
       }
     } else {
       res = await getPhysiqueAllCaseCode();
-      res && setAllCode(res);
+      if (res && res.length) {
+        setAllCode(res);
+      }
     }
   };
 
@@ -50,16 +57,28 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
     onAllInfoChange && onAllInfoChange({ ...res, ...sub });
   };
 
-  // 显示基本资料
-  const handleGetBaseInfo = async () => {
-    const res = await getPatientInfoSingle({ patientId });
+  const queryPatientInfoByQrCode = async (code) => {
+    const res = await getPatientInfoSingleByScan({ code });
     const sub = await getPhysiquePatientInfo({ code: res.caseCodeV });
     setBaseInfo({ ...res, ...sub });
     onPatientIdChange(sub.patientId);
     onAllInfoChange && onAllInfoChange({ ...res, ...sub });
   };
 
+  // 生成二维码-创建连接
+  const queryQrCode = async () => {
+    const res = await getQrCode();
+    if (res) {
+      setQrCode(res.data);
+      initSocket(res.id, (code) => {
+        // 收到扫码通知
+        queryPatientInfoByQrCode(code);
+      });
+    }
+  };
+
   useEffect(() => {
+    queryQrCode();
     queryPhysiqueAllCaseCode();
     if (window.location.search) {
       const code = window.location.search.split('?code=')[1];
@@ -161,15 +180,12 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
         </Col>
         <Col span={6}>
           <div className={styles.code}>
-            <Image
-              width={200}
-              src="https://img14.360buyimg.com/uba/s260x260_jfs/t1/32118/11/559/2782/5c3d81ecEbda0c0f1/5f2b637d11817204.png"
-            />
-            <div className="submit">
+            <Image width={200} src={qrCode} />
+            {/* <div className="submit">
               <Button type="primary" onClick={handleGetBaseInfo}>
                 显示基本资料
               </Button>
-            </div>
+            </div> */}
           </div>
         </Col>
       </Row>

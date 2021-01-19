@@ -9,7 +9,7 @@ function GFMF66({ answers, total, width }) {
   useEffect(() => {
     return () => {};
   }, []);
-  console.log('total:', total);
+
   return (
     <Paper ref={ref} style={{ textAlign: 'center' }}>
       <div

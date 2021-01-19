@@ -1,6 +1,7 @@
 import { parse } from 'querystring';
 import { getCommonAllEnums } from '@/services/common';
 import { fileUpload } from '@/services/common';
+import io from 'socket.io-client';
 
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
 export const isUrl = (path) => reg.test(path);
@@ -41,7 +42,7 @@ export const queryCommonAllEnums = async () => {
 };
 // 从所有枚举里面获取type类型的枚举
 export const getSingleEnums = (key, all) => {
-  console.log(key, all);
+  console.log('key',key);
   return all
     .filter((item) => item.key === key)
     .map((item) => item.value)[0]
@@ -55,7 +56,7 @@ export const media = () => {
     const res = await fileUpload(formData);
     if (res) {
       param.success({
-        url: res,
+        url: res.url,
         meta: {
           loop: true, // 指定音视频是否循环播放
           autoPlay: true, // 指定音视频是否自动播放
@@ -93,7 +94,35 @@ export const getAuth = (key) => {
     }
   };
   getAuthor(menu, key ? 'key' : 'path', key ? key : location.pathname);
-  console.log('auth', auth);
-
   return auth;
+};
+
+export const initSocket = (clientId, callback) => {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  let socket = io.connect('http://117.78.38.243:8081', {
+    transports: ['websocket', 'xhr-polling', 'jsonp-polling'],
+    path: '/api/message',
+    query: {
+      clientId,
+      token,
+    },
+  });
+  // 重新链接则携带第一次的参数
+  socket.on('reconnect_attempt', (e) => {
+    socket.io.opts.query = {
+      clientId,
+      token,
+    };
+  });
+  socket.on('connect', (e) => {
+    console.log('connect---', e);
+  });
+  socket.on('connect_error', (error) => {
+    console.log('error---', error);
+  });
+  socket.on('ScanDone', (e) => {
+    console.log('ScanDone---', e);
+    callback && callback(e);
+  });
 };

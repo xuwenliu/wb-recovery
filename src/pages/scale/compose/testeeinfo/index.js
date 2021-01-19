@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'dva';
 import router from '@/utils/router';
 import { useDebounceFn } from '@umijs/hooks';
@@ -8,20 +8,26 @@ import Alert from '@/components/Alert';
 import Header from '@/components/AppHeader';
 import { makeStyles } from '@material-ui/core/styles';
 import { Paper } from '@material-ui/core';
+import Modal from '@material-ui/core/Modal';
 import Button from '@/components/Common/Button';
 import AutoComplete from '@/components/AutoComplete';
 import SubScale from '../../components/SubScale';
 import { getError } from '@/utils/error';
 import Demographics from '@/pages/scale/components/Demographics';
+import ObjectForm from '@/pages/scale/components/ObjectForm';
 import { formControl, lineControl } from '@/utils/publicStyles';
+
 /**
  * 1.依照人口學變量產生畫面元件
  *
  * 2.依照人口學變量產生子量表清單
  */
 const useStyles = makeStyles({
-  formControl: formControl,
-  lineControl: lineControl,
+  formControl,
+  lineControl,
+  paperControl: {
+    marginLeft: 40,
+  },
 });
 
 function Page({
@@ -32,7 +38,7 @@ function Page({
   form,
   objects = { content: [] },
   object,
-  scale,
+  scale = {},
   subScaleNames = [],
   loading,
   submiting,
@@ -40,6 +46,7 @@ function Page({
   const { getFieldDecorator, getFieldError } = form;
 
   const classes = useStyles();
+  const [open, setOpen] = useState(false);
 
   const fetchScale = () => {
     dispatch({
@@ -48,20 +55,37 @@ function Page({
     });
   };
 
-  const fetchObject = objectId => {
+  const saveUser = (values) => {
+    dispatch({
+      type: 'scaleComposeTesteeInfo/saveUser',
+      payload: { values },
+      callback: () => {
+        setOpen(false);
+      },
+    });
+  };
+
+  const fetchObject = (objectId) => {
     dispatch({
       type: 'scaleComposeTesteeInfo/fetchObjectDetail',
       payload: { id: objectId },
     });
   };
 
+  const fetchSubScaleNames = (demographics) => {
+    dispatch({
+      type: 'scaleComposeTesteeInfo/fetchSubScaleNames',
+      payload: { id: compose, demographics },
+    });
+  };
+
   /**
    * 避免短時間內重複查詢
    */
-  const { run: handleSearch } = useDebounceFn(number => {
+  const { run: handleSearch } = useDebounceFn((number) => {
     dispatch({
       type: 'scaleComposeTesteeInfo/fetchObject',
-      payload: { number },
+      payload: { text: number },
     });
   }, 500);
 
@@ -87,23 +111,16 @@ function Page({
 
   const handleSubmit = () => {
     form.validateFields((err, values) => {
-      // console.log('submit:', values);
-
       if (!err) {
         const testeeInfo = [];
         const { subScales } = values;
 
-        Object.keys(values).forEach(key => {
+        Object.keys(values).forEach((key) => {
           if (key !== 'subScales') {
             const v = {};
             v[key] = values[key];
             testeeInfo.push(v);
           }
-        });
-
-        console.log({
-          compose,
-          values: { user: object.id, subleScaleName: subScales, testeeInfo },
         });
 
         dispatch({
@@ -124,20 +141,17 @@ function Page({
     return { items: [...subScaleNames] };
   };
 
-  const demographicsOnChange = values => {
+  const demographicsOnChange = (values) => {
     // 過濾空白
     const demographics = {};
-    Object.keys(values).forEach(key => {
+    Object.keys(values).forEach((key) => {
       if (values[key] !== '') {
         demographics[key] = values[key];
       }
     });
 
     /** 帶出子量表 */
-    dispatch({
-      type: 'scaleComposeTesteeInfo/fetchSubScaleNames',
-      payload: { id: compose, demographics },
-    });
+    fetchSubScaleNames(demographics);
   };
 
   useEffect(() => {
@@ -155,23 +169,43 @@ function Page({
   return (
     <>
       <Header>
-        <h2 style={{ textAlign: 'center' }}>个人信息</h2>
+        <h2 style={{ textAlign: 'center' }}>
+          个人信息
+          <Button
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              fontSize: '16px',
+              lineHeight: '48px',
+              fontWeight: 'bold',
+            }}
+            aria-label="delete"
+            onClick={() => {
+              setOpen(true);
+            }}
+            fontSize="large"
+          >
+            新增个案
+          </Button>
+        </h2>
       </Header>
       <Paper style={{ margin: 20, paddingBottom: 10 }}>
         <form noValidate autoComplete="off">
           <AutoComplete
-            label="人员代码"
+            label="人员编号"
             loading={loading}
-            onInputChange={value => {
-              const vs = value.split('.');
-              if (vs.length === 1) {
-                handleSearch(value);
+            onInputChange={(value) => {
+              const text = value.trim();
+              const vs = text.split('.');
+              if (vs.length === 1 && text.length > 0) {
+                handleSearch(text);
               }
             }}
             onChange={({ value }) => {
               fetchObject(value);
             }}
-            options={objects.content.map(i => {
+            options={objects.content.map((i) => {
               return {
                 value: i.id,
                 label: `${i.number}.${i.name}`,
@@ -188,21 +222,18 @@ function Page({
                   {...getError({ errors: getFieldError('name') })}
                   className={classes.formControl}
                   label="姓名"
-                  variant="outlined"
-                />
+                  // variant="outlined"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />,
               )}
               <Demographics
                 object={object}
                 form={form}
-                limits={scale.limits || []}
+                limits={scale.limits || {}}
                 onChange={demographicsOnChange}
               />
-
-              {/**
-                 *  {getFieldDecorator('MONTHOLD', {
-                rules: [{ required: true, message: '月齡必須輸入' }],
-              })(<MonthLimit form={form} object={object} supportEarly={supportEarly()} />)}
-                 */}
 
               {getFieldDecorator('subScales', {
                 initialValue: scale.choiceType === 'SINGLE' ? [] : subScaleInfo.items,
@@ -229,6 +260,28 @@ function Page({
           )}
         </form>
       </Paper>
+      <Modal
+        style={{
+          marginTop: '200px',
+          marginLeft: '10%',
+          width: '80%',
+        }}
+        open={open}
+        onClose={() => {
+          setOpen(false);
+        }}
+      >
+        <Paper>
+          <ObjectForm
+            submit={(values) => {
+              saveUser(values);
+            }}
+            handleCancel={() => {
+              setOpen(false);
+            }}
+          />
+        </Paper>
+      </Modal>
     </>
   );
 }

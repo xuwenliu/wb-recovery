@@ -36,8 +36,9 @@ const useStyles = makeStyles({
 });
 
 const columns = [
-  { id: 'item', label: '测试能区', minWidth: 170 },
-  { id: '发育月龄', label: '相当月龄', minWidth: 100 },
+  { id: 'item', label: '测试能区', minWidth: 150 },
+  { id: '实际年龄', label: '实际年龄', minWidth: 100 },
+  { id: '发育月龄', label: '发育月龄', minWidth: 100 },
   { id: '发育商', label: '发育商（DQ）', minWidth: 100 },
   { id: 'explain', label: '评价', minWidth: 100 },
 ];
@@ -60,7 +61,7 @@ function Page(props) {
     totalReport.scoringResults
       // 排序會讓相同項目排在一起
       .sort((a, b) => a.scoreName.localeCompare(b.scoreName, 'zh-CN'))
-      .forEach(result => {
+      .forEach((result) => {
         const { scoreName, score, scoreExplain } = result;
         const [item, name] = scoreName.split('|');
         const list = map[item] || {};
@@ -75,11 +76,9 @@ function Page(props) {
         // data.push(info);
       });
 
-    Object.keys(map).forEach(name => {
+    Object.keys(map).forEach((name) => {
       data.push({ item: name, ...map[name] });
     });
-
-    console.log('data:', data);
 
     return model;
   };
@@ -89,9 +88,9 @@ function Page(props) {
   const obj = {};
   const obj1 = {};
   const arr = [];
-  data.forEach(item => {
-    obj[`${item.item}`] = item.实际年龄;
-    obj1[`${item.item}`] = item.发育月龄;
+  data.forEach((item) => {
+    obj[`${item.item}`] = Number(item.实际年龄);
+    obj1[`${item.item}`] = Number(item.发育月龄);
   });
   arr.push(
     {
@@ -101,20 +100,19 @@ function Page(props) {
     {
       name: '发育月龄',
       ...obj1,
-    }
+    },
   );
-  console.log('arr:', arr);
+
   const ds = new DataSet();
   const dv = ds.createView().source(arr);
   dv.transform({
     type: 'fold',
-    fields: ['大运动', '个人——社会', '适应性', '语言'],
+    fields: ['大运动', '个人——社会', '精细动作', '适应性', '语言'],
     // 展开字段集
-    key: '项目',
+    key: '栏位',
     // key字段
     value: '分数', // value字段
   });
-  console.log('dv:', dv);
 
   return (
     <div>
@@ -136,7 +134,7 @@ function Page(props) {
             <Paper style={{ width: '100%', margin: '1%', paddingTop: '5px' }} variant="outlined">
               <Grid item>
                 <Chart data={dv} height={300} forceFit>
-                  <Axis name="项目" />
+                  <Axis name="栏位" />
                   <Axis name="分数" />
                   <Legend />
                   <Tooltip
@@ -146,7 +144,7 @@ function Page(props) {
                   />
                   <Geom
                     type="interval"
-                    position="项目*分数"
+                    position="栏位*分数"
                     color="name"
                     adjust={[
                       {
@@ -173,7 +171,7 @@ function Page(props) {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      {columns.map(column => (
+                      {columns.map((column) => (
                         <TableCell
                           key={column.id}
                           align={column.align}
@@ -185,10 +183,10 @@ function Page(props) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {data.map(row => {
+                    {data.map((row) => {
                       return (
                         <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                          {columns.map(column => {
+                          {columns.map((column) => {
                             return (
                               <TableCell key={column.id} align={column.align}>
                                 {column.label === '发育商' ? `${row[column.id]} %` : row[column.id]}

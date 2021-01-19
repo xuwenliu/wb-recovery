@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Checkbox, Input, Button, Select, Card, Image, Radio, message } from 'antd';
+import {
+  Form,
+  Checkbox,
+  Input,
+  Button,
+  Select,
+  Card,
+  Image,
+  Radio,
+  message,
+  DatePicker,
+} from 'antd';
 import { CloseCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { FooterToolbar } from '@ant-design/pro-layout';
 import BraftEditor from 'braft-editor';
@@ -8,11 +19,8 @@ import { media } from '@/utils/utils';
 
 import { connect, history } from 'umi';
 import {
-  getAllProblem,
   getAllPast,
-  getAllVaccine,
   getAllVisitingDanger,
-  getAllPrescription,
   getLastVisiting,
   getVisitingSingle,
 } from '@/pages/MedicalExamination/DiagnosisPrescription/service';
@@ -28,16 +36,23 @@ import MainTellLevelSelect from './MainTellLevelSelect';
 import InitialJudgeSelect from './InitialJudgeSelect';
 import ScaleViewModal from '@/components/Scale/ScaleViewModal';
 
-
 import why from '@/assets/img/why.png';
 import chufang from '@/assets/img/chufang.png';
 import jianyi from '@/assets/img/jianyi.png';
 import pingding from '@/assets/img/pingding.png';
 
-
 const layout = {
   labelCol: {
     span: 3,
+  },
+};
+
+const fuLayout = {
+  labelCol: {
+    span: 2,
+  },
+  wrapperCol: {
+    span: 8,
   },
 };
 let numArr = [];
@@ -45,8 +60,8 @@ for (let i = 1; i <= 12; i++) {
   numArr.push(i);
 }
 
-const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
-  console.log('info', info);
+const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKey }) => {
+  const DISABLED = recordId ? true : false;
   const { familyMemberInfoVos, patientBirthRecordVo } = info;
   let fatherInfo = null;
   let motherInfo = null;
@@ -95,44 +110,44 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
   });
   const [tools, setTools] = useState([]);
 
-
-  const queryAllProblem = async () => {
-    const res = await getAllProblem();
-    const options = res.map((item) => {
-      item.label = item.name;
-      item.value = `${item.id}-${item.name}`;
-      return item;
-    });
-    setLoading(false);
-    setAllProblemList(options);
-  };
-
   const queryEnums = async () => {
     const newArr = await queryCommonAllEnums();
     setHistoryList(getSingleEnums('PastHistoryType', newArr)); //既往史
     setVisitingDangerList(getSingleEnums('MedicineCheckDangerType', newArr)); // 高危因素
-    setChildbirthTypeList(getSingleEnums('ChildbirthType', newArr)); // 分娩方式
-    const dataDisease = getSingleEnums('FamilyInfectiousDiseaseType', newArr); //传染病
-    const dataDiseaseOptions = dataDisease.map((item) => {
-      item.label = item.codeCn;
-      item.value = item.code;
-      return item;
-    });
-    setFamilyInfectiousDiseaseList(dataDiseaseOptions);
-
-    const data = getSingleEnums('FamilyInfoType', newArr); // 家族史
-    const options = data.map((item) => {
-      item.label = item.codeCn;
-      item.value = item.code;
-      return item;
-    });
-    setFamilyHistoryList(options);
   };
 
   const queryCheckAll = async () => {
-    const res = await getCheckAll();
+    let res = await getCheckAll();
+    res = res.map((item) => {
+      item.label = item.content;
+      item.value = item.id;
+      return item;
+    });
     setPersonalList(res.filter((item) => item.type === 4)); // 个人史
     setOutpatientList(res.filter((item) => item.type === 8)); // 门诊复查
+
+    const options = res
+      .filter((item) => item.type === 9)
+      .map((item) => {
+        item.value = `${item.id}-${item.content}`;
+        return item;
+      });
+    setAllProblemList(options); // 就诊问题
+
+    setAllVaccineList(res.filter((item) => item.type === 10)); // 疫苗接种
+    setFamilyHistoryList(res.filter((item) => item.type === 11)); // 家族史
+    setFamilyInfectiousDiseaseList(res.filter((item) => item.type === 12)); // 传染病
+    setChildbirthTypeList(res.filter((item) => item.type === 13)); // 分娩方式
+
+    const optionsChu = res
+      .filter((item) => item.type === 14)
+      .map((item) => {
+        item.value = `${item.id}-${item.content}`;
+        return item;
+      });
+    setAllPrescriptionList(optionsChu); // 治疗处方
+
+    setLoading(false);
   };
 
   // 既往史-下拉切换
@@ -155,17 +170,6 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     }
 
     setHistorySubList(options);
-  };
-
-  // 所有疫苗
-  const queryAllVaccine = async () => {
-    const res = await getAllVaccine();
-    const options = res.map((item) => {
-      item.label = item.name;
-      item.value = item.id;
-      return item;
-    });
-    setAllVaccineList(options);
   };
 
   // 高危因素-下拉切换
@@ -198,18 +202,6 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
     if (res) {
       setPersonal2List(res);
     }
-  };
-
-  // 全部治疗处方
-  const queryAllPrescription = async () => {
-    const res = await getAllPrescription();
-    const options = res.map((item) => {
-      item.label = item.name;
-      item.value = `${item.id}-${item.name}`;
-      return item;
-    });
-
-    setAllPrescriptionList(options);
   };
 
   // 医学诊断 下面的显示内容
@@ -438,6 +430,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
         ? values.visitingPrescriptionConnectVos[0]?.other
         : '',
       doctorSuggestion: BraftEditor.createEditorState(values.doctorSuggestion),
+      checkBody: values.checkBody,
     };
     form.setFieldsValue(data);
     setTimestamp(moment().valueOf());
@@ -445,7 +438,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
 
   const onFinish = (values) => {
     console.log(values);
-    console.log("tools",tools);
+    console.log('tools', tools);
     setError([]);
 
     // 就诊问题
@@ -538,6 +531,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
       visitingFamilyHistoryCreateBos, // 家族史
       familyInfectiousDiseaseCreateBos, // 传染病
       visitingDangerConnectCreateBos, // 高危因素
+      checkBody: values.checkBody, // 查体
       visitingJudgmentCreateBos, // 医学诊断
       visitingPrescriptionCreateBos, // 治疗处方
       doctorSuggestion: values.doctorSuggestion?.toHTML(), // 医生建议
@@ -558,11 +552,8 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
   };
 
   useEffect(() => {
-    queryAllProblem();
     queryCheckAll();
-    queryAllVaccine();
     queryEnums();
-    queryAllPrescription();
     queryAllImportSection();
     if (info.id || recordId) {
       queryEditInfo();
@@ -705,437 +696,493 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId }) => {
           复制本页文档内容
         </Button>
       )}
-      <div className="box">
-        {recordId && <div className="mask"></div>}
 
-        <Card loading={loading} style={{ background: '#F2F3F7', marginTop: 20 }}>
-          <Form.Item
-            label="就诊问题 (必填)"
-            name="visitingProblemCreateBos"
-            rules={[
-              {
-                required: true,
-                message: '请选择就诊问题',
-              },
-            ]}
-          >
-            <Checkbox.Group
-              style={{ paddingTop: 6 }}
-              onChange={onProblemChange}
-              options={allProblemList}
-            ></Checkbox.Group>
-          </Form.Item>
-          {problemNameList.includes('其他') && (
-            <Form.Item
-              name="otherProblem"
-              rules={[
-                {
-                  required: true,
-                  message: '请输入其他就诊问题',
-                },
-              ]}
-            >
-              <Input placeholder="请输入其他就诊问题" />
-            </Form.Item>
-          )}
-          <Form.Item label="主诉 (必填)">
-            <MainTellLevelSelect
-              timestamp={timestamp}
-              form={form}
-              type={2}
-              name="visitingMainTellCreateBos"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择',
-                },
-              ]}
-              postFields={[
-                'mainTellLevel1Id',
-                'mainTellLevel2Id',
-                'mainTellLevel3Id',
-                'customizeInfo',
-              ]}
-            />
-          </Form.Item>
-          <Form.Item label="现病史 (必填)">
-            <MainTellLevelSelect
-              timestamp={timestamp}
-              form={form}
-              type={3}
-              name="visitingHpiCreateBos"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择',
-                },
-              ]}
-              postFields={['hpiLevel1Id', 'hpiLevel2Id', 'hpiLevel3Id', 'customizeInfo']}
-            />
-          </Form.Item>
-          <Form.Item label="既往史">
-            <div style={{ display: 'flex' }}>
-              <Form.Item className="mr8" style={{ flex: 1 }} name="pastVoId">
-                <Select placeholder="请选择" onChange={(val) => historyChange(val, false)}>
-                  {historyList.map((item) => (
-                    <Select.Option key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item style={{ flex: 4 }} name="visitingPastCreateBos">
-                <Checkbox.Group options={historySubList}></Checkbox.Group>
-              </Form.Item>
-            </div>
-          </Form.Item>
-          <Form.Item label="个人史">
-            <div style={{ display: 'flex' }}>
-              <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel1Id">
-                <Select onChange={personalChange}>
-                  {personalList.map((item) => (
-                    <Select.Option key={item.id} value={item.id}>
-                      {item.content}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel2Id">
-                <Select>
-                  {personal2List.map((item) => (
-                    <Select.Option key={item.id} value={item.id}>
-                      {item.content}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item>
-                <span>{patientBirthRecordVo?.fetusNumName}</span>
-                {patientBirthRecordVo?.pregnancyWeeksName && (
-                  <span>&nbsp;&nbsp;出生孕周：{patientBirthRecordVo?.pregnancyWeeksName}</span>
-                )}
-                {patientBirthRecordVo?.birthWeightName && (
-                  <span>&nbsp;&nbsp;出生体重：{patientBirthRecordVo?.birthWeightName}</span>
-                )}
-              </Form.Item>
-            </div>
-            <div>
-              <Form.Item className="mr8" style={{ width: '40%' }}>
-                <Checkbox checked={moreInfo.isHealth} onChange={(e) => onMoreChange(e, 'isHealth')}>
-                  健康
-                </Checkbox>
-                <Checkbox checked={moreInfo.isWeak} onChange={(e) => onMoreChange(e, 'isWeak')}>
-                  体弱多病
-                </Checkbox>
-                <Checkbox
-                  checked={moreInfo.isBirthHurt}
-                  onChange={(e) => onMoreChange(e, 'isBirthHurt')}
-                >
-                  产伤
-                </Checkbox>
-                <Checkbox
-                  checked={moreInfo.isAsphyxia}
-                  onChange={(e) => onMoreChange(e, 'isAsphyxia')}
-                >
-                  窒息史
-                </Checkbox>
-              </Form.Item>
-              <Form.Item label="分娩方式" name="childbirthType">
-                <Radio.Group>
-                  {childbirthTypeList.map((item) => (
-                    <Radio key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Radio>
-                  ))}
-                </Radio.Group>
-              </Form.Item>
-            </div>
-          </Form.Item>
-          <Form.Item label="疫苗接种" name="visitingVaccineCreateBos">
-            <Checkbox.Group options={allVaccineList}></Checkbox.Group>
-          </Form.Item>
-
-          <Form.Item label="家族史">
-            <div style={{ paddingTop: 6 }}>
-              {fatherInfo && (
-                <span>
-                  其父：{fatherInfo.name} {fatherInfo.age}岁，职业：{fatherInfo.professionLargeName}
-                  -{fatherInfo.professionMediumName}-{fatherInfo.professionSmallName}
-                </span>
-              )}
-              {motherInfo && (
-                <span>
-                  &nbsp;&nbsp; 其母：{motherInfo.name} {motherInfo.age}岁，职业：
-                  {motherInfo.professionLargeName}-{motherInfo.professionMediumName}-
-                  {motherInfo.professionSmallName}
-                </span>
-              )}
-            </div>
-            <Form.Item name="visitingFamilyHistoryCreateBos">
-              <Checkbox.Group options={familyHistoryList}></Checkbox.Group>
-            </Form.Item>
-            <Form.Item label="传染病" name="familyInfectiousDiseaseCreateBos">
-              <Checkbox.Group options={familyInfectiousDiseaseList}></Checkbox.Group>
-            </Form.Item>
-          </Form.Item>
-
-          <Form.Item label="高危因素">
-            <div style={{ display: 'flex' }}>
-              <Form.Item className="mr8" style={{ flex: 1 }} name="visitingRecordId">
-                <Select
-                  placeholder="请选择高危因素"
-                  onChange={(val) => visitingDangerChange(val, false)}
-                >
-                  {visitingDangerList.map((item) => (
-                    <Select.Option key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item style={{ flex: 4 }} name="visitingDangerConnectCreateBos">
-                <Checkbox.Group options={visitingDangerSubList}></Checkbox.Group>
-              </Form.Item>
-            </div>
-          </Form.Item>
-        </Card>
-
-        <Card
-          bordered={false}
-          title={
-            <>
-              <Image preview={false} className="mr8" src={pingding} width={30} height={30} />
-              评估工具
-            </>
-          }
+      <Card loading={loading} style={{ background: '#F2F3F7', marginTop: 20 }}>
+        <Form.Item
+          label="就诊问题 (必填)"
+          name="visitingProblemCreateBos"
+          rules={[
+            {
+              required: true,
+              message: '请选择就诊问题',
+            },
+          ]}
         >
+          <Checkbox.Group
+            disabled={DISABLED}
+            style={{ paddingTop: 6 }}
+            onChange={onProblemChange}
+            options={allProblemList}
+          ></Checkbox.Group>
+        </Form.Item>
+        {problemNameList.includes('其他') && (
           <Form.Item
-            name="tool"
+            name="otherProblem"
             rules={[
               {
                 required: true,
-                message: '请选择评估工具',
+                message: '请输入其他就诊问题',
               },
             ]}
           >
-            <ScaleViewModal
-              value={tools}
-              onChange={(value) => {
-                setTools(value);
-              }}
-            />
+            <Input disabled={DISABLED} placeholder="请输入其他就诊问题" />
           </Form.Item>
-        </Card>
-
-        {/* 有一项存在才显示 医学诊断*/}
-        {showDataType.length !== 0 && (
-          <Card
-            loading={loading}
-            bordered={false}
-            title={
-              <>
-                <Image preview={false} className="mr8" src={why} width={30} height={30} />
-                医学诊断 (必填)
-              </>
-            }
-          >
-            {showDataType.includes(5) && (
-              <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
-                <InitialJudgeSelect
-                  timestamp={timestamp}
-                  type={5}
-                  form={form}
-                  name="icd"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
-                  postFields={[
-                    'judgmentLevel1Id',
-                    'judgmentLevel2Id',
-                    'judgmentLevel3Id',
-                    'judgmentLevel4Id',
-                  ]}
-                />
-              </Form.Item>
-            )}
-
-            {showDataType.includes(6) && (
-              <Form.Item label="DSM5" labelCol={{ span: 2 }}>
-                <InitialJudgeSelect
-                  timestamp={timestamp}
-                  type={6}
-                  form={form}
-                  name="dsm"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
-                  postFields={[
-                    'judgmentLevel1Id',
-                    'judgmentLevel2Id',
-                    'judgmentLevel3Id',
-                    'judgmentLevel4Id',
-                  ]}
-                />
-              </Form.Item>
-            )}
-            {showDataType.includes(7) && (
-              <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
-                <InitialJudgeSelect
-                  timestamp={timestamp}
-                  type={7}
-                  form={form}
-                  name="icf"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
-                  postFields={[
-                    'judgmentLevel1Id',
-                    'judgmentLevel2Id',
-                    'judgmentLevel3Id',
-                    'judgmentLevel4Id',
-                  ]}
-                />
-              </Form.Item>
-            )}
-          </Card>
         )}
+        <Form.Item label="主诉 (必填)">
+          <MainTellLevelSelect
+            disabled={DISABLED}
+            timestamp={timestamp}
+            form={form}
+            type={2}
+            name="visitingMainTellCreateBos"
+            rules={[
+              {
+                required: true,
+                message: '请选择',
+              },
+            ]}
+            postFields={[
+              'mainTellLevel1Id',
+              'mainTellLevel2Id',
+              'mainTellLevel3Id',
+              'customizeInfo',
+            ]}
+          />
+        </Form.Item>
+        <Form.Item label="现病史 (必填)">
+          <MainTellLevelSelect
+            disabled={DISABLED}
+            timestamp={timestamp}
+            form={form}
+            type={3}
+            name="visitingHpiCreateBos"
+            rules={[
+              {
+                required: true,
+                message: '请选择',
+              },
+            ]}
+            postFields={['hpiLevel1Id', 'hpiLevel2Id', 'hpiLevel3Id', 'customizeInfo']}
+          />
+        </Form.Item>
+        <Form.Item label="既往史">
+          <div style={{ display: 'flex' }}>
+            <Form.Item className="mr8" style={{ flex: 1 }} name="pastVoId">
+              <Select
+                disabled={DISABLED}
+                placeholder="请选择"
+                onChange={(val) => historyChange(val, false)}
+              >
+                {historyList.map((item) => (
+                  <Select.Option key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item style={{ flex: 4 }} name="visitingPastCreateBos">
+              <Checkbox.Group disabled={DISABLED} options={historySubList}></Checkbox.Group>
+            </Form.Item>
+          </div>
+        </Form.Item>
+        <Form.Item label="个人史" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex' }}>
+            <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel1Id">
+              <Select disabled={DISABLED} onChange={personalChange}>
+                {personalList.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.content}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel2Id">
+              <Select disabled={DISABLED}>
+                {personal2List.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.content}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <span>{patientBirthRecordVo?.fetusNumName}</span>
+              {patientBirthRecordVo?.pregnancyWeeksName && (
+                <span>&nbsp;&nbsp;出生孕周：{patientBirthRecordVo?.pregnancyWeeksName}</span>
+              )}
+              {patientBirthRecordVo?.birthWeightName && (
+                <span>&nbsp;&nbsp;出生体重：{patientBirthRecordVo?.birthWeightName}</span>
+              )}
+            </Form.Item>
+          </div>
+        </Form.Item>
+        <Form.Item label="分娩方式" name="childbirthType">
+          <Radio.Group disabled={DISABLED}>
+            {childbirthTypeList.map((item) => (
+              <Radio key={item.id} value={item.id}>
+                {item.content}
+              </Radio>
+            ))}
+          </Radio.Group>
+        </Form.Item>
+        <Form.Item label="疫苗接种" name="visitingVaccineCreateBos">
+          <Checkbox.Group disabled={DISABLED} options={allVaccineList}></Checkbox.Group>
+        </Form.Item>
 
+        <Form.Item label="家族史" style={{ marginBottom: 0 }}>
+          {fatherInfo && (
+            <span>
+              其父：{fatherInfo.name} {fatherInfo.age}岁，职业：{fatherInfo.professionLargeName}-
+              {fatherInfo.professionMediumName}
+            </span>
+          )}
+          {motherInfo && (
+            <span>
+              &nbsp;&nbsp; 其母：{motherInfo.name} {motherInfo.age}岁，职业：
+              {motherInfo.professionLargeName}-{motherInfo.professionMediumName}-
+            </span>
+          )}
+          <Form.Item name="visitingFamilyHistoryCreateBos">
+            <Checkbox.Group disabled={DISABLED} options={familyHistoryList}></Checkbox.Group>
+          </Form.Item>
+        </Form.Item>
+        <Form.Item label="传染病" name="familyInfectiousDiseaseCreateBos">
+          <Checkbox.Group
+            disabled={DISABLED}
+            options={familyInfectiousDiseaseList}
+          ></Checkbox.Group>
+        </Form.Item>
+
+        <Form.Item label="高危因素" style={{ marginBottom: 0 }}>
+          <div style={{ display: 'flex' }}>
+            <Form.Item className="mr8" style={{ flex: 1 }} name="visitingRecordId">
+              <Select
+                disabled={DISABLED}
+                placeholder="请选择高危因素"
+                onChange={(val) => visitingDangerChange(val, false)}
+              >
+                {visitingDangerList.map((item) => (
+                  <Select.Option key={item.code} value={item.code}>
+                    {item.codeCn}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item style={{ flex: 4 }} name="visitingDangerConnectCreateBos">
+              <Checkbox.Group disabled={DISABLED} options={visitingDangerSubList}></Checkbox.Group>
+            </Form.Item>
+          </div>
+        </Form.Item>
+
+        <Form.Item label="查体" name="checkBody">
+          <Input disabled={DISABLED} />
+        </Form.Item>
+      </Card>
+
+      <Card
+        bordered={false}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={pingding} width={30} height={30} />
+            评估工具
+          </>
+        }
+      >
+        <Form.Item
+          name="tool"
+          rules={[
+            {
+              required: true,
+              message: '请选择评估工具',
+            },
+          ]}
+        >
+          <ScaleViewModal
+            disabled={DISABLED}
+            value={tools}
+            onChange={(value) => {
+              setTools(value);
+            }}
+          />
+        </Form.Item>
+      </Card>
+
+      {/* 有一项存在才显示 医学诊断*/}
+      {showDataType.length !== 0 && (
         <Card
           loading={loading}
           bordered={false}
           title={
             <>
-              <Image preview={false} className="mr8" src={chufang} width={30} height={30} />
-              治疗处方 (必填)
+              <Image preview={false} className="mr8" src={why} width={30} height={30} />
+              医学诊断 (必填)
             </>
           }
         >
-          <Form.Item
-            name="visitingPrescriptionCreateBos"
-            rules={[
-              {
-                required: true,
-                message: '请选择治疗处方',
-              },
-            ]}
-          >
-            <Checkbox.Group
-              style={{ paddingTop: 6 }}
-              onChange={onPrescriptionChange}
-              options={allPrescriptionList}
-            ></Checkbox.Group>
-          </Form.Item>
-
-          {allPrescriptionNameList.includes('门诊复查') && (
-            <>
-              <Input.Group compact>
-                <Form.Item
-                  name="time"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
-                >
-                  <Select
-                    style={{ width: 200 }}
-                    placeholder="请选择复查周期"
-                    rules={[
-                      {
-                        required: true,
-                        message: '请选择治疗处方',
-                      },
-                    ]}
-                  >
-                    {numArr.map((item) => (
-                      <Select.Option key={item} value={item}>
-                        {item}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="timeType"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
-                >
-                  <Select style={{ width: 100 }}>
-                    {outpatientList.map((item) => (
-                      <Select.Option key={item.id} value={item.id}>
-                        {item.content}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Input.Group>
-            </>
+          {showDataType.includes(5) && (
+            <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
+              <InitialJudgeSelect
+                disabled={DISABLED}
+                timestamp={timestamp}
+                type={5}
+                form={form}
+                name="icd"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+                postFields={[
+                  'judgmentLevel1Id',
+                  'judgmentLevel2Id',
+                  'judgmentLevel3Id',
+                  'judgmentLevel4Id',
+                ]}
+              />
+            </Form.Item>
           )}
-          {allPrescriptionNameList.includes('其他') && (
-            <Form.Item
-              name="otherPrescription"
-              rules={[
-                {
-                  required: true,
-                  message: '请输入其他治疗处方',
-                },
-              ]}
-            >
-              <Input placeholder="请输入其他治疗处方" />
+
+          {showDataType.includes(6) && (
+            <Form.Item label="DSM5" labelCol={{ span: 2 }}>
+              <InitialJudgeSelect
+                disabled={DISABLED}
+                timestamp={timestamp}
+                type={6}
+                form={form}
+                name="dsm"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+                postFields={[
+                  'judgmentLevel1Id',
+                  'judgmentLevel2Id',
+                  'judgmentLevel3Id',
+                  'judgmentLevel4Id',
+                ]}
+              />
+            </Form.Item>
+          )}
+          {showDataType.includes(7) && (
+            <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
+              <InitialJudgeSelect
+                disabled={DISABLED}
+                timestamp={timestamp}
+                type={7}
+                form={form}
+                name="icf"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+                postFields={[
+                  'judgmentLevel1Id',
+                  'judgmentLevel2Id',
+                  'judgmentLevel3Id',
+                  'judgmentLevel4Id',
+                ]}
+              />
             </Form.Item>
           )}
         </Card>
+      )}
 
-        <Card
-          loading={loading}
-          bordered={false}
-          title={
-            <>
-              <Image preview={false} className="mr8" src={jianyi} width={30} height={30} />
-              医生建议 (必填)
-            </>
-          }
+      <Card
+        loading={loading}
+        bordered={false}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={chufang} width={30} height={30} />
+            治疗处方 (必填)
+          </>
+        }
+      >
+        <Form.Item {...fuLayout} label="门诊复查"></Form.Item>
+        <Form.Item
+          {...fuLayout}
+          label="复查时间"
+          name="placeTime"
+          rules={[
+            {
+              required: true,
+              message: '请选择复查时间',
+            },
+          ]}
         >
+          <DatePicker style={{ width: '100%' }} placeholder="请选择复查时间" />
+        </Form.Item>
+        <Form.Item
+          {...fuLayout}
+          label="复查地点"
+          name="place"
+          rules={[
+            {
+              required: true,
+              message: '请输入复查地点',
+            },
+          ]}
+        >
+          <Input placeholder="请输入复查地点" />
+        </Form.Item>
+        <Form.Item
+          {...fuLayout}
+          wrapperCol={{
+            offset: 2,
+          }}
+        >
+          <Button type="primary">保存</Button>
+        </Form.Item>
+
+        <Form.Item
+          name="visitingPrescriptionCreateBos"
+          rules={[
+            {
+              required: true,
+              message: '请选择治疗处方',
+            },
+          ]}
+        >
+          <Checkbox.Group
+            disabled={DISABLED}
+            style={{ paddingTop: 6 }}
+            onChange={onPrescriptionChange}
+            options={allPrescriptionList}
+          ></Checkbox.Group>
+        </Form.Item>
+
+        {allPrescriptionNameList.includes('门诊复查') && (
+          <>
+            <Input.Group compact>
+              <Form.Item
+                name="time"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+              >
+                <Select
+                  disabled={DISABLED}
+                  style={{ width: 200 }}
+                  placeholder="请选择复查周期"
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择治疗处方',
+                    },
+                  ]}
+                >
+                  {numArr.map((item) => (
+                    <Select.Option key={item} value={item}>
+                      {item}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="timeType"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+              >
+                <Select disabled={DISABLED} style={{ width: 100 }}>
+                  {outpatientList.map((item) => (
+                    <Select.Option key={item.id} value={item.id}>
+                      {item.content}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Input.Group>
+          </>
+        )}
+        {allPrescriptionNameList.includes('其他') && (
           <Form.Item
-            name="doctorSuggestion"
+            name="otherPrescription"
             rules={[
               {
                 required: true,
-                message: '请输入建议',
+                message: '请输入其他治疗处方',
               },
             ]}
           >
-            <BraftEditor media={media()} placeholder="请输入建议" className="my-editor" />
+            <Input disabled={DISABLED} placeholder="请输入其他治疗处方" />
           </Form.Item>
-        </Card>
-      </div>
+        )}
+      </Card>
+
+      <Card
+        loading={loading}
+        bordered={false}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={jianyi} width={30} height={30} />
+            医生建议 (必填)
+          </>
+        }
+      >
+        <Form.Item
+          name="doctorSuggestion"
+          rules={[
+            {
+              required: true,
+              message: '请输入建议',
+            },
+          ]}
+        >
+          <BraftEditor
+            disabled={DISABLED}
+            media={media()}
+            placeholder="请输入建议"
+            className="my-editor"
+          />
+        </Form.Item>
+      </Card>
       <FooterToolbar>
         {getErrorInfo(error)}
-        {getAuth(12)?.canEdit && !recordId && (
+        {getAuth(authKey)?.canEdit && !DISABLED && (
           <>
-            <Button className="mr8" type="primary">
-              截取HIS医嘱
-            </Button>
+            {authKey === 12 && (
+              <Button className="mr8" type="primary">
+                截取HIS医嘱
+              </Button>
+            )}
+
+            {authKey === 22 && (
+              <Button
+                type="primary"
+                onClick={() => {
+                  if (!info.caseCodeV) {
+                    return message.info('请先查看患者信息');
+                  }
+                  history.push({
+                    pathname: '/assessment/teamassessment',
+                    query: {
+                      code: info.caseCodeV,
+                    },
+                  });
+                }}
+              >
+                进入小组评估
+              </Button>
+            )}
+
             <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
               提交
             </Button>
           </>
         )}
 
-        {recordId && (
+        {DISABLED && (
           <Button icon={<ArrowLeftOutlined />} onClick={() => history.goBack()}>
             返回
           </Button>

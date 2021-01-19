@@ -5,6 +5,7 @@ import proxy from './proxy';
 const { REACT_APP_ENV } = process.env;
 export default defineConfig({
   hash: true,
+  outputPath: './cr-business',
   antd: {},
   dva: {
     hmr: true,
@@ -273,7 +274,7 @@ export default defineConfig({
                   name: 'assessmenttool',
                   icon: 'smile',
                   path: '/function/assessmenttool',
-                  component: './Function/AssessmentTool',
+                  component: './scale/type',
                 },
                 {
                   name: 'individualcase',

@@ -107,7 +107,7 @@ const MedicalRecordList = ({ patientId }) => {
     },
 
     {
-      title: '医师初步判断',
+      title: '医学诊断',
       dataIndex: 'judgmentInfo',
       ellipsis: true,
       search: false,

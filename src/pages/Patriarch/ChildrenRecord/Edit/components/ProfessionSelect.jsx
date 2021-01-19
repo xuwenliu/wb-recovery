@@ -6,7 +6,7 @@ import { getParentSectionChildren } from '@/pages/Function/ColumnLocation/servic
 
 const { Option } = Select;
 
-const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
+const ProfessionSelect = ({ value = {}, onChange, professionList, disabled = false }) => {
   console.log('value', value);
   const [largeList, setLargeList] = useState([]);
   const [mediumList, setMediumList] = useState([]);
@@ -48,7 +48,7 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
     } else {
       triggerChange({ medium: id, small: '' });
     }
-    queryParentSectionChildren(3, id);
+    // queryParentSectionChildren(3, id);
   };
   const onSmallChange = (id) => {
     triggerChange({ small: id });
@@ -73,7 +73,8 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
       <Select
-        style={{ width: '31%' }}
+        disabled={disabled}
+        style={{ width: '50%' }}
         value={value.large || large}
         onChange={(id) => onLargeChange(id, false)}
         placeholder="请选择大类"
@@ -85,7 +86,8 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
         ))}
       </Select>
       <Select
-        style={{ width: '31%' }}
+        disabled={disabled}
+        style={{ width: '50%' }}
         value={value.medium || medium}
         onChange={(id) => onMediumChange(id, false)}
         placeholder="请选择中类"
@@ -96,7 +98,8 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
           </Option>
         ))}
       </Select>
-      <Select
+      {/* <Select
+        disabled={disabled}
         style={{ width: '31%' }}
         value={value.small || small}
         onChange={onSmallChange}
@@ -107,7 +110,7 @@ const ProfessionSelect = ({ value = {}, onChange, professionList }) => {
             {item.name}
           </Option>
         ))}
-      </Select>
+      </Select> */}
     </div>
   );
 };

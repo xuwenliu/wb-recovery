@@ -1,4 +1,3 @@
-
 module.exports = {
   lineControl: {
     margin: 20,
@@ -6,9 +5,12 @@ module.exports = {
   formControl: {
     display: 'block',
     margin: 20,
+    '& .MuiInput-formControl': {
+      width: 200,
+    },
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
-        width: 230,
+        width: 200,
       },
     },
   },
@@ -56,4 +58,4 @@ module.exports = {
       fontSize: '18px',
     },
   },
-}
+};

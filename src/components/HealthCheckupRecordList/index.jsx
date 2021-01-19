@@ -37,7 +37,7 @@ const columns = [
 const HealthCheckupRecordList = ({ patientId }) => {
     const actionRef = useRef();
     useEffect(() => {
-        actionRef?.current.reload();
+        actionRef?.current?.reload();
     }, [patientId])
     return <ProTable
         actionRef={actionRef}

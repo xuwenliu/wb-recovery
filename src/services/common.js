@@ -15,8 +15,23 @@ export async function getCommonRegion(params) {
 }
 
 export async function fileUpload(data) {
-  return request('/api/resource/file/upload', {
+  const res = await request('/api/resource/file/upload', {
     method: 'POST',
     data,
   });
+  if (res) {
+    const params = {
+      fileName: res,
+    };
+    const url = await request('/api/resource/file/downloadUrl', {
+      params,
+    });
+    return {
+      name: res, // 文件名
+      url, // 文件地址
+    };
+  }
+}
+export async function getQrCode() {
+  return request('/api/resource/QrCode/generate');
 }

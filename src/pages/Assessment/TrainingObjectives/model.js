@@ -7,6 +7,7 @@ import {
   saveTrainEnv,
   saveLanguageInfo,
   saveTrainSelfCare,
+  saveFeelInfo,
 } from './service';
 
 const Model = {
@@ -15,6 +16,10 @@ const Model = {
   effects: {
     *createSaveRoughActivity({ payload, callback }, { call }) {
       const res = yield call(saveRoughActivity, payload);
+      callback && callback(res);
+    },
+    *createSaveFeelInfo({ payload, callback }, { call }) {
+      const res = yield call(saveFeelInfo, payload);
       callback && callback(res);
     },
     *createSaveTrainAndTarget({ payload, callback }, { call }) {

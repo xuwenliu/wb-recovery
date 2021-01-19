@@ -16,7 +16,7 @@ function ByItemOrder({ answers, total, width }) {
 
   const height = (size + 2) * answers[0].answerQuestions.length + bottom;
 
-  const drawStep = ctx => {
+  const drawStep = (ctx) => {
     // console.log('panding:', panding, 'contentWidth:', contentwidth, 'width:', width);
     ctx.textAlign = 'center';
 
@@ -26,20 +26,20 @@ function ByItemOrder({ answers, total, width }) {
     ctx.lineTo(width - panding, lineY);
     ctx.stroke();
 
-    [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(step => {
+    [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach((step) => {
       const x = (step * contentwidth) / 100;
       const y = height - 10;
       // console.log(step, 'x:', panding + x, 'y:', y);
 
-      ctx.moveTo(panding + x, lineY); 
-      ctx.lineTo(panding + x, lineY+ 5); // 5為標線的高度
+      ctx.moveTo(panding + x, lineY);
+      ctx.lineTo(panding + x, lineY + 5); // 5為標線的高度
       ctx.stroke();
 
       ctx.fillText(step, panding + x, y); // 分數
     });
   };
 
-  const drawLine = ctx => {
+  const drawLine = (ctx) => {
     // 實線
     const x1 = (total.score * contentwidth) / 100;
     ctx.moveTo(x1, 0);
@@ -52,9 +52,9 @@ function ByItemOrder({ answers, total, width }) {
     drawDashLine(ctx, x3, 0, x3, height - bottom, 5);
   };
 
-  const drawOption = (no,ctx, x, y, text, answer) => {
+  const drawOption = (no, ctx, x, y, text, answer) => {
     ctx.fillText(`${text}`, x, y); // 選項數字
-    
+
     if (text === answer) {
       ctx.beginPath();
       ctx.arc(x + 3, y - 3, 6, 0, 2 * Math.PI); // 3 為圓半徑 6 的一半
@@ -64,7 +64,7 @@ function ByItemOrder({ answers, total, width }) {
 
   let align = 'left'; // 不一樣
 
-  const drawaAnswer = ctx => {
+  const drawaAnswer = (ctx) => {
     sortData(2, answers) // 不一樣
       .sort((a, b) => a.sort - b.sort)
       .forEach(({ no, title, answer, values }, index) => {
@@ -74,18 +74,16 @@ function ByItemOrder({ answers, total, width }) {
         }
 
         const space =
-          align === 'right'
-            ? contentwidth - ctx.measureText(dispyay).width - panding
-            : panding;
+          align === 'right' ? contentwidth - ctx.measureText(dispyay).width - panding : panding;
 
-        const y = 20 + index * (size + 2); 
+        const y = 20 + index * (size + 2);
 
         ctx.fillText(dispyay, space, y); // x,y
 
         // 選項
-        Object.keys(values).forEach(key => {
+        Object.keys(values).forEach((key) => {
           const x = (values[key] / 100) * contentwidth;
-          drawOption(no,ctx, x, y, key, answer);
+          drawOption(no, ctx, x, y, `${key * 1 + 1}`, answer);
           // console.log(no,'text:',key,'answer:',answer ,values[key] );
         });
       });

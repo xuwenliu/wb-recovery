@@ -109,7 +109,7 @@ const Department = (props) => {
     updateId = row.id;
     const updateData = {
       ...row,
-      parentDeptId: row.id, // 设置父级部门id
+      parentDeptId: row.parentId, // 设置父级部门id
     };
     form.setFieldsValue(updateData);
     setVisible(true);
@@ -281,30 +281,18 @@ const Department = (props) => {
           >
             <Input placeholder="请输入部门名称" />
           </FormItem>
+          <Tooltip title="注：未选择父级部门则默认创建一级部门">
+            <FormItem {...formItemLayout} label="父级部门" name="parentDeptId">
+              <Select onChange={selectParentDeptChange} disabled={updateId}>
+                {deptList.map((item) => (
+                  <Select.Option key={item.id} value={item.id}>
+                    {item.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </FormItem>
+          </Tooltip>
 
-          <FormItem
-            {...formItemLayout}
-            label="父级部门"
-            name="parentDeptId"
-            rules={[
-              {
-                required: true,
-                message: '请选择父级部门',
-              },
-            ]}
-          >
-            <Select
-              onChange={selectParentDeptChange}
-              disabled={updateId}
-              placeholder="请选择父级部门"
-            >
-              {deptList.map((item) => (
-                <Select.Option key={item.id} value={item.id}>
-                  {item.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </FormItem>
           <FormItem {...formItemLayout} label="部门职位">
             <Select disabled={updateId}>
               {roleList.map((item) => (
@@ -314,18 +302,8 @@ const Department = (props) => {
               ))}
             </Select>
           </FormItem>
-          <FormItem
-            {...formItemLayout}
-            label="部门主管"
-            name="supervisorId"
-            rules={[
-              {
-                required: true,
-                message: '请选择部门主管',
-              },
-            ]}
-          >
-            <Select placeholder="请选择部门主管">
+          <FormItem {...formItemLayout} label="部门主管" name="supervisorId">
+            <Select>
               {deptMangerList.map((item) => (
                 <Select.Option key={item.id} value={item.id}>
                   {item.name}

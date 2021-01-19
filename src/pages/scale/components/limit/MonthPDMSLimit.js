@@ -1,13 +1,13 @@
 /* eslint-disable no-restricted-globals */
 import React, { Fragment, useEffect } from 'react';
 
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 import TextField from '@material-ui/core/TextField';
-import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
-import DateFnsUtils from '@date-io/date-fns';
 import { getYear, getMonth, getDate } from 'date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 
-import styles from '@/utils/publicStyles'
+import styles from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
   formControl: styles.formControl,
@@ -23,17 +23,15 @@ function dateFromISO(isoDateString) {
   return new Date(isoDateString);
 }
 
-export default function page({ object = {}, value, onChange, supportEarly }) {
+export default function page({ object = {}, value, onChange, supportEarly = true }) {
   const classes = useStyles();
   const today = new Date();
-
-  const [birthday, setBirthday] = React.useState(
-    object.birthday ? dateFromISO(object.birthday) : today
-  );
 
   const [early, setEarly] = React.useState({});
 
   const calculateMonth = () => {
+    const birthday = object.birthday ? dateFromISO(object.birthday) : today;
+
     const start = {
       year: getYear(birthday),
       month: getMonth(birthday) + 1, // 0 代表一月份
@@ -61,20 +59,13 @@ export default function page({ object = {}, value, onChange, supportEarly }) {
     return v;
   };
 
-  const handleDateChange = date => {
-    if (date instanceof Date && !isNaN(date.getTime())) {
-      setBirthday(date);
-      onChange(calculateMonth());
-    }
-  };
-
-  const handleEarlyMonthChange = changeValue => {
+  const handleEarlyMonthChange = (changeValue) => {
     early.month = changeValue;
     setEarly(early);
     onChange(calculateMonth());
   };
 
-  const handleEarlyDateChange = changeValue => {
+  const handleEarlyDateChange = (changeValue) => {
     early.date = changeValue;
     setEarly(early);
     onChange(calculateMonth());
@@ -82,28 +73,10 @@ export default function page({ object = {}, value, onChange, supportEarly }) {
 
   useEffect(() => {
     onChange(calculateMonth());
-  }, []);
+  }, [object.id]);
 
   return (
     <Fragment>
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <KeyboardDatePicker
-          // disableToolbar
-          className={classes.formControl}
-          style={{ width: 230 }}
-          margin="normal"
-          id="date-picker-dialog"
-          label="出生日期"
-          // variant="inline"
-          format="yyyy/MM/dd"
-          value={birthday}
-          onChange={handleDateChange}
-          KeyboardButtonProps={{
-            'aria-label': 'change date',
-          }}
-        />
-      </MuiPickersUtilsProvider>
-
       {supportEarly && (
         <Fragment>
           <TextField
@@ -112,7 +85,7 @@ export default function page({ object = {}, value, onChange, supportEarly }) {
             variant="outlined"
             type="number"
             value={early.month}
-            onChange={e => {
+            onChange={(e) => {
               handleEarlyMonthChange(e.target.value);
             }}
           />
@@ -122,27 +95,16 @@ export default function page({ object = {}, value, onChange, supportEarly }) {
             variant="outlined"
             type="number"
             value={early.date}
-            onChange={e => {
+            onChange={(e) => {
               handleEarlyDateChange(e.target.value);
             }}
           />
         </Fragment>
       )}
-
-      <TextField
-        className={classes.formControl}
-        id="outlined-basic"
-        label="月份"
-        value={value}
-        type="number"
-        InputLabelProps={{
-          shrink: true,
-        }}
-        variant="outlined"
-        onChange={event => {
-          onChange(event.target.value);
-        }}
-      />
+      <FormControl className={classes.formControl}>
+        <FormLabel>月龄</FormLabel>
+        <div>{value}</div>
+      </FormControl>
     </Fragment>
   );
 }

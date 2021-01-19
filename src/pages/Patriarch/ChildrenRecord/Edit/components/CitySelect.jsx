@@ -5,7 +5,7 @@ import { getCommonRegion } from '@/services/common';
 
 const { Option } = Select;
 
-const CitySelect = ({ value = {}, onChange }) => {
+const CitySelect = ({ value = {}, onChange, disabled = false }) => {
   const [provinceList, setProvinceList] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [areaList, setAreaList] = useState([]);
@@ -76,6 +76,7 @@ const CitySelect = ({ value = {}, onChange }) => {
   return (
     <div style={{ display: 'flex' }}>
       <Select
+        disabled={disabled}
         value={value.province || province}
         onChange={(id) => onProvinceChange(id, false)}
         className="select"
@@ -88,6 +89,7 @@ const CitySelect = ({ value = {}, onChange }) => {
         ))}
       </Select>
       <Select
+        disabled={disabled}
         value={value.city || city}
         onChange={(id) => onCityChange(id, false)}
         className="select"
@@ -100,6 +102,7 @@ const CitySelect = ({ value = {}, onChange }) => {
         ))}
       </Select>
       <Select
+        disabled={disabled}
         value={value.area || area}
         onChange={onAreaChange}
         className="select"
@@ -112,6 +115,7 @@ const CitySelect = ({ value = {}, onChange }) => {
         ))}
       </Select>
       <Input
+        disabled={disabled}
         value={value.place}
         onChange={onPlaceChange}
         placeholder="请输入详细地址"

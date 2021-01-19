@@ -4,7 +4,7 @@ import { Modal, Button, Tag } from 'antd';
 import { fetchScaleData } from '@/pages/scale/service/compose';
 import ScaleView from './ScaleView';
 
-function ScaleViewModal({ value = [], onChange }) {
+function ScaleViewModal({ value = [], onChange, disabled = false }) {
   const [visible, setVisible] = useState(false);
   const [data, setData] = useState([]);
 
@@ -31,6 +31,7 @@ function ScaleViewModal({ value = [], onChange }) {
     <>
       {value.map((v) => (
         <Tag
+          disabled={disabled}
           style={{ margin: '5px' }}
           closable
           onClose={(e) => {
@@ -42,6 +43,7 @@ function ScaleViewModal({ value = [], onChange }) {
         </Tag>
       ))}
       <Button
+        disabled={disabled}
         onClick={() => {
           setVisible(!visible);
         }}

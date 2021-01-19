@@ -1,4 +1,4 @@
-import { listType, searchScale, manage } from '@/pages/scale/service/compose';
+import { fetchScaleData, searchScale, manage } from '@/pages/scale/service/compose';
 
 export default {
   namespace: 'patriarchAssessmentRecord',
@@ -9,14 +9,13 @@ export default {
     /**
      * 帶出量表清單
      */
-    *listType({ payload }, { call, put }) {
-      console.log('listType...');
-
-      const types = yield call(listType, payload);
+    *fetchScaleData({ payload }, { call, put }) {
+      
+      const scales = yield call(fetchScaleData, payload);
 
       yield put({
         type: 'save',
-        payload: { types },
+        payload: { scales },
       });
     },
     /**

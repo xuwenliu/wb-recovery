@@ -87,3 +87,34 @@ export async function updateImportData(data) {
 export async function getAllImportSection() {
   return request('/api/resource/section/allImportSection');
 }
+
+// 轮播图列表
+export async function getCarouselList(data) {
+  return request('/api/resource/carousel/page', {
+    method: 'POST',
+    data,
+  });
+}
+// 轮播图保存
+export async function saveCarousel(data) {
+  return request('/api/resource/carousel/save', {
+    method: 'POST',
+    data,
+  });
+}
+
+// 轮播图启用
+export async function enableCarousel(params) {
+  return request('/api/resource/carousel/enable', {
+    method: 'POST',
+    params,
+  });
+}
+
+// 轮播图禁用
+export async function unableCarousel(params) {
+  return request('/api/resource/carousel/unable', {
+    method: 'POST',
+    params,
+  });
+}

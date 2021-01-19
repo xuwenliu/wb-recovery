@@ -6,12 +6,13 @@
  * https://pro.ant.design/docs/deploy
  */
 
-const server = 'http://cr.ts-health.cn'; // 'http://127.0.0.1:5001';
-
-// 'http://127.0.0.1:5001'
+const server = 'http://cr.ts-health.cn';
+const server2 = 'http://training.cr.ts-health.cn';
+//  http://127.0.0.1:5001
+// http://cq.guofw.cn:8080
 
 export default {
-  // http://cr.ts-health.cn
+  //
   // http://127.0.0.1:5001
   dev: {
     '/api/login/execute': {
@@ -35,11 +36,11 @@ export default {
       changeOrigin: true,
     },
     '/api/': {
-      target: 'http://49.4.25.130:8080',
+      target: server2,
       changeOrigin: true,
     },
     '/common/': {
-      target: 'http://49.4.25.130:8080',
+      target: server2,
       changeOrigin: true,
     },
   },

@@ -6,6 +6,8 @@ import {
   fetchSubScaleNames,
 } from '../../service/compose';
 
+import { save } from '../../service/user';
+
 export default {
   namespace: 'scaleComposeTesteeInfo',
 
@@ -54,6 +56,18 @@ export default {
     *createAnswer({ payload, callback }, { call }) {
       const response = yield call(createAnswer, payload);
       callback(response);
+    },
+    *saveUser({ payload, callback }, { call, put }) {
+      const object = yield call(save, payload);
+
+      yield put({
+        type: 'save',
+        payload: { object },
+      });
+
+      if (callback) {
+        callback(object);
+      }
     },
   },
 

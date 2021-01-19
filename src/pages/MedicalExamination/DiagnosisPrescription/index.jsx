@@ -44,7 +44,7 @@ const DiagnosisPrescription = () => {
         <Tabs defaultActiveKey="1">
           {getAuth(12) && (
             <Tabs.TabPane tab="本次就诊记录" key="1">
-              <CreateCheckupRecord info={info} />
+              <CreateCheckupRecord info={info} authKey={12} />
             </Tabs.TabPane>
           )}
           {getAuth(13) && (

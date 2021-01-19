@@ -40,7 +40,7 @@ export default {
       const records = yield call(fetchAll, payload);
       yield put({
         type: 'save',
-        payload: { records },
+        payload: { records: records.content, totalPages: records.totalPages },
       });
     },
     *fetchSubScaleNames({ payload }, { call, put }) {

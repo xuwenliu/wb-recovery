@@ -27,8 +27,8 @@ import SubScale from '../../components/SubScale';
  *
  */
 const useStyles = makeStyles({
-  formControl: formControl,
-  lineControl: lineControl,
+  formControl,
+  lineControl,
 });
 
 function Page({
@@ -39,17 +39,18 @@ function Page({
   scales = { content: [] },
   scale,
   subScaleNames = [],
-  loading,
+  // loading,
   submiting,
 }) {
-  const { getFieldDecorator } = form;
+
+  const { getFieldDecorator , getFieldError } = form;
 
   const classes = useStyles();
 
   const fetch = () => {
     dispatch({
       type: 'scaleComposeQuick/fetch',
-      payload: {},
+      payload: { code: 'S0057' },
     });
   };
 
@@ -73,7 +74,7 @@ function Page({
   const { run: handleSearch } = useDebounceFn((number) => {
     dispatch({
       type: 'scaleComposeQuick/fetchObject',
-      payload: { number },
+      payload: { text:number },
     });
   }, 500);
 
@@ -126,7 +127,12 @@ function Page({
   };
 
   const getSubScaleInfo = () => {
-    return { items: [...subScaleNames] };
+
+    const info = { items: [...subScaleNames] };
+    info.alert = getFieldError('subScales');
+    // alert
+
+    return info;
   };
 
   const demographicsOnChange = (values) => {
@@ -157,16 +163,19 @@ function Page({
 
   const subScaleInfo = getSubScaleInfo();
 
+  console.log('object:',object);
+
   return (
     <>
       <Header>
         <h2 style={{ textAlign: 'center' }}>检核自评</h2>
       </Header>
-      <Paper style={{ margin: 20, paddingBottom: 10 }}>
+      <Paper style={{ padding: 10 }}>
         <form noValidate autoComplete="off">
           <FormControl className={classes.formControl}>
             <InputLabel className={classes.text}>量表</InputLabel>
             <Select
+              style={{ width: '250px' }}
               onChange={(event) => {
                 fetchScale(event.target.value);
               }}
@@ -178,25 +187,29 @@ function Page({
               ))}
             </Select>
           </FormControl>
-          <AutoComplete
-            label="人员代码"
-            // loading={loading}
-            onInputChange={(value) => {
-              const vs = value.split('.');
-              if (vs.length === 1) {
-                handleSearch(value);
-              }
-            }}
-            onChange={({ value }) => {
-              fetchObject(value);
-            }}
-            options={objects.content.map((i) => {
-              return {
-                value: i.id,
-                label: `${i.number}.${i.name}`,
-              };
-            })}
-          />
+          {scale && (
+            <div style={{ paddingLeft: 20 }}>
+              <AutoComplete
+                label="人员代码"
+                onInputChange={(value) => {
+                  const vs = value.split('.');
+                  if (vs.length === 1) {
+                    handleSearch(value);
+                  }
+                }}
+                onChange={({ value }) => {
+                  fetchObject(value);
+                }}
+                options={objects.content.map((i) => {
+                  return {
+                    value: i.id,
+                    label: `${i.number}.${i.name}`,
+                  };
+                })}
+              />
+            </div>
+          )}
+
           {object && (
             <div>
               {getFieldDecorator('name', {
@@ -212,7 +225,7 @@ function Page({
               />
               {getFieldDecorator('subScales', {
                 initialValue: scale.choiceType === 'SINGLE' ? [] : subScaleInfo.items,
-                rules: [{ required: true, message: '子量表不可为空' }],
+                rules: [{ required: true, message: '符合条件的子量表不可为空' }],
               })(<SubScale choiceType={scale.choiceType} data={subScaleInfo.items} />)}
 
               {subScaleInfo.alert ? (

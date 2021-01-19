@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
 import {
   getGroupList,
-  getDeptAllList,
   getGroupDepartments,
   getGroupEmployees,
 } from '@/pages/Function/Employee/service';
@@ -61,7 +60,7 @@ const Group = (props) => {
 
   // 查询一级部门
   const queryDeptList = async () => {
-    const res = await getDeptAllList();
+    const res = await getGroupDepartments({ parentId: 0 });
     if (res) {
       setDeptList(res);
     }
@@ -117,7 +116,7 @@ const Group = (props) => {
   useEffect(() => {
     if (props.tab == 4) {
       queryGroupType();
-      queryDeptList(); // 全部权限
+      queryDeptList(); // 一级部门和二级部门
       actionRef?.current?.reload();
     }
   }, [props.tab]);
@@ -361,12 +360,12 @@ const Group = (props) => {
             <FormItem
               style={{ flex: 1 }}
               name="subId"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择子部门',
-                },
-              ]}
+              // rules={[
+              //   {
+              //     required: true,
+              //     message: '请选择子部门',
+              //   },
+              // ]}
             >
               <Select onChange={handleSubDeptChange} placeholder="请选择子部门">
                 {subDeptList.map((item) => (

@@ -41,7 +41,6 @@ function Page(props) {
   const { code, scaleName, items = [], scales = [], progress = {} } = data;
 
   const fetch = (params = {}) => {
-    console.log('fetch...', params);
     dispatch({
       type: 'scaleComposeAnswer/fetchGuide',
       payload: { ...params },

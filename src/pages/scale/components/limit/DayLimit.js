@@ -1,13 +1,12 @@
-/* eslint-disable no-restricted-globals */
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
-import TextField from '@material-ui/core/TextField';
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 
-import { KeyboardDatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
-import DateFnsUtils from '@date-io/date-fns';
 import { makeStyles } from '@material-ui/core/styles';
 import { getDayByBirthday } from '@/pages/scale/util/age';
-import styles from '@/utils/publicStyles'
+import styles from '@/utils/publicStyles';
+import { formatDateFromDays } from '@/utils/format';
 
 function dateFromISO(isoDateString) {
   if (isoDateString.match) {
@@ -18,65 +17,46 @@ function dateFromISO(isoDateString) {
   return new Date(isoDateString);
 }
 
-
 const useStyles = makeStyles({
   formControl: styles.formControl,
   lineControl: styles.lineControl,
 });
 
+const DateDisplay = ({ day = {} }) => {
+  const { years, months, days } = formatDateFromDays(day);
+
+  const list = [];
+
+  if (years) {
+    list.push(<span>{years}年</span>);
+  }
+
+  if (months) {
+    list.push(<span>{months}个月</span>);
+  }
+
+  if (days) {
+    list.push(<span>{days}天</span>);
+  }
+
+  return list;
+};
+
 function DayLimit({ object = {}, value, onChange }) {
   const classes = useStyles();
-  const today = new Date();
-
-  const [birthday, setBirthday] = useState(object.birthday ? dateFromISO(object.birthday) : today);
-
-  const handleDateChange = date => {
-    if (date instanceof Date && !isNaN(date.getTime())) {
-      setBirthday(date);
-      onChange(getDayByBirthday(birthday));
-    }
-  };
 
   useEffect(() => {
+    const birthday = object.birthday ? dateFromISO(object.birthday) : new Date();
     onChange(getDayByBirthday(birthday));
-  }, []);
+  }, [object.id]);
 
   return (
-    <Fragment>
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <KeyboardDatePicker
-          // disableToolbar
-          className={classes.formControl}
-          style={{ width: 230 }}
-          margin="normal"
-          id="date-picker-dialog"
-          label="出生日期"
-          // variant="inline"
-          format="yyyy/MM/dd"
-          value={birthday}
-          onChange={handleDateChange}
-          KeyboardButtonProps={{
-            'aria-label': 'change date',
-          }}
-        />
-      </MuiPickersUtilsProvider>
-
-      <TextField
-        className={classes.formControl}
-        label="日龄"
-        value={value}
-        type="number"
-        InputLabelProps={{
-          shrink: true,
-        }}
-        variant="outlined"
-        onChange={event => {
-          if (event.target.value.length !== 0) {
-            onChange(event.target.value);
-          }
-        }}
-      />
-    </Fragment>
+    <FormControl className={classes.formControl}>
+      <FormLabel>年齡</FormLabel>
+      <div>
+        <DateDisplay day={value} />
+      </div>
+    </FormControl>
   );
 }
 

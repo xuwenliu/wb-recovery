@@ -6,7 +6,7 @@ const proSettings = {
   fixedHeader: true,
   fixSiderbar: true,
   colorWeak: false,
-  title: '健康训练管理操作系统',
+  title: '特殊儿童康复定点机构管理系统',
   pwa: false,
   iconfontUrl: '',
 
@@ -16,11 +16,11 @@ const proSettings = {
   theme: {
     palette: {
       primary: {
-        main: '#FFA000',
+        main: '#8CA949',
         contrastText: '#000',
       },
       secondary: {
-        main: '#ffa726',
+        main: '#ACBE36',
         contrastText: '#000000',
       },
     },

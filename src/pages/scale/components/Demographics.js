@@ -23,7 +23,7 @@ function Demographics({ form, object, limits, onChange }) {
         ...result,
         getFieldDecorator('YEAR', {
           rules: [{ required: true, message: '年龄必须输入' }],
-          onChange: value => {
+          onChange: (value) => {
             onChange({ YEAR: value });
           },
         })(<YearLimit form={form} object={object} />),
@@ -35,7 +35,7 @@ function Demographics({ form, object, limits, onChange }) {
         ...result,
         getFieldDecorator('MONTH', {
           rules: [{ required: true, message: '月龄必须输入' }],
-          onChange: value => {
+          onChange: (value) => {
             onChange({ MONTH_PDMS: value });
           },
         })(<MonthPDMSLimit form={form} object={object} />),
@@ -43,14 +43,16 @@ function Demographics({ form, object, limits, onChange }) {
     }
 
     if (limits.MONTH) {
+      const { scale } = limits.MONTH;
       result = [
         ...result,
         getFieldDecorator('MONTH', {
           rules: [{ required: true, message: '月龄必须输入' }],
-          onChange: value => {
+          onChange: (value) => {
+            console.log('Demographics onChange:', value);
             onChange({ MONTH: value });
           },
-        })(<MonthLimit form={form} object={object} />),
+        })(<MonthLimit form={form} object={object} scale={scale} />),
       ];
     }
 
@@ -59,7 +61,7 @@ function Demographics({ form, object, limits, onChange }) {
         ...result,
         getFieldDecorator('DAY', {
           rules: [{ required: true, message: '日龄必须输入' }],
-          onChange: value => {
+          onChange: (value) => {
             onChange({ DAY: value });
           },
         })(<DayLimit form={form} object={object} />),
@@ -74,7 +76,7 @@ function Demographics({ form, object, limits, onChange }) {
       onChange({});
     }
     return () => {};
-  }, [limits]);
+  }, []);
 
   return <Fragment>{getUI()}</Fragment>;
 }

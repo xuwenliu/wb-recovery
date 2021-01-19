@@ -22,6 +22,22 @@ export async function getRoughActivityInfo(params) {
   });
 }
 
+// 提交 感官认知
+export async function saveFeelInfo(data) {
+  return request('/api/resource/train/saveFeelInfo', {
+    method: 'POST',
+    data,
+  });
+}
+
+// 获取 感官认知数据
+export async function getFeelInfo(params) {
+  return request('/api/resource/train/feelInfo', {
+    params,
+  });
+}
+
+
 // 提交 评定与分级信息
 export async function saveTrainAndTarget(data) {
   return request('/api/resource/train/saveTrainAndTarget', {

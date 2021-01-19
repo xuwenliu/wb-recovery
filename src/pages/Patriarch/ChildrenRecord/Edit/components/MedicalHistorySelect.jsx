@@ -3,7 +3,7 @@ import { Form, Input, Select } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 
-const MedicalHistorySelect = ({ form, list, name, label, postFields }) => {
+const MedicalHistorySelect = ({ form, list, name, label, postFields, disabled = false }) => {
   useEffect(() => {
     form.setFields([
       {
@@ -40,7 +40,7 @@ const MedicalHistorySelect = ({ form, list, name, label, postFields }) => {
                     name={[field.name, postFields[0]]}
                     fieldKey={[field.fieldKey, postFields[0]]}
                   >
-                    <Select placeholder="请选择">
+                    <Select disabled={disabled} placeholder="请选择">
                       {list.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.name}
@@ -56,12 +56,12 @@ const MedicalHistorySelect = ({ form, list, name, label, postFields }) => {
                 name={[field.name, postFields[1]]}
                 fieldKey={[field.fieldKey, postFields[1]]}
               >
-                <Input placeholder="请输入详细信息" />
+                <Input disabled={disabled} placeholder="请输入详细信息" />
               </Form.Item>
-              {form.getFieldValue(name).length > 1 && (
+              {form.getFieldValue(name).length > 1 && !disabled && (
                 <MinusCircleOutlined className="reduce" onClick={() => remove(field.name)} />
               )}
-              {form.getFieldValue(name).length - 1 === index && (
+              {form.getFieldValue(name).length - 1 === index && !disabled && (
                 <PlusCircleOutlined className="add" onClick={() => add()} />
               )}
             </div>

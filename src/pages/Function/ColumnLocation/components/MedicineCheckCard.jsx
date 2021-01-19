@@ -30,6 +30,7 @@ const MedicineCheckCard = () => {
     });
     const res = await getCheckAll();
     setLoading(false);
+    const one = [8, 9, 10, 11, 12, 13, 14]; // 只有一级
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr
@@ -46,8 +47,8 @@ const MedicineCheckCard = () => {
             }
           });
           res.forEach((sub) => {
-            sub.expandable = sub.type != 8; // 门诊复查-不需要展开
-            sub.isAdd = sub.type != 8; // 门诊复查-不需要新增
+            sub.expandable = !one.includes(sub.type); // 门诊复查-不需要展开
+            sub.isAdd = !one.includes(sub.type); // 门诊复查-不需要新增
             sub.isRemove = true;
             if (item.type === sub.type) {
               lists.push(sub);
@@ -288,53 +289,6 @@ const MedicineCheckCard = () => {
           </Form.Item>
         </Form>
       </Modal>
-      {/* <Form form={form}>
-        {parentSection.map((item, idx) => {
-          return (
-            <Form.Item key={idx} {...formItemLayout} label={item.codeCn}>
-              {item.list.map((oneItem, oneIndex) => (
-                <Select
-                  allowClear
-                  style={{ width: '20%' }}
-                  className="mr8"
-                  key={oneIndex}
-                  onChange={(e) => selectChange(e, item, oneItem.level + 1)}
-                  dropdownRender={(menu) => (
-                    <div>
-                      {menu}
-                      <Divider style={{ margin: '4px 0' }} />
-                      <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                        <Input
-                          style={{ flex: 'auto' }}
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                        <a
-                          style={{
-                            flex: 'none',
-                            padding: '8px',
-                            display: 'block',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => addItem(item, oneItem)}
-                        >
-                          新增
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                >
-                  {oneItem.list.map((sub) => (
-                    <Select.Option key={sub.id} value={sub.id}>
-                      {sub.content}
-                    </Select.Option>
-                  ))}
-                </Select>
-              ))}
-            </Form.Item>
-          );
-        })}
-      </Form> */}
     </Card>
   );
 };

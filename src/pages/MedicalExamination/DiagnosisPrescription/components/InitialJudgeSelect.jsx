@@ -4,7 +4,16 @@ import { Form, Input, Select } from 'antd';
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { getCheckAll, getCheckChildren } from '@/pages/Function/ColumnLocation/service';
 
-const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timestamp }) => {
+const InitialJudgeSelect = ({
+  form,
+  type,
+  name,
+  label,
+  postFields,
+  rules,
+  timestamp,
+  disabled = false,
+}) => {
   const [checkList1, setCheckList1] = useState([]);
   const [checkList2, setCheckList2] = useState([]);
   const [checkList3, setCheckList3] = useState([]);
@@ -138,7 +147,7 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timest
                     rules={rules}
                     fieldKey={[field.fieldKey, postFields[0]]}
                   >
-                    <Select onChange={(val) => onCheckList1Change(val, index)}>
+                    <Select disabled={disabled} onChange={(val) => onCheckList1Change(val, index)}>
                       {checkList1.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -159,7 +168,7 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timest
                     name={[field.name, postFields[1]]}
                     fieldKey={[field.fieldKey, postFields[1]]}
                   >
-                    <Select onChange={(val) => onCheckList2Change(val, index)}>
+                    <Select disabled={disabled} onChange={(val) => onCheckList2Change(val, index)}>
                       {checkList2.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -180,7 +189,7 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timest
                     name={[field.name, postFields[2]]}
                     fieldKey={[field.fieldKey, postFields[2]]}
                   >
-                    <Select onChange={(val) => onCheckList3Change(val, index)}>
+                    <Select disabled={disabled} onChange={(val) => onCheckList3Change(val, index)}>
                       {checkList3.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -201,7 +210,7 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timest
                     name={[field.name, postFields[3]]}
                     fieldKey={[field.fieldKey, postFields[3]]}
                   >
-                    <Select>
+                    <Select disabled={disabled}>
                       {checkList4.map((item) => (
                         <Select.Option key={item.id} value={item.id}>
                           {item.content}
@@ -211,10 +220,10 @@ const InitialJudgeSelect = ({ form, type, name, label, postFields, rules, timest
                   </Form.Item>
                 )}
               </Form.Item>
-              {form.getFieldValue(name).length > 1 && (
+              {form.getFieldValue(name).length > 1 && !disabled && (
                 <MinusCircleOutlined className="reduce" onClick={() => remove(field.name)} />
               )}
-              {form.getFieldValue(name).length - 1 === index && (
+              {form.getFieldValue(name).length - 1 === index && !disabled && (
                 <PlusCircleOutlined className="add" onClick={() => add()} />
               )}
             </div>

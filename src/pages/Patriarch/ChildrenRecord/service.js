@@ -26,6 +26,13 @@ export async function getPatientInfoSingle(params) {
     params,
   });
 }
+// 通过扫码通知获取患者信息
+export async function getPatientInfoSingleByScan(params) {
+  return request(`/api/resource/patient/info/singleByScan`, {
+    params,
+  });
+}
+
 
 export async function getAllBirthDangerInfo() {
   return request('/api/resource/patient/info/allBirthDangerInfo');

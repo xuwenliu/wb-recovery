@@ -33,27 +33,23 @@ import ProfessionSelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/P
 import MedicalHistorySelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/MedicalHistorySelect';
 
 import { getParentSectionAll } from '@/pages/Function/ColumnLocation/service';
-import { getAllBirthDangerInfo } from '@/pages/Patriarch/ChildrenRecord/service';
 import { fileUpload } from '@/services/common';
 
 const FormMoreItemLayout = {
   labelCol: { span: 3 },
 };
-const FormItemlayout = {
+const FormItemLayout = {
   labelCol: { span: 10 },
 };
-const FormRecordItemlayout = {
+const FormRecordItemLayout = {
   labelCol: { span: 8 },
 };
-
-const FormItemCard2layout = {
-  labelCol: { span: 5 },
-};
+const dangerTypeArr = [18, 19, 20, 21];
 
 const filterEmptyObj = (obj) => {
   let newObj = {};
   for (let i in obj) {
-    if (obj[i]) {
+    if (obj[i] || obj[i] === false) {
       newObj[i] = obj[i];
     }
   }
@@ -64,8 +60,19 @@ const disabledGTToday = (current) => {
   return current && current > moment().endOf('day');
 };
 
+const yesOrNoList = [
+  {
+    label: '是',
+    value: true,
+  },
+  {
+    label: '否',
+    value: false,
+  },
+];
 const BaseInfo = ({ submitting, dispatch, location }) => {
   const { id, type } = location.query;
+  const DISABLED = type == 2;
 
   const [filePaths, setFilePaths] = useState([]);
   const [fileList, setFileList] = useState([]);
@@ -95,11 +102,11 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
   const [fangLanguageList, setFangLanguageList] = useState([]);
 
   const [isBehaviorUnusualShow, setIsBehaviorUnusualShow] = useState();
-  const [otherShow, setOtherShow] = useState();
 
   const [abnormalActionList, setAbnormalActionList] = useState([]); // 异常行为
 
   const [patientPastRecoveryConnectBosList, setPatientPastRecoveryConnectBosList] = useState([]); // 既往医疗康复情况
+  const [patientPastRecoveryConnectNames, setPatientPastRecoveryConnectNames] = useState([]);
 
   const [canTimeList, setCanTimeList] = useState([]); // 成长时间
   const [supportTypeList, setSupportTypeList] = useState([]); // 喂养方式
@@ -111,7 +118,6 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
   const [birthWeightList, setBirthWeightList] = useState([]); // 出生体重
   const [fetusNumList, setFetusNumList] = useState([]); // 胎数
   const [baseInfoDangerTypeList, setBaseInfoDangerTypeList] = useState([]); // 高危因素
-  const [birthRecordDangerInfoBosList, setBirthRecordDangerInfoBosList] = useState([]); // 高危因素-子集
 
   const [patientAllergyConnectList, setPatientAllergyConnectList] = useState([]); // 过敏史
   const [patientFamilyDiseaseHistoryList, setPatientFamilyDiseaseHistoryList] = useState([]); // 家族史
@@ -189,14 +195,14 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     // 就诊原因 -行为已经放到patientBasicInfoCreateBo里面了
     const patientPastRecoveryConnectBos = [];
     values.patientPastRecoveryConnectBos?.map((item) => {
-      if (item === 5) {
+      if (item.split('-')[1] === '其他') {
         patientPastRecoveryConnectBos.push({
-          pastRecoveryInfoType: item,
+          pastRecoveryInfo: item.split('-')[0],
           other: values.other,
         });
       } else {
         patientPastRecoveryConnectBos.push({
-          pastRecoveryInfoType: item,
+          pastRecoveryInfo: item.split('-')[0],
         });
       }
     });
@@ -205,7 +211,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     const patientGrowthRecordBo = filterEmptyObj({
       caTalkTimeId: values.caTalkTimeId,
       canClimbTimeId: values.canClimbTimeId,
-      feverTimeId: values.feverTimeId,
+      isFever: values.isFever,
       canGainGroundTimeId: values.canGainGroundTimeId,
       canLaughTimeId: values.canLaughTimeId,
       canSitTimeId: values.canSitTimeId,
@@ -224,11 +230,23 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
       pregnancyWeeksId: values.pregnancyWeeksId,
     });
 
+    // 高危因素
     const birthRecordDangerInfoBos = [];
-    values.birthRecordDangerInfoBos?.map((item) => {
-      birthRecordDangerInfoBos.push({
-        birthDangerInfoId: item,
-      });
+    baseInfoDangerTypeList.forEach((item) => {
+      const value = values[`gao_${item.code}`];
+      if (value) {
+        if (Array.isArray(value)) {
+          value.forEach((sub) => {
+            birthRecordDangerInfoBos.push({
+              birthDangerInfoId: sub,
+            });
+          });
+        } else {
+          birthRecordDangerInfoBos.push({
+            birthDangerInfoId: value,
+          });
+        }
+      }
     });
 
     const postData = {
@@ -265,16 +283,19 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
   const handleBeforeUpload = async (file, fileList) => {
     const formData = new FormData();
     formData.append('file', file);
+    const hide = message.loading('文件上传中,请耐心等待...');
     const res = await fileUpload(formData);
     if (res) {
-      setFilePaths([res]);
+      setFilePaths([res.name]);
       fileList = fileList.map((item) => {
-        item.url = res;
+        item.url = res.url;
         return item;
       });
       setFileList(fileList);
+      hide();
       message.success('文件上传成功');
     } else {
+      hide();
       message.error('文件上传失败');
     }
 
@@ -295,7 +316,8 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         console.log('values', values);
         // 基本信息
         const fileList = values.patientDocumentVos?.map((item) => {
-          item.name = item.path?.split('_')[1] || item.path;
+          item.path = item.path ? decodeURIComponent(item.path) : '';
+          item.name = item.path?.match(/_(\S*)\?/)[1] || item.path;
           item.url = item.path;
           item.uid = '-2';
           item.status = 'done';
@@ -388,23 +410,23 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
 
         // 既往医疗康复情况
         let other = '';
+        let names = [];
         const patientPastRecoveryConnectBos = values.patientPastRecoveryConnectVos?.map((item) => {
-          if (item.pastRecoveryInfoType === 5) {
+          if (item.pastRecoveryInfoName === '其他') {
             other = item.other;
           }
-          return item.pastRecoveryInfoType;
+          names.push(item.pastRecoveryInfoName);
+          return item.pastRecoveryInfo + '-' + item.pastRecoveryInfoName;
         });
         // 既往医疗康复情况-显示其他
-        if (patientPastRecoveryConnectBos?.includes(5)) {
-          setOtherShow(true);
-        }
+        setPatientPastRecoveryConnectNames(names);
 
         // 成长记录
         const patientGrowthRecordBo = values.patientGrowthRecordVo
           ? {
               caTalkTimeId: values.patientGrowthRecordVo.caTalkTimeId,
               canClimbTimeId: values.patientGrowthRecordVo.canClimbTimeId,
-              feverTimeId: values.patientGrowthRecordVo.feverTimeId,
+              isFever: values.patientGrowthRecordVo.isFever,
               canGainGroundTimeId: values.patientGrowthRecordVo.canGainGroundTimeId,
               canLaughTimeId: values.patientGrowthRecordVo.canLaughTimeId,
               canSitTimeId: values.patientGrowthRecordVo.canSitTimeId,
@@ -428,17 +450,22 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         if (patientBirthRecordBo && patientBirthRecordBo.birthPlaceType) {
           setOtherBirthPlaceShow(patientBirthRecordBo.birthPlaceType); // 医院/其他-显示输入框
         }
-        let allBirthDangerInfo = ''; // 高危因素
-        let birthRecordDangerInfoBos = [];
-        values.patientBirthRecordVo?.birthRecordDangerInfoConnectVos?.map((item) => {
-          allBirthDangerInfo = item.dangerType;
+
+        // 高危因素
+        let gaoObj = {};
+        const backData = values.patientBirthRecordVo?.birthRecordDangerInfoConnectVos;
+        dangerTypeArr.forEach((type) => {
+          gaoObj[`gao_${type}`] = [];
+          backData?.forEach((item) => {
+            if (type === item.dangerType) {
+              gaoObj[`gao_${type}`].push(item.birthDangerInfoId);
+            }
+          });
         });
-        if (allBirthDangerInfo) {
-          // 请求高危因素对应的-多选框并选中
-          birthDangerInfoChange(allBirthDangerInfo, true);
-          birthRecordDangerInfoBos = values.patientBirthRecordVo?.birthRecordDangerInfoConnectVos?.map(
-            (item) => item.birthDangerInfoId,
-          );
+        for (let i in gaoObj) {
+          if (gaoObj[i].length === 1) {
+            gaoObj[i] = gaoObj[i][0];
+          }
         }
 
         // 过敏史
@@ -486,13 +513,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             ];
 
         form.setFieldsValue({
+          ...gaoObj, //高危因素
           ...patientBasicInfoCreateBo, // 患者基本信息
           patientFamilyMemberInfoBos, // 家庭成员
           ...patientFamilyInfoBo, //家庭状况
           ...patientGrowthRecordBo, // 成长记录
           ...patientBirthRecordBo, //出生记录
-          allBirthDangerInfo,
-          birthRecordDangerInfoBos,
           patientPastRecoveryConnectBos,
           other, //既往医疗康复情况-显示其他内容
           abnormalActionIds,
@@ -518,15 +544,23 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     setEconomicTypeList(getSingleEnums('FamilyEconomicType', newArr)); //家庭经济状况
     setHukouTypeList(getSingleEnums('HukouType', newArr)); //户口类别
     setMedicalInsuranceTypeList(getSingleEnums('MedicalInsuranceType', newArr)); //医疗保险情况
-    setBaseInfoDangerTypeList(getSingleEnums('BaseInfoDangerType', newArr)); //高危因素类型
 
-    let pastRecoveryInfoTypeData = getSingleEnums('PastRecoveryInfoType', newArr);
-    pastRecoveryInfoTypeData = pastRecoveryInfoTypeData.map((item) => {
-      item.label = item.codeCn;
-      item.value = item.code;
-      return item;
-    });
-    setPatientPastRecoveryConnectBosList(pastRecoveryInfoTypeData); // 既往医疗康复情况类型
+    let dangerOptions = getSingleEnums('ParentSectionType', newArr);
+    const res = await getParentSectionAll();
+    dangerOptions = dangerOptions
+      .filter((item) => dangerTypeArr.includes(item.code))
+      .map((item) => {
+        item.codeCn = item.codeCn.split('-')[1];
+        item.children = res
+          .filter((sub) => sub.type === item.code)
+          .map((sub) => {
+            sub.label = sub.name;
+            sub.value = sub.id;
+            return sub;
+          });
+        return item;
+      });
+    setBaseInfoDangerTypeList(dangerOptions); //高危因素类型
 
     let birthPlaceTypeData = getSingleEnums('BirthPlaceType', newArr);
     birthPlaceTypeData = birthPlaceTypeData.map((item) => {
@@ -591,6 +625,13 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     setPatientAllergyConnectList(res.filter((item) => item.type === 5)); // 过敏史
     setPatientFamilyDiseaseHistoryList(res.filter((item) => item.type === 6)); // 家族史
     setPatientDiseaseList(res.filter((item) => item.type === 7)); // 病症
+    let pastRecoveryInfoTypeData = res.filter((item) => item.type === 22);
+    pastRecoveryInfoTypeData = pastRecoveryInfoTypeData.map((item) => {
+      item.label = item.name;
+      item.value = item.id + '-' + item.name;
+      return item;
+    });
+    setPatientPastRecoveryConnectBosList(pastRecoveryInfoTypeData); //既往医疗康复情况类型
   };
 
   const checkAddress = (rule, value) => {
@@ -616,17 +657,26 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     if (!value.medium) {
       return Promise.reject('请选择职业-中类');
     }
-    if (!value.small) {
-      return Promise.reject('请选择职业-小类');
-    }
     return Promise.resolve();
   };
-  const checkFormList = (rule, value) => {
-    console.log('xxx', value);
-    const father = value.filter((item) => item.code === 1);
-    const mother = value.filter((item) => item.code === 2);
-    if (father.name && !mother.name) {
-      return Promise.reject('请输入父亲姓名');
+
+  const selectAddress = (e) => {
+    const checked = e.target.checked;
+    const old = form.getFieldValue('regionAddress');
+    if (checked && old) {
+      form.setFields([
+        {
+          name: 'nowAddress',
+          value: old,
+        },
+      ]);
+    } else {
+      form.setFields([
+        {
+          name: 'nowAddress',
+          value: { province: '', city: '', area: '', place: '' },
+        },
+      ]);
     }
   };
 
@@ -645,29 +695,6 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         {item.name}
       </Option>
     ));
-  };
-
-  const birthDangerInfoChange = async (type, noClear) => {
-    const res = await getAllBirthDangerInfo();
-    const data = res
-      .filter((item) => item.type === type)
-      .map((item) => {
-        item.label = item.info;
-        item.value = item.id;
-        return item;
-      });
-    // 获取详情时-不清空
-    if (!noClear) {
-      // 切换时，把选中的高危因素-子集清空
-      form.setFields([
-        {
-          name: 'birthRecordDangerInfoBos',
-          value: [],
-        },
-      ]);
-    }
-
-    setBirthRecordDangerInfoBosList(data);
   };
 
   const birthPlaceTypeChange = (e) => {
@@ -708,8 +735,6 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
 
   const writePersonTypeChange = (code, targetData) => {
     let writeName = '';
-    console.log('code', code);
-    console.log('targetData', targetData);
     if (!targetData || targetData.length === 0) {
       targetData = form.getFieldValue('patientFamilyMemberInfoBos');
     }
@@ -754,6 +779,34 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     ]);
   };
 
+  const getBirthRecordDangerInfoBosList = () => {
+    return baseInfoDangerTypeList.map((item) => {
+      if (item.code === 19) {
+        return (
+          <Form.Item
+            key={item.code}
+            labelCol={{ span: 6 }}
+            label={item.codeCn}
+            name={`gao_${item.code}`}
+          >
+            <Checkbox.Group disabled={DISABLED} options={item.children} />
+          </Form.Item>
+        );
+      } else {
+        return (
+          <Form.Item
+            key={item.code}
+            labelCol={{ span: 6 }}
+            label={item.codeCn}
+            name={`gao_${item.code}`}
+          >
+            <Radio.Group disabled={DISABLED} options={item.children} />
+          </Form.Item>
+        );
+      }
+    });
+  };
+
   return (
     <Form
       form={form}
@@ -771,12 +824,13 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               <Row gutter={16}>
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="姓名"
                     name="name"
                     rules={[{ required: true, message: '请输入姓名' }]}
                   >
                     <Input
+                      disabled={DISABLED}
                       onBlur={(e) => setCardTitle(e.target.value + cardTitle)}
                       placeholder="请输入姓名"
                     />
@@ -784,12 +838,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="性别"
                     name="gender"
                     rules={[{ required: true, message: '请选择性别' }]}
                   >
-                    <Select placeholder="请选择性别">
+                    <Select disabled={DISABLED} placeholder="请选择性别">
                       {genderTypeList.map((item) => (
                         <Option key={item.id} value={item.id}>
                           {item.name}
@@ -800,12 +854,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="民族"
                     name="ethnic"
                     rules={[{ required: true, message: '请选择名族' }]}
                   >
-                    <Select placeholder="请选择民族">
+                    <Select disabled={DISABLED} placeholder="请选择民族">
                       {ethnicList.map((item) => (
                         <Option key={item.id} value={item.id}>
                           {item.name}
@@ -818,33 +872,33 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               <Row gutter={16}>
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="出生日期"
                     name="birthTime"
                     rules={[{ required: true, message: '请选择出生日期' }]}
                   >
-                    <DatePicker disabledDate={disabledGTToday} />
+                    <DatePicker disabled={DISABLED} disabledDate={disabledGTToday} />
                   </Form.Item>
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="建档日期"
                     name="createDocumentTime"
                     rules={[{ required: true, message: '请选择建档日期' }]}
                   >
-                    <DatePicker />
+                    <DatePicker disabled={DISABLED} />
                   </Form.Item>
                 </Col>
 
                 <Col span={8}>
                   <Form.Item
-                    {...FormItemlayout}
+                    {...FormItemLayout}
                     label="邮政编码"
                     name="postCode"
                     rules={[{ required: true, message: '请输入邮政编码' }]}
                   >
-                    <Input placeholder="请输入邮政编码" />
+                    <Input disabled={DISABLED} placeholder="请输入邮政编码" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -863,6 +917,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                     ]}
                   >
                     <Input
+                      disabled={DISABLED}
                       style={{ width: 'calc(100% - 4px)', marginLeft: 4 }}
                       placeholder="请输入身份证号码"
                     />
@@ -885,7 +940,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                       },
                     ]}
                   >
-                    <CitySelect />
+                    <CitySelect disabled={DISABLED} />
                   </Form.Item>
                 </Col>
               </Row>
@@ -906,8 +961,18 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                       },
                     ]}
                   >
-                    <CitySelect />
+                    <CitySelect disabled={DISABLED} />
                   </Form.Item>
+                  <Checkbox
+                    onChange={selectAddress}
+                    style={{
+                      position: 'absolute',
+                      right: '-90px',
+                      top: '12px',
+                    }}
+                  >
+                    同户籍
+                  </Checkbox>
                 </Col>
               </Row>
             </Col>
@@ -932,17 +997,16 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                   return (
                     <div key={field.key}>
                       <Row>
-                        <Col span={10}>
+                        <Col span={6}>
                           {index !== 2 && (
                             <Form.Item
                               {...field}
                               name={[field.name, 'name']}
                               fieldKey={[field.fieldKey, 'name']}
-                              {...FormItemCard2layout}
+                              {...FormRecordItemLayout}
                               label={index === 0 ? '父亲姓名' : '母亲姓名'}
-                              // rules={[{ required: true, message: '请填写姓名' }]}
                             >
-                              <Input placeholder="请填写姓名" />
+                              <Input disabled={DISABLED} placeholder="请填写姓名" />
                             </Form.Item>
                           )}
 
@@ -951,11 +1015,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                               {...field}
                               name={[field.name, 'mainCarefulId']}
                               fieldKey={[field.fieldKey, 'mainCarefulId']}
-                              {...FormItemCard2layout}
+                              {...FormRecordItemLayout}
                               label="主要照顾者"
                               rules={[{ required: true, message: '请选择主要照顾者' }]}
                             >
                               <Select
+                                disabled={DISABLED}
                                 onChange={(val) => handleMainChange(val, index)}
                                 placeholder="请选择主要照顾者"
                               >
@@ -973,7 +1038,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                             {...field}
                             name={[field.name, 'mobile']}
                             fieldKey={[field.fieldKey, 'mobile']}
-                            labelCol={{ span: 8 }}
+                            {...FormRecordItemLayout}
                             label="联系电话"
                             rules={
                               index === 2
@@ -987,49 +1052,27 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                                 : null
                             }
                           >
-                            <Input placeholder="请填写联系电话" />
+                            <Input disabled={DISABLED} placeholder="请填写联系电话" />
                           </Form.Item>
                         </Col>
-                        <Col span={8}>
+                        <Col span={6}>
                           <Form.Item
                             {...field}
                             name={[field.name, 'birthYear']}
                             fieldKey={[field.fieldKey, 'birthYear']}
-                            labelCol={{ span: 7 }}
+                            {...FormRecordItemLayout}
                             label="出生年份"
                             rules={
                               index === 2 ? [{ required: true, message: '请选择出生年份' }] : null
                             }
                           >
                             <DatePicker
+                              disabled={DISABLED}
                               disabledDate={(current) => {
                                 return current && current > moment().endOf('year');
                               }}
                               picker="year"
                             />
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col span={10}>
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'profession']}
-                            fieldKey={[field.fieldKey, 'profession']}
-                            {...FormItemCard2layout}
-                            label="职业种类"
-                            rules={
-                              index === 2
-                                ? [
-                                    { required: true, message: '请选择职业种类' },
-                                    {
-                                      validator: checkProfession,
-                                    },
-                                  ]
-                                : null
-                            }
-                          >
-                            <ProfessionSelect professionList={professionList} />
                           </Form.Item>
                         </Col>
                         <Col span={6}>
@@ -1043,13 +1086,36 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                               index === 2 ? [{ required: true, message: '请选择文化程度' }] : null
                             }
                           >
-                            <Select placeholder="请选择文化程度">
+                            <Select disabled={DISABLED} placeholder="请选择文化程度">
                               {educationDegreeList.map((item) => (
                                 <Option key={item.id} value={item.id}>
                                   {item.name}
                                 </Option>
                               ))}
                             </Select>
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col span={24}>
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'profession']}
+                            fieldKey={[field.fieldKey, 'profession']}
+                            labelCol={{ span: 2 }}
+                            label="职业种类"
+                            rules={
+                              index === 2
+                                ? [
+                                    { required: true, message: '请选择职业种类' },
+                                    {
+                                      validator: checkProfession,
+                                    },
+                                  ]
+                                : null
+                            }
+                          >
+                            <ProfessionSelect disabled={DISABLED} professionList={professionList} />
                           </Form.Item>
                         </Col>
                       </Row>
@@ -1079,7 +1145,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="familyType"
                 rules={[{ required: true, message: '请选择家庭模式' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {familyTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1097,7 +1163,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="communityType"
                 rules={[{ required: true, message: '请选择居住社区' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {communityTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1115,7 +1181,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="educationType"
                 rules={[{ required: true, message: '请选择教养方式' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {educationTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1134,6 +1200,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 rules={[{ required: true, message: '请选择语言环境' }]}
               >
                 <Radio.Group
+                  disabled={DISABLED}
                   onChange={(e) => {
                     setLanguageTypeShow(e.target.value);
                     if (e.target.value === 1) {
@@ -1161,7 +1228,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                   name="languageId"
                   rules={[{ required: true, message: '请选择地方方言' }]}
                 >
-                  <Select size="small" style={{ width: 100 }} placeholder="请选择地方方言">
+                  <Select
+                    disabled={DISABLED}
+                    size="small"
+                    style={{ width: 100 }}
+                    placeholder="请选择地方方言"
+                  >
                     {fangLanguageList.map((item) => (
                       <Option key={item.id} value={item.id}>
                         {item.name}
@@ -1180,7 +1252,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="economicType"
                 rules={[{ required: true, message: '请选择家庭经济状况' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {economicTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1198,7 +1270,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="hukouType"
                 rules={[{ required: true, message: '请选择户口类别' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {hukouTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1216,7 +1288,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="medicalInsuranceType"
                 rules={[{ required: true, message: '请选择享受医疗保险情况' }]}
               >
-                <Radio.Group>
+                <Radio.Group disabled={DISABLED}>
                   {medicalInsuranceTypeList.map((item) => (
                     <Radio key={item.code} value={item.code}>
                       {item.codeCn}
@@ -1241,7 +1313,10 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item labelCol={{ span: 9 }} label="行为" name="isBehaviorUnusual">
-                <Radio.Group onChange={(e) => setIsBehaviorUnusualShow(e.target.value)}>
+                <Radio.Group
+                  disabled={DISABLED}
+                  onChange={(e) => setIsBehaviorUnusualShow(e.target.value)}
+                >
                   <Radio value={false}>正常</Radio>
                   <Radio value={true}>异常</Radio>
                 </Radio.Group>
@@ -1250,7 +1325,12 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             <Col span={12} style={{ marginLeft: -100 }}>
               {isBehaviorUnusualShow && (
                 <Form.Item name="abnormalActionIds">
-                  <Select mode="multiple" size="small" placeholder="请选择异常情况(可多选)">
+                  <Select
+                    disabled={DISABLED}
+                    mode="multiple"
+                    size="small"
+                    placeholder="请选择异常情况(可多选)"
+                  >
                     {abnormalActionList.map((item) => (
                       <Option key={item.id} value={item.id}>
                         {item.name}
@@ -1269,9 +1349,13 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                 name="patientPastRecoveryConnectBos"
               >
                 <Checkbox.Group
+                  disabled={DISABLED}
                   onChange={(codeArr) => {
-                    setOtherShow(codeArr.includes(5));
-                    if (!codeArr.includes(5)) {
+                    codeArr = codeArr.map((item) => {
+                      return item.split('-')[1];
+                    });
+                    setPatientPastRecoveryConnectNames(codeArr);
+                    if (!codeArr.includes('其他')) {
                       form.setFields([
                         {
                           name: 'other',
@@ -1283,9 +1367,9 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                   options={patientPastRecoveryConnectBosList}
                 />
               </Form.Item>
-              {otherShow && (
+              {patientPastRecoveryConnectNames.includes('其他') && (
                 <Form.Item {...FormMoreItemLayout} name="other">
-                  <Input />
+                  <Input disabled={DISABLED} />
                 </Form.Item>
               )}
             </Col>
@@ -1307,8 +1391,8 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             <Col span={20}>
               <Row>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="喂养方式" name="supportTypeId">
-                    <Select placeholder="请选择">
+                  <Form.Item {...FormRecordItemLayout} label="喂养方式" name="supportTypeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
                       {supportTypeList.map((item) => (
                         <Option key={item.id} value={item.id}>
                           {item.name}
@@ -1318,51 +1402,71 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="高热抽搐" name="feverTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="高热抽搐" name="isFever">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {yesOrNoList.map((item) => (
+                        <Option key={item.value} value={item.value}>
+                          {item.label}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={8}>
                   <Form.Item
-                    {...FormRecordItemlayout}
+                    {...FormRecordItemLayout}
                     label="会抬头时间"
                     name="canGainGroundTimeId"
                   >
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
               <Row>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会翻身时间" name="canTurnOverTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会翻身时间" name="canTurnOverTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会爬行时间" name="canClimbTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会爬行时间" name="canClimbTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会笑时间" name="canLaughTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会笑时间" name="canLaughTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
               <Row>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会坐时间" name="canSitTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会坐时间" name="canSitTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会走时间" name="canWalkTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会走时间" name="canWalkTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
                 <Col span={8}>
-                  <Form.Item {...FormRecordItemlayout} label="会说话时间" name="caTalkTimeId">
-                    <Select placeholder="请选择">{getTimeOption()}</Select>
+                  <Form.Item {...FormRecordItemLayout} label="会说话时间" name="caTalkTimeId">
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {getTimeOption()}
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
@@ -1381,82 +1485,95 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           }
           bordered={false}
         >
-          <Row gutter={16}>
+          <Row>
             <Col span={12}>
-              <Form.Item labelCol={{ span: 5 }} label="出生地点" name="birthPlaceType">
-                <Radio.Group onChange={(e) => birthPlaceTypeChange(e)}>
-                  {birthPlaceTypeList.map((item) => (
-                    <Radio key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Radio>
-                  ))}
-                </Radio.Group>
-              </Form.Item>
+              <Row>
+                <Col span={24}>
+                  <Form.Item
+                    labelCol={{ span: 4 }}
+                    wrapperCol={{ span: 12 }}
+                    label="出生地点"
+                    name="birthPlaceType"
+                  >
+                    <Radio.Group disabled={DISABLED} onChange={(e) => birthPlaceTypeChange(e)}>
+                      {birthPlaceTypeList.map((item) => (
+                        <Radio key={item.code} value={item.code}>
+                          {item.codeCn}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
+                  {otherBirthPlaceShow === 1 && (
+                    <Form.Item wrapperCol={{ span: 12, offset: 4 }} name="birthPlaceDesc">
+                      <Input disabled={DISABLED} placeholder="请输入具体医院信息" />
+                    </Form.Item>
+                  )}
+                  {otherBirthPlaceShow === 3 && (
+                    <Form.Item wrapperCol={{ span: 12, offset: 4 }} name="otherBirthPlace">
+                      <Input disabled={DISABLED} placeholder="请输入其他出生地点" />
+                    </Form.Item>
+                  )}
+                </Col>
+              </Row>
+              <Row>
+                <Col span={24}>
+                  <Form.Item
+                    labelCol={{ span: 4 }}
+                    wrapperCol={{ span: 12 }}
+                    label="出生孕周"
+                    name="pregnancyWeeksId"
+                  >
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {pregnancyWeeksList.map((item) => (
+                        <Option key={item.id} value={item.id}>
+                          {item.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={24}>
+                  <Form.Item
+                    labelCol={{ span: 4 }}
+                    wrapperCol={{ span: 12 }}
+                    label="出生体重"
+                    name="birthWeightId"
+                  >
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {birthWeightList.map((item) => (
+                        <Option key={item.id} value={item.id}>
+                          {item.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col span={24}>
+                  <Form.Item
+                    labelCol={{ span: 4 }}
+                    wrapperCol={{ span: 12 }}
+                    label="胎数"
+                    name="fetusNumId"
+                  >
+                    <Select disabled={DISABLED} placeholder="请选择">
+                      {fetusNumList.map((item) => (
+                        <Option key={item.id} value={item.id}>
+                          {item.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Col>
-            <Col span={12} style={{ marginLeft: '-22%' }}>
-              {otherBirthPlaceShow === 1 && (
-                <Form.Item name="birthPlaceDesc">
-                  <Input placeholder="请输入具体医院信息" />
-                </Form.Item>
-              )}
-              {otherBirthPlaceShow === 3 && (
-                <Form.Item name="otherBirthPlace">
-                  <Input placeholder="请输入其他出生地点" />
-                </Form.Item>
-              )}
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={6}>
-              <Form.Item {...FormItemlayout} label="出生孕周" name="pregnancyWeeksId">
-                <Select placeholder="请选择">
-                  {pregnancyWeeksList.map((item) => (
-                    <Option key={item.id} value={item.id}>
-                      {item.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item {...FormItemlayout} label="出生体重" name="birthWeightId">
-                <Select placeholder="请选择">
-                  {birthWeightList.map((item) => (
-                    <Option key={item.id} value={item.id}>
-                      {item.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item {...FormItemlayout} label="胎数" name="fetusNumId">
-                <Select placeholder="请选择">
-                  {fetusNumList.map((item) => (
-                    <Option key={item.id} value={item.id}>
-                      {item.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
             <Col span={12}>
-              <Form.Item labelCol={{ span: 5 }} label="高危因素" name="allBirthDangerInfo">
-                <Select onChange={(val) => birthDangerInfoChange(val, false)} placeholder="请选择">
-                  {baseInfoDangerTypeList.map((item) => (
-                    <Option key={item.code} value={item.code}>
-                      {item.codeCn}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col>
-              <Form.Item name="birthRecordDangerInfoBos">
-                <Checkbox.Group options={birthRecordDangerInfoBosList} />
-              </Form.Item>
+              <Row gutter={16}>
+                <Col span={24}>{getBirthRecordDangerInfoBosList()}</Col>
+              </Row>
             </Col>
           </Row>
         </Card>
@@ -1474,6 +1591,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           <Row gutter={16}>
             <Col span={16}>
               <MedicalHistorySelect
+                disabled={DISABLED}
                 form={form}
                 list={patientAllergyConnectList}
                 name="patientAllergyConnectBos"
@@ -1486,6 +1604,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           <Row gutter={16}>
             <Col span={16}>
               <MedicalHistorySelect
+                disabled={DISABLED}
                 form={form}
                 list={patientFamilyDiseaseHistoryList}
                 name="patientFamilyDiseaseHistoryBos"
@@ -1498,6 +1617,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
           <Row gutter={16}>
             <Col span={16}>
               <MedicalHistorySelect
+                disabled={DISABLED}
                 form={form}
                 list={patientDiseaseList}
                 name="patientDiseaseBos"
@@ -1515,7 +1635,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               valuePropName="checked"
               rules={[{ required: true, message: '请勾选' }]}
             >
-              <Checkbox className="mr8" />
+              <Checkbox disabled={DISABLED} className="mr8" />
             </Form.Item>
             <Form.Item
               style={{ width: '15%' }}
@@ -1524,6 +1644,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               rules={[{ required: true, message: '请选择家长' }]}
             >
               <Select
+                disabled={DISABLED}
                 onChange={(code) => writePersonTypeChange(code, null)}
                 placeholder="请选择家长"
               >
@@ -1548,12 +1669,17 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               valuePropName="checked"
               rules={[{ required: true, message: '请同意' }]}
             >
-              <Checkbox className="mr8" />
+              <Checkbox disabled={DISABLED} className="mr8" />
             </Form.Item>
             <div>本人同意无偿提供儿童的康复训练过程及数据，作为后续研究使用。</div>
           </div>
           <Form.Item>
-            <Upload.Dragger fileList={fileList} action="#" beforeUpload={handleBeforeUpload}>
+            <Upload.Dragger
+              disabled={DISABLED}
+              fileList={fileList}
+              action="#"
+              beforeUpload={handleBeforeUpload}
+            >
               <p className="ant-upload-drag-icon">
                 <InboxOutlined />
               </p>
@@ -1567,11 +1693,14 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         <Button onClick={() => history.goBack()} icon={<ArrowLeftOutlined />}>
           返回
         </Button>
-        {/* {type != 2 && ( */}
-          <Button type="primary" onClick={() => form?.submit()} loading={submitting}>
-            提交
-          </Button>
-        {/* )} */}
+        <Button
+          disabled={DISABLED}
+          type="primary"
+          onClick={() => form?.submit()}
+          loading={submitting}
+        >
+          提交
+        </Button>
       </FooterToolbar>
     </Form>
   );

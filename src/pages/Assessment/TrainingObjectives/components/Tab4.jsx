@@ -483,7 +483,23 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
         </Radio.Group>
       </Form.Item>
 
-      <Form.Item label="会呛食" name="chokeFeedBos" rules={[{ required: true, message: '请选择' }]}>
+      <Form.Item
+        label="会呛食"
+        name="chokeFeedBos"
+        dependencies={['swallowingAbilityInfo']}
+        rules={[
+          ({ getFieldValue }) => ({
+            validator(rule, value) {
+              if (getFieldValue('swallowingAbilityInfo') !== 3) {
+                if (!value || value.length === 0) {
+                  return Promise.reject('请选择');
+                }
+              }
+              return Promise.resolve();
+            },
+          }),
+        ]}
+      >
         <Checkbox.Group options={chokeFeedList}></Checkbox.Group>
       </Form.Item>
 
@@ -538,7 +554,22 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="食物材质的选择">
-        <Form.Item name="foodBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="foodBos"
+          dependencies={['swallowingAbilityInfo']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('swallowingAbilityInfo') !== 3) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, foodListNames, setFoodListNames, 'otherFood')
@@ -554,7 +585,22 @@ const Tab4 = ({ patientId, submitting, dispatch }) => {
       </Form.Item>
 
       <Form.Item label="食器的选择">
-        <Form.Item name="feederBos" rules={[{ required: true, message: '请选择' }]}>
+        <Form.Item
+          name="feederBos"
+          dependencies={['swallowingAbilityInfo']}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(rule, value) {
+                if (getFieldValue('swallowingAbilityInfo') !== 3) {
+                  if (!value || value.length === 0) {
+                    return Promise.reject('请选择');
+                  }
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+        >
           <Checkbox.Group
             onChange={(arrId) =>
               onHandleChange(arrId, feederListNames, setFeederListNames, 'otherFeeder')

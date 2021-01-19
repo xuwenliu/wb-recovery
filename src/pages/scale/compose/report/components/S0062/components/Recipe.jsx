@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Select, message, Input, Form, Space, Card, Row, Col, Switch } from 'antd';
+import { Button, Select, message, Input, Form, Row, Col } from 'antd';
 import { PlusOutlined, MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { FooterToolbar } from '@ant-design/pro-layout';
 import { connect } from 'umi';
@@ -481,7 +481,6 @@ const Recipe = ({ submitting, dispatch, patientId }) => {
             </>
           )}
         </Form.List>
-      
       </Form>
       <FooterToolbar>
         <Button type="primary" onClick={() => form?.submit()} loading={submitting}>

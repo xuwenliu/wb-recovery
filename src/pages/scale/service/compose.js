@@ -18,8 +18,17 @@ export async function fetchIdByCode({ code }) {
   });
 }
 
-export async function fetchAll({ id }) {
-  return request(`/api/scale/compose/search/${id}`);
+export async function fetchAll({ id, values = {}, pagination = { page: 0, size: 8 } }) {
+  const { page, size } = pagination;
+
+  let url = `/api/scale/compose/search/${id}?page=${page}&limit=${size}`;
+
+  Object.keys(values).forEach((key) => {
+    if (values[key] !== undefined && values[key] !== '') {
+      url += `&${key}=${values[key]}`;
+    }
+  });
+  return request(url);
 }
 
 export async function fetchSubScaleNames({ id, demographics }) {
@@ -95,6 +104,19 @@ export async function saveAnswer({ params, values = {} }) {
   });
 }
 
+export async function saveAnswerByValue({ params, values = {} }) {
+  const { compose, answer, subScale } = params;
+  const url = `/api/scale/compose/${compose}/answer/${answer}/${subScale}/values`;
+
+  return request(url, {
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    method: 'PUT',
+    body: JSON.stringify(values),
+  });
+}
+
 export async function saveAndCreateReport({ params, values = {} }) {
   // console.log('saveAndCreateReport:', params, values);
 
@@ -150,11 +172,15 @@ export async function getScaleCompose({ scaleId }) {
 /**
  * object
  */
-export async function fetchObject({ number }) {
+export async function fetchObject({ text, number }) {
   let url = '/api/object?page=0&limit=10';
 
   if (number) {
     url += `&number=${number}`;
+  }
+
+  if (text) {
+    url += `&text=${text}`;
   }
 
   return request(url);
@@ -164,10 +190,18 @@ export async function fetchObjectDetail({ id }) {
   return request(`/api/object/${id}`);
 }
 
+export async function getIncompleteAnswer({ compose, number }) {
+  return request(`/api/scale/compose/${compose}/user/${number}/incomplete`);
+}
+
 /**
  * 查詢量表清單
  */
-export async function searchScale({ scaleType }) {
+export async function searchScale({ scaleType, code }) {
+  if (code) {
+    return request(`/api/scale/compose?page=0&limit=100&code=${code}`);
+  }
+
   if (scaleType) {
     return request(`/api/scale/compose?page=0&limit=100&scaleType=${scaleType}`);
   }

@@ -20,7 +20,7 @@ function ScaleTrainingSuggest({ user = {} }) {
   };
 
   const queryRecords = async (number) => {
-    setRecords(await manage({ values: { userNumber: number } }));
+    setRecords(await manage({ values: { userNumber: number, suggest: true } }));
   };
 
   useEffect(() => {

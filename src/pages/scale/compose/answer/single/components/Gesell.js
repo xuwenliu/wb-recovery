@@ -23,7 +23,7 @@ const { alert } = Modal;
  * https://material-ui.com/zh/components/accordion/
  */
 
-function Page({ model, submit, form }) {
+function Page({ testeeInfo, model, submit, form }) {
   const { getFieldDecorator } = form;
   const { scaleQuestions } = model;
   const theme = useTheme();
@@ -43,7 +43,7 @@ function Page({ model, submit, form }) {
     submit(newValues);
   };
 
-  const getRecord = page => {
+  const getRecord = (page) => {
     if (records && records.length > 0) {
       return records[page];
     }
@@ -55,7 +55,7 @@ function Page({ model, submit, form }) {
   const init = () => {
     const { scaleName, dimensions } = model;
     const mp = {};
-    scaleQuestions.forEach(question => {
+    scaleQuestions.forEach((question) => {
       const { questionNo } = question;
       mp[questionNo] = question;
     });
@@ -65,24 +65,45 @@ function Page({ model, submit, form }) {
     if (scaleName === '评估状态') {
       list.push({ group: '', items: scaleQuestions });
     } else {
-      dimensions.forEach(d => {
+      dimensions.forEach((d) => {
         const qs = [];
-        d.questions.forEach(no => {
+        d.questions.forEach((no) => {
           qs.push(mp[no]);
         });
 
-        list.push({ group: qs[0].tips, items: qs });
+        list.push({ group: qs[0].tips, month: qs[0].questionInfo.replace('月', ''), items: qs });
       });
     }
 
+    testeeInfo.forEach((t) => {
+      const [key, value] = t.split(':');
+      if (key === 'MONTH') {
+        let check = -1;
+        list
+          .sort((a, b) => a.month * 1 - b.month * 1)
+          .forEach(({ month }, index) => {
+            if (check === -1 && month * 1 === value * 1) {
+              check = index;
+            }
+            if (check === -1 && month * 1 >= value * 1) {
+              check = index - 1;
+            }
+          });
+        if (check === -1) {
+          setCurrentStep(0);
+        } else {
+          setCurrentStep(check);
+        }
+      }
+    });
     setRecords(list);
   };
 
-  const changeStep = nextStep => {
+  const changeStep = (nextStep) => {
     setCurrentStep(nextStep);
   };
 
-  const isExpanded = questionNo => {
+  const isExpanded = (questionNo) => {
     if (expanded[questionNo] === undefined) {
       return true;
     }
@@ -125,7 +146,7 @@ function Page({ model, submit, form }) {
           variant="contained"
           color="primary"
           onClick={() => {
-            form.validateFields(err => {
+            form.validateFields((err) => {
               if (!err) {
                 changeStep(currentStep - 1);
               }
@@ -134,7 +155,7 @@ function Page({ model, submit, form }) {
         >
           上一页
         </Button>
-      </Grid>
+      </Grid>,
     );
 
     result.push(
@@ -149,7 +170,7 @@ function Page({ model, submit, form }) {
             color="primary"
             style={{ width: '100%' }}
             onClick={() => {
-              form.validateFields(err => {
+              form.validateFields((err) => {
                 if (!err) {
                   warpSubmit();
                 } else {
@@ -165,7 +186,7 @@ function Page({ model, submit, form }) {
             {currentStep + 1} / {records.length}
           </div>
         )}
-      </Grid>
+      </Grid>,
     );
 
     result.push(
@@ -185,7 +206,7 @@ function Page({ model, submit, form }) {
         >
           下一页
         </Button>
-      </Grid>
+      </Grid>,
     );
 
     result.push(
@@ -199,7 +220,7 @@ function Page({ model, submit, form }) {
         }}
       >
         结束
-      </Button>
+      </Button>,
     );
 
     const flag = mediumScreen ? '' : { justify: 'center', alignItems: 'center' };
@@ -213,7 +234,7 @@ function Page({ model, submit, form }) {
   const mark = ({ questionNo, scaleOptions }) => {
     const value = answerValues[questionNo];
     if (value) {
-      const index = scaleOptions.findIndex(i => i.option * 1 === value * 1);
+      const index = scaleOptions.findIndex((i) => i.option * 1 === value * 1);
       if (index !== -1) {
         return <Avatar>{scaleOptions[index].optionContent}</Avatar>;
       }
@@ -244,7 +265,7 @@ function Page({ model, submit, form }) {
     <div>
       <Paper style={{ paddingBottom: '10px', margin: 10 }} elevation={3}>
         {group && <h3 style={{ paddingTop: 20, paddingLeft: 20 }}>{group}</h3>}
-        {items.map(item => (
+        {items.map((item) => (
           <ExpansionPanel
             key={item.questionNo}
             defaultExpanded
@@ -262,7 +283,7 @@ function Page({ model, submit, form }) {
             <ExpansionPanelDetails>
               {getFieldDecorator(`${item.questionNo}`, {
                 initialValue: answerValues[`${item.questionNo}`] || '',
-                onChange: e => {
+                onChange: (e) => {
                   changeAnswer(item.questionNo, e.target.value);
                 },
                 rules: [],
@@ -273,7 +294,7 @@ function Page({ model, submit, form }) {
                   }}
                   questionType={item.questionType}
                   scaleOptions={item.scaleOptions.sort((a, b) => a.option * 1 - b.option * 1)}
-                />
+                />,
               )}
             </ExpansionPanelDetails>
           </ExpansionPanel>

@@ -24,14 +24,13 @@ import Slider from '@material-ui/core/Slider';
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
 import ScaleSuggestList from '@/pages/scale/components/ScaleSuggestList';
 
-import {defaultBlock} from '@/utils/publicStyles'
+import { defaultBlock } from '@/utils/publicStyles';
 
 import Slider2 from '../Slider';
 
 const useStyles = makeStyles({
-  ...defaultBlock
+  ...defaultBlock,
 });
-
 
 const marks = [
   {
@@ -97,7 +96,7 @@ const sortMapping = {
 };
 
 // 环境改造
-const getTerraforming = report => {
+const getTerraforming = (report) => {
   const { scaleName, scoringResults } = report;
 
   const result = { scaleName, items: [] };
@@ -111,7 +110,7 @@ const getTerraforming = report => {
   return result;
 };
 
-const getScoreExplains = report => {
+const getScoreExplains = (report) => {
   let result = [];
 
   const { scoringResults } = report;
@@ -126,7 +125,7 @@ const getScoreExplains = report => {
 };
 
 // 分數組成. 功能性技巧和照顾者协助
-const getScoreCompose = report => {
+const getScoreCompose = (report) => {
   const { scaleType, scaleName, scoringResults } = report;
 
   const result = { scaleType, scaleName };
@@ -205,7 +204,7 @@ function Report(props) {
       scope: scoreScope,
     };
 
-    reports.forEach(report => {
+    reports.forEach((report) => {
       const { scoreCompose, terraforming } = model;
 
       const { scaleType } = report;
@@ -228,11 +227,7 @@ function Report(props) {
   return (
     <div>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel0a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>个案信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -241,15 +236,10 @@ function Report(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>分 数 总 结</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <hr /><Slider2 /><hr />
           <TableContainer component={Paper}>
             <Table className={classes.table} size="small" aria-label="simple table">
               <TableHead>
@@ -265,7 +255,7 @@ function Report(props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scoreCompose.map(row => (
+                {scoreCompose.map((row) => (
                   <TableRow key={row.scaleType + row.scaleName}>
                     <TableCell component="th" scope="row">
                       {row.scaleType}
@@ -285,16 +275,12 @@ function Report(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>环境改造频率</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <Grid container spacing={2}>
-            {terraforming.map(row => (
+            {terraforming.map((row) => (
               <Paper
                 key={row.scaleName}
                 style={{ width: '31%', margin: '1%', paddingTop: '5px' }}
@@ -302,7 +288,7 @@ function Report(props) {
               >
                 <Grid item>
                   <h3 style={{ textAlign: 'center' }}>{row.scaleName}</h3>
-                  {row.items.map(i => (
+                  {row.items.map((i) => (
                     <ListItem key={i.scoreName}>
                       <ListItemText primary={i.scoreName} />
                       <ListItemSecondaryAction>{i.score}</ListItemSecondaryAction>
@@ -316,11 +302,7 @@ function Report(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel1a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>分数领域</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -343,7 +325,7 @@ function Report(props) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scoreCompose.map(row => (
+                {scoreCompose.map((row) => (
                   <TableRow key={row.scaleType + row.scaleName}>
                     <TableCell align="center">{row.scaleType}</TableCell>
                     <TableCell align="center">{row.scaleName}</TableCell>
@@ -376,16 +358,12 @@ function Report(props) {
       </ExpansionPanel>
 
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel2a-content"
-          id="panel2a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>功能性技巧 刻度分范围</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
           <Grid container spacing={2}>
-            {Object.keys(scope).map(key => (
+            {Object.keys(scope).map((key) => (
               <Paper
                 key={key}
                 style={{ width: '31%', margin: '1%', paddingTop: '5px' }}
@@ -393,11 +371,11 @@ function Report(props) {
               >
                 <Grid item>
                   <h3 style={{ textAlign: 'center' }}>{key}</h3>
-                  {scope[key].map(i => (
+                  {scope[key].map((i) => (
                     <ListItem key={i.name}>
                       <ListItemText
                         primary={
-                          scoreExplains.findIndex(s => s === i.name) === -1 ? null : <CheckIcon />
+                          scoreExplains.findIndex((s) => s === i.name) === -1 ? null : <CheckIcon />
                         }
                       />
                       <ListItemSecondaryAction>{i.name}</ListItemSecondaryAction>

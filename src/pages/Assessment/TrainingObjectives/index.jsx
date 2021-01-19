@@ -9,6 +9,7 @@ import Tab3 from './components/Tab3';
 import Tab4 from './components/Tab4';
 import Tab5 from './components/Tab5';
 import Tab6 from './components/Tab6';
+import Tab7 from './components/Tab7';
 import Tab8 from './components/Tab8';
 import BottomContent from './components/BottomContent';
 import BaseInfoShow from '@/components/BaseInfoShow';
@@ -92,7 +93,9 @@ const TrainingObjectives = () => {
           <TabPane tab="社会适应" key="6">
             <Tab6 patientId={patientId} />
           </TabPane>
-          <TabPane tab="社会融合活动" key="7"></TabPane>
+          <TabPane tab="感官知觉" key="7">
+            <Tab7 patientId={patientId} />
+          </TabPane>
           <TabPane tab="环境与辅具" key="8">
             <Tab8 patientId={patientId} />
           </TabPane>

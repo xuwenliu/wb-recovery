@@ -79,7 +79,6 @@ const getRow = ({ scaleType, scaleName, reportDate, TOTAL_SCORE, 百分比 }) =>
     percentage: `${百分比}%`,
     value: 百分比 * 1, // TOTAL_SCORE * 1,
   };
-
 };
 
 const getInfo = (reportDate, report) => {
@@ -93,7 +92,7 @@ const getInfo = (reportDate, report) => {
   scoringResults.forEach(({ scoreName, score }) => {
     info[scoreName] = score;
   });
-  
+
   // console.log('info:',info);
 
   info.rows = [getRow({ scaleType, scaleName, reportDate, ...info })];
@@ -101,11 +100,11 @@ const getInfo = (reportDate, report) => {
   return info;
 };
 
-const getHistoryInfo = history => {
+const getHistoryInfo = (history) => {
   const result = {};
 
   history.forEach(({ reportDate, reports }) => {
-    reports.forEach(report => {
+    reports.forEach((report) => {
       const { scaleType, scaleName } = report;
 
       const key = `${scaleType}_${scaleName}`;
@@ -139,7 +138,7 @@ function Page(props) {
 
     reports
       .sort((a, b) => a.scaleType.localeCompare(b.scaleType, 'zh-CN'))
-      .forEach(report => {
+      .forEach((report) => {
         const { scaleType, scaleName } = report;
         const info = getInfo(reportDate, report);
         const key = `${scaleType}_${scaleName}`;
@@ -155,16 +154,10 @@ function Page(props) {
 
   const { data } = buildModel();
 
-  console.log('data:',data);
-
   return (
     <div>
       <ExpansionPanel defaultExpanded>
-        <ExpansionPanelSummary
-          expandIcon={<ExpandMoreIcon />}
-          aria-controls="panel1a-content"
-          id="panel0a-header"
-        >
+        <ExpansionPanelSummary>
           <Typography className={classes.heading}>个案信息</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
@@ -173,8 +166,8 @@ function Page(props) {
       </ExpansionPanel>
 
       {data.map(({ scaleName, rows }) => (
-        <ExpansionPanel>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} id="panel2a-header">
+        <ExpansionPanel defaultExpanded>
+          <ExpansionPanelSummary>
             <Typography className={classes.heading}>{scaleName}</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.root}>
@@ -182,9 +175,9 @@ function Page(props) {
               <Paper style={{ width: '100%', margin: '1%', paddingTop: '5px' }} variant="outlined">
                 <Grid item>
                   <Chart height={300} data={rows} scale={cols} forceFit>
-                    <Axis name="title"/>
-                    <Axis name="value"/>
-                    <Tooltip shared/>
+                    <Axis name="title" />
+                    <Axis name="value" />
+                    <Tooltip shared />
                     <Geom type="interval" position="title*value" size={['value', [35, 45]]} />
                     <Guide>
                       <Guide.Region
@@ -204,7 +197,7 @@ function Page(props) {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        {columns.map(column => (
+                        {columns.map((column) => (
                           <TableCell
                             key={column.id}
                             align={column.align}
@@ -216,10 +209,10 @@ function Page(props) {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {rows.map(row => {
+                      {rows.map((row) => {
                         return (
                           <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                            {columns.map(column => {
+                            {columns.map((column) => {
                               return (
                                 <TableCell key={column.id} align={column.align}>
                                   {row[column.id]}
@@ -239,7 +232,7 @@ function Page(props) {
       ))}
       {suggests && (
         <ExpansionPanel defaultExpanded>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+          <ExpansionPanelSummary>
             <Typography className={classes.heading}>训练目标</Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.root}>

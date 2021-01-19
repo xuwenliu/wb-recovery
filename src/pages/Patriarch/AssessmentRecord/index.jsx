@@ -1,6 +1,6 @@
 /* eslint-disable no-lonely-if */
 /* eslint-disable no-restricted-globals */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'dva';
 
 import { Button, DatePicker, Select } from 'antd';
@@ -21,20 +21,17 @@ const { RangePicker } = DatePicker;
  */
 
 const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
-  console.log('render start..:', patriarchAssessmentRecord);
-
-  const { types = [], records } = patriarchAssessmentRecord;
+  const { scales = [], records } = patriarchAssessmentRecord;
 
   // const actionRef = useRef();
 
   const [report, setReport] = useState();
 
-  const getTypeSelect = () => {
-    console.log('getTypeSelect types:', types.length);
+  const getScaleSelect = () => {
     return (
       <Select placeholder="量表类型">
-        {types
-          ? types.map((item) => (
+        {scales
+          ? scales.map((item) => (
               <Select.Option value={item.id} key={item.id}>
                 {item.name}
               </Select.Option>
@@ -71,8 +68,8 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
     {
       title: '量表类型',
       dataIndex: 'scaleName',
-      renderFormItem: (_, { type, defaultRender, ...rest }, form) => {
-        return getTypeSelect();
+      renderFormItem: () => {
+        return getScaleSelect();
       },
     },
     {
@@ -107,16 +104,23 @@ const AssessmentRecord = ({ patriarchAssessmentRecord, dispatch }) => {
   ];
 
   const search = (params) => {
-    console.log('search..');
+    let value = {};
+    if (params) {
+      value = {
+        scale: params.scaleName || '',
+        start: params.reportDate ? params.reportDate[0] : '',
+        end: params.reportDate ? params.reportDate[1] : '',
+      };
+    }
     dispatch({
       type: 'patriarchAssessmentRecord/searchRecords',
-      payload: params,
+      payload: value,
     });
   };
 
   useEffect(() => {
     dispatch({
-      type: 'patriarchAssessmentRecord/listType',
+      type: 'patriarchAssessmentRecord/fetchScaleData',
     });
     search();
     return () => {

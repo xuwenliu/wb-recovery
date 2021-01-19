@@ -12,7 +12,6 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
  */
 
 function SingleSelect({ onChange, scaleOptions, RenderOptionContent, config = {} }) {
-  
   const getRadioGroupStyle = () => {
     const { direction = 'vertical' } = config;
 
@@ -27,7 +26,7 @@ function SingleSelect({ onChange, scaleOptions, RenderOptionContent, config = {}
 
   return (
     <RadioGroup style={{ ...getRadioGroupStyle() }} onChange={onChange}>
-      {scaleOptions.map(option => (
+      {scaleOptions.map((option) => (
         <FormControlLabel
           style={{
             marginTop: '8px',
@@ -37,7 +36,7 @@ function SingleSelect({ onChange, scaleOptions, RenderOptionContent, config = {}
             cursor: 'pointer',
             minWidth: '100px',
           }}
-          key={`${option.optionScore}`}
+          key={`${option.option}`}
           value={`${option.option}`}
           control={
             <Radio

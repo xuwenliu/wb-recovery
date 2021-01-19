@@ -6,6 +6,7 @@ import './index.less';
 import { getComprehensiveAllSection } from '@/pages/Function/ColumnLocation/service';
 import { getTrainAndTargetInfo } from '@/pages/Assessment/TrainingObjectives/service';
 import { getAuth } from '@/utils/utils';
+import { getCommonEnums } from '@/services/common';
 
 const layout = {
   labelCol: {
@@ -25,26 +26,36 @@ const BottomContent = ({ patientId, submitting, dispatch }) => {
   const [form] = Form.useForm();
 
   const queryComprehensiveSectionAll = async () => {
+    const common = await getCommonEnums({
+      enumName: 'AssessSectionType',
+    });
+
     const res = await getComprehensiveAllSection();
     const data = res?.map((item) => {
       item.label = item.name;
       item.value = item.id;
       return item;
     });
+    console.log('res', res);
     setPrescriptionList(data.filter((item) => item.type === 2)); // 康复处方
     setCfCsList(data.filter((item) => item.type === 3)); //言语社交领域CFCS
     setCarefulFieldList(data.filter((item) => item.type === 4)); //精细动作领域
     setGmfcsList(data.filter((item) => item.type === 5)); //粗大运动领域GMFCS
 
     const arr = [6, 7, 8, 9, 10];
-    const description = data
-      .filter((item) => arr.includes(item.type) && item.description)
-      .map((item) => {
-        item.label = item.description;
-        item.value = item.type;
-        return item;
-      });
-    setRoughActiveTypeList(description);
+    if (common) {
+      const commonArr = Object.values(common);
+      const newCommon = commonArr
+        .filter((item) => arr.includes(item.code))
+        .map((item) => {
+          item.list = [];
+          item.label = item.codeCn.split('-')[1];
+          item.value = item.code;
+          return item;
+        })
+        .sort((a, b) => a.ordianl - b.ordianl);
+      setRoughActiveTypeList(newCommon); //粗大运动领域细分类
+    }
   };
 
   const onRoughActiveTypeChange = async (type, noClear) => {
@@ -194,12 +205,12 @@ const BottomContent = ({ patientId, submitting, dispatch }) => {
                 <Form.Item
                   style={{ width: '50%' }}
                   name="roughActiveDetailLevelId"
-                  rules={[
-                    {
-                      required: true,
-                      message: '请选择',
-                    },
-                  ]}
+                  // rules={[
+                  //   {
+                  //     required: true,
+                  //     message: '请选择',
+                  //   },
+                  // ]}
                 >
                   <Select style={{ width: '100%' }}>
                     {roughActiveDetailLevelList.map((item) => (

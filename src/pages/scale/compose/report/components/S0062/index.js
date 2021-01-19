@@ -65,11 +65,12 @@ function Page(props) {
           <Typography className={classes.heading}>评量结果表</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <Result data={data} />;
+          <Result data={data} />
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
-      <ExpansionPanel defaultExpanded>
+      {/**
+         *  <ExpansionPanel defaultExpanded>
         <ExpansionPanelSummary>
           <Typography className={classes.heading}>综合发展侧面图(一)</Typography>
         </ExpansionPanelSummary>
@@ -86,6 +87,7 @@ function Page(props) {
           <View2 data={data} />
         </ExpansionPanelDetails>
       </ExpansionPanel>
+         */}
 
       <ExpansionPanel defaultExpanded>
         <ExpansionPanelSummary>
@@ -101,7 +103,10 @@ function Page(props) {
           <Typography className={classes.heading}>综合发展侧面图(三)</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <View3 data={data} />;
+          {/**
+           * <View3 data={data} />;
+           */}
+
           <Chart2 list={data} />
           <Chart3 list={data} />
           <Chart4 list={data} />

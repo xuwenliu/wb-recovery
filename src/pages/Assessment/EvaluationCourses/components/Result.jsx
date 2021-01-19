@@ -7,6 +7,7 @@ import S0062 from '@/pages/scale/compose/report/components/S0062';
 import { truncate } from 'lodash';
 import { formatDateFromTime } from '@/utils/format';
 
+import Target from '@/components/Scale/Target';
 import Chart1 from './Chart1';
 import Chart2 from './Chart2';
 import Chart3 from './Chart3';
@@ -81,6 +82,15 @@ const getData = (reports, answers) => {
 
 function Result({ user = {} }) {
   const scaleCode = 'S0062';
+
+  const [target, setTarget] = useState();
+  /**
+     * {
+    '1-1': ['1-1-2'],
+    '1-1-1': ['1-1-1-1'],
+    }
+     */
+
   const [records, setRecords] = useState({ content: [] });
   const [guide, setGuide] = useState();
   const [list, setList] = useState([]);
@@ -106,6 +116,8 @@ function Result({ user = {} }) {
     }
     return () => {};
   }, [user.visitingCodeV]);
+
+  console.log('target:', target);
 
   return (
     <>
@@ -134,6 +146,14 @@ function Result({ user = {} }) {
           <Chart1 list={list} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="感官知觉" key={2}>
+          <Target
+            tree="感官知觉"
+            guide={guide}
+            value={target}
+            onChange={(checked) => {
+              setTarget(checked);
+            }}
+          />
           <Chart2 list={list} patientId={user.patientId} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="粗大动作" key={3}>

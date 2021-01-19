@@ -5,7 +5,9 @@ import { Card, Tabs } from 'antd';
 import BaseInfoShow from '@/components/BaseInfoShow';
 
 import ScaleTrainingSuggest from '@/components/Scale/ScaleTrainingSuggest';
-import ResultAnalysisTable from '@/components/Scale/ResultAnalysisTable';
+import TeachingEvaluation from '@/components/Scale/TeachingEvaluation';
+// import ResultAnalysisTable from '@/components/Scale/ResultAnalysisTable';
+
 import Result from './components/Result';
 import Recipe from './components/Recipe';
 import { getAuth } from '@/utils/utils';
@@ -31,7 +33,11 @@ const EvaluationCourses = () => {
             </Tabs.TabPane>
           )}
 
-          {getAuth(34) && <Tabs.TabPane tab="教学评量" key="2" />}
+          {getAuth(34) && (
+            <Tabs.TabPane tab="教学评量" key="2">
+              <TeachingEvaluation user={info} />
+            </Tabs.TabPane>
+          )}
           {getAuth(35) && (
             <Tabs.TabPane tab="评估结果分析表" key="3">
               <Result user={info} />

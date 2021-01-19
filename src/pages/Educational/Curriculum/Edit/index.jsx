@@ -71,7 +71,8 @@ const Edit = (props) => {
         res.equipment = BraftEditor.createEditorState(res.equipment);
         const fileList = res.filePaths?.map((item) => {
           let obj = {};
-          obj.name = item?.split('_')[1] || item;
+          item = item ? decodeURIComponent(item) : '';
+          obj.name = item?.match(/_(\S*)\?/)[1] || item;
           obj.url = item;
           obj.uid = '-2';
           obj.status = 'done';
@@ -107,16 +108,19 @@ const Edit = (props) => {
   const handleBeforeUpload = async (file, fileList) => {
     const formData = new FormData();
     formData.append('file', file);
+    const hide = message.loading('文件上传中,请耐心等待...');
     const res = await fileUpload(formData);
     if (res) {
-      setDocPaths([res]);
+      setDocPaths([res.name]);
       fileList = fileList.map((item) => {
-        item.url = res;
+        item.url = res.url;
         return item;
       });
       setFileList(fileList);
+      hide();
       message.success('文件上传成功');
     } else {
+      hide();
       message.error('文件上传失败');
     }
 

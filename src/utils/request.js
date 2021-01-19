@@ -107,7 +107,6 @@ request.interceptors.response.use(async (response, options) => {
   if (response.status === 204) {
     return;
   }
-
   const res = await response.clone().json();
 
   if (res.status === undefined || res.status === 200) {

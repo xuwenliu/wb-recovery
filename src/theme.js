@@ -1,27 +1,14 @@
+const setting = require('../config/defaultSettings');
+
 module.exports = {
-  // primaryColor: '#1890ff',
-  // brandPrimaryTap: '#1890ff',
-  palette: {
-    primary: {
-      light: '#5f7481',
-      main: '#ffc300',
-      dark: '#0b222c',
-      contrastText: '#000',
-    },
-    secondary: {
-      light: '#ffa65e',
-      main: '#fe752f',
-      dark: '#c44500',
-      contrastText: '#000000',
-    },
-  },
-  formBlock: {
-    display: 'block',
-    margin: 20,
-  },
-  fromLine: {
-    margin: 20,
-  },
+  ...setting.default.theme,
+  // formBlock: {
+  //   display: 'block',
+  //   margin: 20,
+  // },
+  // fromLine: {
+  //   margin: 20,
+  // },
   mediumScreen: '(min-width:450px)',
 };
 

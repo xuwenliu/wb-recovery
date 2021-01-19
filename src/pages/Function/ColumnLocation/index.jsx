@@ -3,6 +3,7 @@ import React from 'react';
 import ParentCard from './components/ParentCard';
 import MedicineCheckCard from './components/MedicineCheckCard';
 import ComprehensiveCard from './components/ComprehensiveCard';
+import Carousel from './components/Carousel';
 
 const ColumnLocation = (props) => {
   return (
@@ -10,6 +11,7 @@ const ColumnLocation = (props) => {
       <ParentCard />
       <MedicineCheckCard />
       <ComprehensiveCard />
+      <Carousel />
     </PageContainer>
   );
 };

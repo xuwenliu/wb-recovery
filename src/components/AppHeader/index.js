@@ -1,20 +1,20 @@
 import React, { PureComponent } from 'react';
-import { PageHeader, Button } from 'antd';
+import { PageHeader } from 'antd';
 // import { PageContainer } from '@ant-design/pro-layout';
 
-import { IconButton } from '@material-ui/core';
-import router from '@/utils/router';
+// import router from '@/utils/router';
 
-const Header = ({ contents, returnUrl, onClick, onLoadType }) => {
-  const goBack = (url) => {
-    if (!url) {
-      router.goBack();
-    } else {
-      router.push(url);
-    }
-  };
+const Header = ({ contents, onLoadType }) => {
+  // const goBack = (url) => {
+  //   if (!url) {
+  //     router.goBack();
+  //   } else {
+  //     router.push(url);
+  //   }
+  // };
   return (
     <PageHeader
+      style={{ height: 40, marginBottom: 10, padding: 0 }}
       extra={
         onLoadType
           ? []
@@ -35,8 +35,9 @@ const Header = ({ contents, returnUrl, onClick, onLoadType }) => {
                 */
             ]
       }
+      title={contents}
     >
-      {contents}
+      {/* {contents} */}
     </PageHeader>
   );
 };
