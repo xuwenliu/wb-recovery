@@ -570,4 +570,56 @@ export default (myCanvas, height, weight) => {
 
   height && m.line(ctx, 218, color_, 1, height, 12, 80, 10, 2, true, false, null); //身高
   weight && m.line(ctx, 218, color_, 1, weight, 16, 10, 10, 2, true, false, null); //体重
+
+
+  //左上角实时显示数值
+  c.addEventListener("mousemove", function(e) {
+    var cRect = c.getBoundingClientRect();
+    var canvasX = Math.round(e.clientX - cRect.left);
+    var canvasY = Math.round(e.clientY - cRect.top);
+    //      ctx.clearRect(0, 0, c.width, c.height);
+    ctx.clearRect(0, 0, 300, 25); //清空制定区域
+    var Xx = "--";
+    if (canvasX > 100 && canvasX <= 100 + (35 * 16)) {
+      Xx = 2 + (canvasX - 100) / 35;
+    }
+    var Yy = "--";
+    var Yy2 = "--";
+    if (canvasY > 100 && canvasY <= 100 + (60 * 17)) {
+      Yy = 200 - (canvasY - 100) * 10 / 60;
+      Yy2 = 170 - (canvasY - 100) * 10 / 60;
+    }
+    var age = typeof Xx === 'number' ? Xx.toFixed(1) : Xx;
+    var height = typeof Yy === 'number' ? Yy.toFixed(1) : Yy;
+    var weight = typeof Yy2 === 'number' ? Yy2.toFixed(1) : Yy2;
+    ctx.fillText("年龄:" + age + "个月，身高:" + height + "cm，体重:" + weight + "kg", 10, 20);
+
+  });
+
+  //左上角实时显示数值
+  c.addEventListener("mousemove", function(e) {
+    var cRect = c.getBoundingClientRect();
+    var canvasX = Math.round(e.clientX - cRect.left);
+    var canvasY = Math.round(e.clientY - cRect.top);
+    //      ctx.clearRect(0, 0, c.width, c.height);  
+    ctx.clearRect(0, 0, 300, 25); //清空制定区域
+    var Xx = "--";
+    if (canvasX > 100 && canvasX <= 100 + (35 * 16)) {
+      Xx = 2 + (canvasX - 100) / 35;
+    }
+    var Yy = "--";
+    var Yy2 = "--";
+    if (canvasY > 100 && canvasY <= 100 + (60 * 17)) {
+      Yy = 200 - (canvasY - 100) * 10 / 60;
+      Yy2 = 170 - (canvasY - 100) * 10 / 60;
+    }
+    var age = typeof Xx === 'number' ? Xx.toFixed(1) : Xx;
+    var height = typeof Yy === 'number' ? Yy.toFixed(1) : Yy;
+    var weight = typeof Yy2 === 'number' ? Yy2.toFixed(1) : Yy2;
+    ctx.fillText("年龄:" + age + "岁，身高:" + height + "cm，体重:" + weight + "kg", 10, 20);
+
+  });
+
+
+
 };

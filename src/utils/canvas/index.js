@@ -12,7 +12,8 @@ import girl_036_per from './girl_036_per';
 import girl_036_stand from './girl_036_stand';
 import girl_218_per from './girl_218_per';
 import girl_218_stand from './girl_218_stand';
-import M from './canvas_t';
+import M_S0062 from './canvas_t';
+import M_S0075 from './canvas_t_zq';
 
 export const charts = (canvas, gender, age, type, { height, weight, head }) => {
   if (gender === 1) {
@@ -67,8 +68,11 @@ export const charts = (canvas, gender, age, type, { height, weight, head }) => {
   }
 };
 
-export const lateralView = (canvas, json, title, content, fix_score, total) => {
-  let m = new M();
+export const lateralView = (code, canvas, json, title, content, fix_score, total) => {
+  let m = new M_S0062();
+  if (code === 'S0075') {
+    m = new M_S0075();
+  }
   m.t(canvas, json, title, content, fix_score, total);
 };
 

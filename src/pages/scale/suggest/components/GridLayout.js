@@ -25,6 +25,7 @@ function GridLayout(params) {
                 questionContent,
                 optContent,
                 score,
+                answerOptions,
               };
               if (getValues) {
                 changeValue(getValues(parans));

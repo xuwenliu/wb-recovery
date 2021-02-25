@@ -23,6 +23,8 @@ import {
   getAllVisitingDanger,
   getLastVisiting,
   getVisitingSingle,
+  getFamilyMember,
+  messagePush,
 } from '@/pages/MedicalExamination/DiagnosisPrescription/service';
 import {
   getCheckAll,
@@ -90,6 +92,8 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
   const [personalList, setPersonalList] = useState([]); // 个人史
   const [personal2List, setPersonal2List] = useState([]); // 个人史-二级
   const [childbirthTypeList, setChildbirthTypeList] = useState([]); // 分娩方式
+  const [limitValueList, setLimitValueList] = useState([]); // 限定值
+
   const [allVaccineList, setAllVaccineList] = useState([]); // 疫苗
   const [familyHistoryList, setFamilyHistoryList] = useState([]); // 家族史
   const [familyInfectiousDiseaseList, setFamilyInfectiousDiseaseList] = useState([]); // 传染病
@@ -109,6 +113,8 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
     isWeak: false,
   });
   const [tools, setTools] = useState([]);
+
+  const [way, setWay] = useState(1);
 
   const queryEnums = async () => {
     const newArr = await queryCommonAllEnums();
@@ -138,6 +144,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
     setFamilyHistoryList(res.filter((item) => item.type === 11)); // 家族史
     setFamilyInfectiousDiseaseList(res.filter((item) => item.type === 12)); // 传染病
     setChildbirthTypeList(res.filter((item) => item.type === 13)); // 分娩方式
+    setLimitValueList(res.filter((item) => item.type === 15)); // 限定值
 
     const optionsChu = res
       .filter((item) => item.type === 14)
@@ -431,12 +438,57 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
         : '',
       doctorSuggestion: BraftEditor.createEditorState(values.doctorSuggestion),
       checkBody: values.checkBody,
+      visitingMain: values.visitingMain,
+      visitingHpi: values.visitingHpi,
+      visitingPast: values.visitingPast,
+      visitingPersonal: values.visitingPersonal,
+      visitingResult: values.visitingResult,
+      pushTime: values.visitingPushMessageVo?.data
+        ? moment(values.visitingPushMessageVo?.data)
+        : null,
+      place: values.visitingPushMessageVo?.place,
     };
     form.setFieldsValue(data);
     setTimestamp(moment().valueOf());
+    if (
+      values.visitingMain ||
+      values.visitingHpi ||
+      values.visitingPast ||
+      values.visitingPersonal
+    ) {
+      setWay(2);
+    }
   };
 
-  const onFinish = (values) => {
+  function disabledDate(current) {
+    return current < moment().subtract(1, 'days');
+  }
+
+  // 门诊复查保存
+  const handleOutpatient = async () => {
+    if (!info.id) return message.info('请先选择患者');
+    const values = await form.getFieldsValue();
+    const res = await getFamilyMember({
+      patientId: info.id,
+    });
+    if (res && res.length != 0) {
+      const postData = {
+        patientId: info.id,
+        place: values.place,
+        data: values.pushTime ? moment(values.pushTime).valueOf() : null,
+        parentId: res.filter((item) => item.type === 3)[0].id, // 主要照顾者id
+      };
+      const result = await messagePush(postData);
+      if (result) {
+        message.success('操作成功');
+      }
+    } else {
+      message.info('您尚未填写家庭成员信息');
+    }
+  };
+
+  const onFinish = async (values) => {
+    if (!info.id) return message.info('请先选择患者');
     console.log(values);
     console.log('tools', tools);
     setError([]);
@@ -520,6 +572,14 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
       visitingPrescriptionCreateBos.push(obj);
     });
 
+    const parentInfo = await getFamilyMember({
+      patientId: info.id,
+    });
+
+    if (!parentInfo || parentInfo.length === 0) {
+      return message.info('您尚未填写家庭成员信息');
+    }
+
     const postData = {
       patientId: info.id, // 患者id
       visitingProblemCreateBos, // 就诊问题
@@ -532,9 +592,22 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
       familyInfectiousDiseaseCreateBos, // 传染病
       visitingDangerConnectCreateBos, // 高危因素
       checkBody: values.checkBody, // 查体
+      visitingMain: values.visitingMain,
+      visitingHpi: values.visitingHpi,
+      visitingPast: values.visitingPast,
+      visitingPersonal: values.visitingPersonal,
+      visitingResult: values.visitingResult, // 诊断内容
       visitingJudgmentCreateBos, // 医学诊断
       visitingPrescriptionCreateBos, // 治疗处方
       doctorSuggestion: values.doctorSuggestion?.toHTML(), // 医生建议
+
+      // 门诊复查
+      visitingMessageBo: {
+        patientId: info.id,
+        place: values.place,
+        data: values.pushTime ? moment(values.pushTime).valueOf() : null,
+        parentId: parentInfo.filter((item) => item.type === 3)[0].id, // 主要照顾者id
+      },
     };
 
     dispatch({
@@ -571,40 +644,47 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
         visitingProblemVosNames.push(item.other);
       }
     });
-    // 主诉
-    const visitingMainTellVosNames = [];
-    copyText.visitingMainTellVos?.forEach((item) => {
-      visitingMainTellVosNames.push(
-        `${item.mainTellLevel1Name}-${item.mainTellLevel2Name}-${item.mainTellLevel3Name}-${item.customizeInfo}`,
-      );
-    });
 
-    // 现病史
-    const visitingHpiVosNames = [];
-    copyText.visitingHpiVos?.forEach((item) => {
-      visitingHpiVosNames.push(
-        `${item.hpiLevel1Name}-${item.hpiLevel2Name}-${item.hpiLevel3Name}-${item.customizeInfo}`,
-      );
-    });
+    let visitingMainTellVosNames = [];
+    let visitingHpiVosNames = [];
+    let visitingPastVosNames = [];
+    let visitingPersonalVoNames = [];
 
-    // 既往史
-    const visitingPastVosNames = [copyText.visitingPastVos[0]?.pastVo?.typeName];
-    copyText.visitingPastVos?.forEach((item) => {
-      visitingPastVosNames.push(`${item.pastVo.name}`);
-    });
-    // 个人史
-    const visitingPersonalVoNames = `
-    ${copyText.visitingPersonalVo.personalLevel1Name}-${
-      copyText.visitingPersonalVo.personalLevel2Name
-    }  
-    足月/早产：${copyText.visitingPersonalVo.gestationalWeek}周
-    出生体重：${copyText.visitingPersonalVo.gestationalWeight}KG
-    ${copyText.visitingPersonalVo.isHealth ? '健康' : ''}
-    ${copyText.visitingPersonalVo.isWeak ? '体弱多病' : ''}
-    ${copyText.visitingPersonalVo.isBirthHurt ? '产伤' : ''}
-    ${copyText.visitingPersonalVo.isAsphyxia ? '窒息史' : ''}
-    分娩方式：${copyText.visitingPersonalVo.childbirthTypeName} 
-    `;
+    if (
+      copyText.visitingMain ||
+      copyText.visitingHpi ||
+      copyText.visitingPast ||
+      copyText.visitingPersonal
+    ) {
+      visitingMainTellVosNames = [copyText.visitingMain];
+      visitingHpiVosNames = [copyText.visitingHpi];
+      visitingPastVosNames = [copyText.visitingPast];
+      visitingPersonalVoNames = [copyText.visitingPersonal];
+    } else {
+      // 主诉
+      copyText.visitingMainTellVos?.forEach((item) => {
+        visitingMainTellVosNames.push(
+          `${item.mainTellLevel1Name}-${item.mainTellLevel2Name}-${item.mainTellLevel3Name}-${item.customizeInfo}`,
+        );
+      });
+
+      // 现病史
+      copyText.visitingHpiVos?.forEach((item) => {
+        visitingHpiVosNames.push(
+          `${item.hpiLevel1Name}-${item.hpiLevel2Name}-${item.hpiLevel3Name}-${item.customizeInfo}`,
+        );
+      });
+
+      // 既往史
+      visitingPastVosNames = [copyText.visitingPastVos[0]?.pastVo?.typeName];
+      copyText.visitingPastVos?.forEach((item) => {
+        visitingPastVosNames.push(`${item.pastVo.name}`);
+      });
+      // 个人史
+      visitingPersonalVoNames = [
+        `${copyText.visitingPersonalVo.personalLevel1Name}-${copyText.visitingPersonalVo.personalLevel2Name}`,
+      ];
+    }
 
     // 疫苗接种
     const visitingVaccineVosNames = [];
@@ -633,7 +713,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
     const visitingJudgmentVos = copyText.visitingJudgmentVos?.map((item) => {
       item.judgmentLevelName = `${item.judgmentLevel1Name}-${item.judgmentLevel2Name || '无'}-${
         item.judgmentLevel3Name || '无'
-      }-${item.judgmentLevel4Name || '无'}`;
+      }-${item.judgmentLevel4Name || '无'}-${item.limitValueName || '无'}`;
       return item;
     });
     const icdNames = visitingJudgmentVos
@@ -659,22 +739,35 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
     });
     const doctorSuggestion = copyText.doctorSuggestion;
     const text = `
-就诊问题：${visitingProblemVosNames.join(' ')}
-主诉：${visitingMainTellVosNames.join(' ')}
-现病史：${visitingHpiVosNames.join(' ')}
-既往史：${visitingPastVosNames.join(' ')}   
-个人史：${visitingPersonalVoNames}
-疫苗接种：${visitingVaccineVosNames.join(' ')}
-家族史：${visitingFamilyHistoryVosNames.join(' ')}
-传染病：${familyInfectiousDiseaseVosNames.join(' ')}
-高危因素：${visitingDangerConnectVosNames.join(' ')}
-医师初步判断：
-          ICD10/11：${icdNames.join(' ')}
-          DSM5：${dsmNames.join(' ')}
-          ICF-CY：${icfNames.join(' ')}
-治疗处方：${visitingPrescriptionConnectVosNames.join(' ')}
-医生建议：${doctorSuggestion}
-`;
+      就诊问题：${visitingProblemVosNames.join(' ')}
+      主诉：${visitingMainTellVosNames.join(' ')}
+      现病史：${visitingHpiVosNames.join(' ')}
+      既往史：${visitingPastVosNames.join(' ')}   
+      个人史：${visitingPersonalVoNames.join(' ')}
+      足月/早产：${copyText.visitingPersonalVo.gestationalWeek || 0}周
+      出生体重：${copyText.visitingPersonalVo.gestationalWeight || 0}KG
+      分娩方式：${copyText.visitingPersonalVo.childbirthTypeName || ''} 
+      疫苗接种：${visitingVaccineVosNames.join(' ')}
+      家族史：${visitingFamilyHistoryVosNames.join(' ')}
+      传染病：${familyInfectiousDiseaseVosNames.join(' ')}
+      高危因素：${visitingDangerConnectVosNames.join(' ')}
+      查体：${copyText.checkBody || ''}
+      医学诊断：
+            诊断内容：${copyText.visitingResult || ''}
+            ICD10/11：${icdNames.join(' ')}
+            DSM5：${dsmNames.join(' ')}
+            ICF-CY：${icfNames.join(' ')}
+      治疗处方：
+            门诊复查：
+            复查时间：${
+              copyText.visitingPushMessageVo?.data
+                ? moment(copyText.visitingPushMessageVo?.data).format('YYYY-MM-DD')
+                : ''
+            }
+            复查地点：${copyText.visitingPushMessageVo?.place || ''}
+            ${visitingPrescriptionConnectVosNames.join(' ')}
+      医生建议：${doctorSuggestion}
+      `;
     copy(text);
     if (copy(text)) {
       message.success('复制成功');
@@ -728,94 +821,122 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
             <Input disabled={DISABLED} placeholder="请输入其他就诊问题" />
           </Form.Item>
         )}
-        <Form.Item label="主诉 (必填)">
-          <MainTellLevelSelect
-            disabled={DISABLED}
-            timestamp={timestamp}
-            form={form}
-            type={2}
-            name="visitingMainTellCreateBos"
-            rules={[
-              {
-                required: true,
-                message: '请选择',
-              },
-            ]}
-            postFields={[
-              'mainTellLevel1Id',
-              'mainTellLevel2Id',
-              'mainTellLevel3Id',
-              'customizeInfo',
-            ]}
-          />
+        <Form.Item label="就诊方式">
+          <Radio.Group onChange={(e) => setWay(e.target.value)} value={way}>
+            <Radio value={1}>下拉框选择</Radio>
+            <Radio value={2}>编辑框输入</Radio>
+          </Radio.Group>
         </Form.Item>
-        <Form.Item label="现病史 (必填)">
-          <MainTellLevelSelect
-            disabled={DISABLED}
-            timestamp={timestamp}
-            form={form}
-            type={3}
-            name="visitingHpiCreateBos"
-            rules={[
-              {
-                required: true,
-                message: '请选择',
-              },
-            ]}
-            postFields={['hpiLevel1Id', 'hpiLevel2Id', 'hpiLevel3Id', 'customizeInfo']}
-          />
-        </Form.Item>
-        <Form.Item label="既往史">
-          <div style={{ display: 'flex' }}>
-            <Form.Item className="mr8" style={{ flex: 1 }} name="pastVoId">
-              <Select
+
+        {way === 1 && (
+          <>
+            <Form.Item label="主诉">
+              <MainTellLevelSelect
                 disabled={DISABLED}
-                placeholder="请选择"
-                onChange={(val) => historyChange(val, false)}
-              >
-                {historyList.map((item) => (
-                  <Select.Option key={item.code} value={item.code}>
-                    {item.codeCn}
-                  </Select.Option>
-                ))}
-              </Select>
+                timestamp={timestamp}
+                form={form}
+                type={2}
+                name="visitingMainTellCreateBos"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+                postFields={[
+                  'mainTellLevel1Id',
+                  'mainTellLevel2Id',
+                  'mainTellLevel3Id',
+                  'customizeInfo',
+                ]}
+              />
             </Form.Item>
-            <Form.Item style={{ flex: 4 }} name="visitingPastCreateBos">
-              <Checkbox.Group disabled={DISABLED} options={historySubList}></Checkbox.Group>
+            <Form.Item label="现病史">
+              <MainTellLevelSelect
+                disabled={DISABLED}
+                timestamp={timestamp}
+                form={form}
+                type={3}
+                name="visitingHpiCreateBos"
+                rules={[
+                  {
+                    required: true,
+                    message: '请选择',
+                  },
+                ]}
+                postFields={['hpiLevel1Id', 'hpiLevel2Id', 'hpiLevel3Id', 'customizeInfo']}
+              />
             </Form.Item>
-          </div>
-        </Form.Item>
-        <Form.Item label="个人史" style={{ marginBottom: 0 }}>
-          <div style={{ display: 'flex' }}>
-            <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel1Id">
-              <Select disabled={DISABLED} onChange={personalChange}>
-                {personalList.map((item) => (
-                  <Select.Option key={item.id} value={item.id}>
-                    {item.content}
-                  </Select.Option>
-                ))}
-              </Select>
+            <Form.Item label="既往史">
+              <div style={{ display: 'flex' }}>
+                <Form.Item className="mr8" style={{ flex: 1 }} name="pastVoId">
+                  <Select
+                    disabled={DISABLED}
+                    placeholder="请选择"
+                    onChange={(val) => historyChange(val, false)}
+                  >
+                    {historyList.map((item) => (
+                      <Select.Option key={item.code} value={item.code}>
+                        {item.codeCn}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item style={{ flex: 4 }} name="visitingPastCreateBos">
+                  <Checkbox.Group disabled={DISABLED} options={historySubList}></Checkbox.Group>
+                </Form.Item>
+              </div>
             </Form.Item>
-            <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel2Id">
-              <Select disabled={DISABLED}>
-                {personal2List.map((item) => (
-                  <Select.Option key={item.id} value={item.id}>
-                    {item.content}
-                  </Select.Option>
-                ))}
-              </Select>
+            <Form.Item label="个人史" style={{ marginBottom: 0 }}>
+              <div style={{ display: 'flex' }}>
+                <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel1Id">
+                  <Select disabled={DISABLED} onChange={personalChange}>
+                    {personalList.map((item) => (
+                      <Select.Option key={item.id} value={item.id}>
+                        {item.content}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item className="mr8" style={{ width: '20%' }} name="personalLevel2Id">
+                  <Select disabled={DISABLED}>
+                    {personal2List.map((item) => (
+                      <Select.Option key={item.id} value={item.id}>
+                        {item.content}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item>
+                  <span>{patientBirthRecordVo?.fetusNumName}</span>
+                  {patientBirthRecordVo?.pregnancyWeeksName && (
+                    <span>&nbsp;&nbsp;出生孕周：{patientBirthRecordVo?.pregnancyWeeksName}</span>
+                  )}
+                  {patientBirthRecordVo?.birthWeightName && (
+                    <span>&nbsp;&nbsp;出生体重：{patientBirthRecordVo?.birthWeightName}</span>
+                  )}
+                </Form.Item>
+              </div>
             </Form.Item>
-            <Form.Item>
-              <span>{patientBirthRecordVo?.fetusNumName}</span>
-              {patientBirthRecordVo?.pregnancyWeeksName && (
-                <span>&nbsp;&nbsp;出生孕周：{patientBirthRecordVo?.pregnancyWeeksName}</span>
-              )}
-              {patientBirthRecordVo?.birthWeightName && (
-                <span>&nbsp;&nbsp;出生体重：{patientBirthRecordVo?.birthWeightName}</span>
-              )}
+          </>
+        )}
+        {way === 2 && (
+          <>
+            <Form.Item label="主诉" name="visitingMain">
+              <Input disabled={DISABLED} />
             </Form.Item>
-          </div>
-        </Form.Item>
+            <Form.Item label="现病史" name="visitingHpi">
+              <Input disabled={DISABLED} />
+            </Form.Item>
+            <Form.Item label="既往史" name="visitingPast">
+              <Input disabled={DISABLED} />
+            </Form.Item>
+            <Form.Item label="个人史" name="visitingPersonal">
+              <Input disabled={DISABLED} />
+            </Form.Item>
+          </>
+        )}
+
         <Form.Item label="分娩方式" name="childbirthType">
           <Radio.Group disabled={DISABLED}>
             {childbirthTypeList.map((item) => (
@@ -825,6 +946,7 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
             ))}
           </Radio.Group>
         </Form.Item>
+
         <Form.Item label="疫苗接种" name="visitingVaccineCreateBos">
           <Checkbox.Group disabled={DISABLED} options={allVaccineList}></Checkbox.Group>
         </Form.Item>
@@ -907,90 +1029,107 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
         </Form.Item>
       </Card>
 
-      {/* 有一项存在才显示 医学诊断*/}
-      {showDataType.length !== 0 && (
-        <Card
-          loading={loading}
-          bordered={false}
-          title={
-            <>
-              <Image preview={false} className="mr8" src={why} width={30} height={30} />
-              医学诊断 (必填)
-            </>
-          }
+      <Card
+        loading={loading}
+        bordered={false}
+        title={
+          <>
+            <Image preview={false} className="mr8" src={why} width={30} height={30} />
+            医学诊断 (必填)
+          </>
+        }
+      >
+        <Form.Item
+          label="诊断内容"
+          labelCol={{ span: 2 }}
+          name="visitingResult"
+          rules={[
+            {
+              required: true,
+              message: '请输入诊断内容',
+            },
+          ]}
         >
-          {showDataType.includes(5) && (
-            <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
-              <InitialJudgeSelect
-                disabled={DISABLED}
-                timestamp={timestamp}
-                type={5}
-                form={form}
-                name="icd"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-                postFields={[
-                  'judgmentLevel1Id',
-                  'judgmentLevel2Id',
-                  'judgmentLevel3Id',
-                  'judgmentLevel4Id',
-                ]}
-              />
-            </Form.Item>
-          )}
+          <Input disabled={DISABLED} />
+        </Form.Item>
 
-          {showDataType.includes(6) && (
-            <Form.Item label="DSM5" labelCol={{ span: 2 }}>
-              <InitialJudgeSelect
-                disabled={DISABLED}
-                timestamp={timestamp}
-                type={6}
-                form={form}
-                name="dsm"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-                postFields={[
-                  'judgmentLevel1Id',
-                  'judgmentLevel2Id',
-                  'judgmentLevel3Id',
-                  'judgmentLevel4Id',
-                ]}
-              />
-            </Form.Item>
-          )}
-          {showDataType.includes(7) && (
-            <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
-              <InitialJudgeSelect
-                disabled={DISABLED}
-                timestamp={timestamp}
-                type={7}
-                form={form}
-                name="icf"
-                rules={[
-                  {
-                    required: true,
-                    message: '请选择',
-                  },
-                ]}
-                postFields={[
-                  'judgmentLevel1Id',
-                  'judgmentLevel2Id',
-                  'judgmentLevel3Id',
-                  'judgmentLevel4Id',
-                ]}
-              />
-            </Form.Item>
-          )}
-        </Card>
-      )}
+        {showDataType.includes(5) && (
+          <Form.Item label="ICD10/11" labelCol={{ span: 2 }}>
+            <InitialJudgeSelect
+              disabled={DISABLED}
+              timestamp={timestamp}
+              type={5}
+              form={form}
+              name="icd"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              postFields={[
+                'judgmentLevel1Id',
+                'judgmentLevel2Id',
+                'judgmentLevel3Id',
+                'judgmentLevel4Id',
+                'limitValue',
+              ]}
+              limitValueList={limitValueList}
+            />
+          </Form.Item>
+        )}
+
+        {showDataType.includes(6) && (
+          <Form.Item label="DSM5" labelCol={{ span: 2 }}>
+            <InitialJudgeSelect
+              disabled={DISABLED}
+              timestamp={timestamp}
+              type={6}
+              form={form}
+              name="dsm"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              postFields={[
+                'judgmentLevel1Id',
+                'judgmentLevel2Id',
+                'judgmentLevel3Id',
+                'judgmentLevel4Id',
+                'limitValue',
+              ]}
+              limitValueList={limitValueList}
+            />
+          </Form.Item>
+        )}
+        {showDataType.includes(7) && (
+          <Form.Item label="ICF-CY" labelCol={{ span: 2 }}>
+            <InitialJudgeSelect
+              disabled={DISABLED}
+              timestamp={timestamp}
+              type={7}
+              form={form}
+              name="icf"
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              postFields={[
+                'judgmentLevel1Id',
+                'judgmentLevel2Id',
+                'judgmentLevel3Id',
+                'judgmentLevel4Id',
+                'limitValue',
+              ]}
+              limitValueList={limitValueList}
+            />
+          </Form.Item>
+        )}
+      </Card>
 
       <Card
         loading={loading}
@@ -1003,40 +1142,27 @@ const CreateCheckupRecord = ({ dispatch, submitting, info = {}, recordId, authKe
         }
       >
         <Form.Item {...fuLayout} label="门诊复查"></Form.Item>
-        <Form.Item
-          {...fuLayout}
-          label="复查时间"
-          name="placeTime"
-          rules={[
-            {
-              required: true,
-              message: '请选择复查时间',
-            },
-          ]}
-        >
-          <DatePicker style={{ width: '100%' }} placeholder="请选择复查时间" />
+        <Form.Item {...fuLayout} label="复查时间" name="pushTime">
+          <DatePicker
+            disabled={DISABLED}
+            disabledDate={disabledDate}
+            style={{ width: '100%' }}
+            placeholder="请选择复查时间"
+          />
         </Form.Item>
-        <Form.Item
-          {...fuLayout}
-          label="复查地点"
-          name="place"
-          rules={[
-            {
-              required: true,
-              message: '请输入复查地点',
-            },
-          ]}
-        >
-          <Input placeholder="请输入复查地点" />
+        <Form.Item {...fuLayout} label="复查地点" name="place">
+          <Input disabled={DISABLED} placeholder="请输入复查地点" />
         </Form.Item>
-        <Form.Item
+        {/* <Form.Item
           {...fuLayout}
           wrapperCol={{
             offset: 2,
           }}
         >
-          <Button type="primary">保存</Button>
-        </Form.Item>
+          <Button type="primary" onClick={handleOutpatient}>
+            保存
+          </Button>
+        </Form.Item> */}
 
         <Form.Item
           name="visitingPrescriptionCreateBos"

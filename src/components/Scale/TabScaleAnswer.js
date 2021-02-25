@@ -6,8 +6,11 @@ import { CheckOutlined } from '@ant-design/icons';
 const buildScaleQuestions = (scale, name) => {
   const [type, scaleName] = name.split('.');
   let questions = [];
+
+  console.log(type, scaleName);
+
   scale.computes.forEach((c) => {
-    if (c.scale.scaleName === scaleName && c.scale.scaleType === type) {
+    if (c.scale.scaleName === scaleName) {
       questions = c.scale.scaleQuestions;
     }
   });

@@ -41,12 +41,8 @@ const ChartsStand = ({ graphData, gender }) => {
   return (
     <Card>
       <Row>
-        <Col span={12}>
-          <canvas id="myCanvas3" width="900" height="1200" style={{ width: '100%' }}></canvas>
-        </Col>
-        <Col span={12}>
-          <canvas id="myCanvas4" width="900" height="1200" style={{ width: '100%' }}></canvas>
-        </Col>
+          <canvas id="myCanvas3" width="1000" height="1200"></canvas>
+          <canvas id="myCanvas4" width="1000" height="1200"></canvas>
       </Row>
     </Card>
   );

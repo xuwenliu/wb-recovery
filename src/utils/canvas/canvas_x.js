@@ -160,10 +160,9 @@ var muban = function (HB, VB, STH, STV) {
    * */
   this.title = function (ctx, num_v, title) {
     ctx.beginPath();
-    //		ctx.fillStyle = "#000000";	//文字颜色
-    ctx.font = '18px Arial';
+    ctx.fillStyle = "#000000";	//文字颜色
+    ctx.font = '12px Arial';
     ctx.fillText(title, (num_v * this.HB * 1) / 2 + this.STH - 80, this.STV - 30); //标题
-
     ctx.stroke();
     ctx.closePath();
   };

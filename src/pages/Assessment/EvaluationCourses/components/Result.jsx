@@ -1,37 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { Radio, Tabs } from 'antd';
+import { Tabs } from 'antd';
 
-import { manage, getGuide } from '@/pages/scale/service/compose';
+import { findTopReport, getGuide } from '@/pages/scale/service/compose';
 
-import S0062 from '@/pages/scale/compose/report/components/S0062';
 import { truncate } from 'lodash';
-import { formatDateFromTime } from '@/utils/format';
 
-import Target from '@/components/Scale/Target';
-import Chart1 from './Chart1';
-import Chart2 from './Chart2';
-import Chart3 from './Chart3';
-import Chart4 from './Chart4';
-import Chart5 from './Chart5';
-import Chart6 from './Chart6';
-import Chart7 from './Chart7';
-import Chart8 from './Chart8';
+import S0062_Chart1 from './S0062/Chart1';
+import S0062_Chart2 from './S0062/Chart2';
+import S0062_Chart3 from './S0062/Chart3';
+import S0062_Chart4 from './S0062/Chart4';
+import S0062_Chart5 from './S0062/Chart5';
+import S0062_Chart6 from './S0062/Chart6';
+import S0062_Chart7 from './S0062/Chart7';
+import S0062_Chart8 from './S0062/Chart8';
+
+import S0075_Chart1 from './S0075/Chart1';
+import S0075_Chart2 from './S0075/Chart2';
+import S0075_Chart3 from './S0075/Chart3';
+import S0075_Chart4 from './S0075/Chart4';
+import S0075_Chart5 from './S0075/Chart5';
+import S0075_Chart6 from './S0075/Chart6';
+import S0075_Chart7 from './S0075/Chart7';
+import S0075_Chart8 from './S0075/Chart8';
 
 const getQuestion = (map, no) => {
   const q = map[no];
 
   if (q) {
-    const { objectAnswer, answerOptions } = q;
+    const { objectAnswer, answerOptions, questionInfo } = q;
     const index = answerOptions.findIndex((e) => e.option === objectAnswer * 1);
 
-    let result = { name: q.questionContent };
+    let result = {};
+
+    if (questionInfo && questionInfo.trim().length > 0) {
+      result = {
+        name: questionInfo,
+      };
+    } else {
+      result = {
+        name: q.questionContent,
+      };
+    }
 
     if (index !== -1) {
-      result = { ...result, score: answerOptions[index].optionScore };
+      const children = answerOptions.map((i) => {
+        const { optionContent } = i;
+        return {
+          name: optionContent,
+        };
+      });
+
+      result = { ...result, score: answerOptions[index].optionScore, children };
     }
 
     return result;
   }
+
+  console.log('lose question:',no,map)
 
   return {
     name: `X-${no}`,
@@ -81,104 +106,135 @@ const getData = (reports, answers) => {
 };
 
 function Result({ user = {} }) {
-  const scaleCode = 'S0062';
-
-  const [target, setTarget] = useState();
   /**
-     * {
-    '1-1': ['1-1-2'],
-    '1-1-1': ['1-1-1-1'],
-    }
-     */
-
-  const [records, setRecords] = useState({ content: [] });
+   * 要帶出 S0062 和 SOO75 等綜合報告
+   */
+  const scaleCodes = ['S0062', 'S0075'];
   const [guide, setGuide] = useState();
   const [list, setList] = useState([]);
 
   const queryRecords = async (number) => {
-    const result = await manage({ values: { scaleCode, userNumber: number } });
-    if (result.content.length > 0) {
-      const record = result.content[0];
+    /**
+     * 帶出最新一筆的綜合報告
+     */
+    const result = await findTopReport({ userNumber: number, codes: scaleCodes });
+
+    if (result.length > 0) {
+      const record = result[0];
       const data = await getGuide({ compose: record.scale, id: record.id, takeAnswer: truncate });
       setGuide(data);
-      setList(getData(data.reports, data.answers));
+      const newList = getData(data.reports, data.answers);
+      console.log('newList', newList);
+      setList(newList);
+    } else {
+      setList([]);
     }
-    setRecords(result);
-  };
-
-  const queryGuide = async ({ compose, id }) => {
-    setGuide(await getGuide({ compose, id, takeAnswer: truncate }));
   };
 
   useEffect(() => {
     if (user.visitingCodeV) {
       queryRecords(user.visitingCodeV);
     }
-    return () => {};
   }, [user.visitingCodeV]);
 
-  console.log('target:', target);
+  const MAP = {
+    S0062: [
+      {
+        key: 1,
+        title: '综合发展',
+        component: S0062_Chart1,
+      },
+      {
+        key: 2,
+        title: '感官知觉',
+        component: S0062_Chart2,
+      },
+      {
+        key: 3,
+        title: '粗大动作',
+        component: S0062_Chart3,
+      },
+      {
+        key: 4,
+        title: '精细动作',
+        component: S0062_Chart4,
+      },
+      {
+        key: 5,
+        title: '生活自理',
+        component: S0062_Chart5,
+      },
+      {
+        key: 6,
+        title: '沟通领域',
+        component: S0062_Chart6,
+      },
+      {
+        key: 7,
+        title: '认知',
+        component: S0062_Chart7,
+      },
+      {
+        key: 8,
+        title: '社会技能',
+        component: S0062_Chart8,
+      },
+    ],
+    S0075: [
+      {
+        key: 1,
+        title: '综合发展',
+        component: S0075_Chart1,
+      },
+      {
+        key: 2,
+        title: '感官知觉领域',
+        component: S0075_Chart2,
+      },
+      {
+        key: 3,
+        title: '粗大动作领域',
+        component: S0075_Chart3,
+      },
+      {
+        key: 4,
+        title: '精细动作领域',
+        component: S0075_Chart4,
+      },
+      {
+        key: 5,
+        title: '生活自理领域',
+        component: S0075_Chart5,
+      },
+      {
+        key: 6,
+        title: '语言沟通领域',
+        component: S0075_Chart6,
+      },
+      {
+        key: 7,
+        title: '认知领域',
+        component: S0075_Chart7,
+      },
+      {
+        key: 8,
+        title: '社会适应领域',
+        component: S0075_Chart8,
+      },
+    ],
+  };
 
-  return (
-    <>
-      {/* {records.content.length > 1 && (
-        <Radio.Group
-          defaultValue={records.content[0].id}
-          buttonStyle="solid"
-          onChange={(e) => {
-            records.content.forEach((i) => {
-              if (i.id === e.target.value) {
-                queryGuide({ compose: i.scale, id: i.id });
-              }
-            });
-          }}
-        >
-          {records.content.map(({ id, reportDate }) => (
-            <Radio.Button key={id} value={id}>
-              {formatDateFromTime(reportDate)}
-            </Radio.Button>
-          ))}
-        </Radio.Group>
-      )} */}
+  const getTabPane = () => {
+    if (guide && guide.code && list.length > 0) {
+      return MAP[guide.code].map((item) => (
+        <Tabs.TabPane tab={item.title} key={item.key}>
+          <item.component list={list} guide={guide} name={item.title} patientId={user.patientId} />
+        </Tabs.TabPane>
+      ));
+    }
+  };
 
-      <Tabs defaultActiveKey={1}>
-        <Tabs.TabPane tab="综合发展" key={1}>
-          <Chart1 list={list} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="感官知觉" key={2}>
-          <Target
-            tree="感官知觉"
-            guide={guide}
-            value={target}
-            onChange={(checked) => {
-              setTarget(checked);
-            }}
-          />
-          <Chart2 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="粗大动作" key={3}>
-          <Chart3 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="精细动作" key={4}>
-          <Chart4 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="生活自理" key={5}>
-          <Chart5 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="沟通" key={6}>
-          <Chart6 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="认知" key={7}>
-          <Chart7 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="社会技能" key={8}>
-          <Chart8 list={list} patientId={user.patientId} />
-        </Tabs.TabPane>
-      </Tabs>
-
-      {/* {guide && <S0062 {...guide} />} */}
-    </>
-  );
+  return <Tabs defaultActiveKey={1}>{getTabPane()}</Tabs>;
 }
 
 export default Result;

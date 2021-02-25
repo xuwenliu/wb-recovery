@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Table, Input, Button, Popconfirm, Form } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { uniqueId } from 'lodash/util';
+import { queId } from 'lodash/util';
 
 const EditableContext = React.createContext();
 

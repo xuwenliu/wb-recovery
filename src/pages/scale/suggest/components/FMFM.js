@@ -3,6 +3,7 @@ import Typography from '@material-ui/core/Typography';
 import { getExampleData } from '@/pages/scale/suggest/utils';
 import LayoutManager from './LayoutManager';
 import SuggestItem from './SuggestItem';
+import { renderToString } from 'react-dom/server'
 import LoadingBox from '@/components/LoadingBox';
 
 /**
@@ -24,7 +25,7 @@ const mapping = [
   { no: 13, value: '49.07' },
   { no: 14, value: '52.66' },
   { no: 15, value: '35.05' },
-  { no: 16 },
+  { no: 16, value: '37.52' },
   { no: 17, value: '39.05' },
   { no: 18, value: '39.62' },
   { no: 19, value: '42.04' },
@@ -46,7 +47,7 @@ const mapping = [
   { no: 35, value: '70.71' },
   { no: 36, value: '76.03' },
   { no: 37, value: '79.26' },
-  { no: 38 },
+  { no: 38, value: '35.81' },
   { no: 39, value: '39.82' },
   { no: 40, value: '46.06' },
   { no: 41, value: '46.17' },
@@ -83,6 +84,7 @@ const getTotalState = model => {
 /**
  * 取得目前的訓練水平
  */
+
 const getTargetItem = state => {
   let result;
   mapping.forEach(item => {
@@ -106,6 +108,20 @@ const getRange = (model, level) => {
   return { min, max };
 };
 
+const Desc = ({ level, questionNo, optContent, next }) => {
+  return (
+    <>
+      {level.no === questionNo && <span>＊</span>}
+      <b>现有能力</b>：{optContent}
+      {next && (
+        <div>
+          <b>发展目标</b>：{next.optionContent}
+        </div>
+      )}
+    </>
+  );
+};
+
 function FMFM(props) {
   const { model, items, changeValue } = props;
 
@@ -115,16 +131,14 @@ function FMFM(props) {
   const level = getTargetItem(state); // 現在的水平
   const { min, max } = getRange(model, level); // 訓練範圍
 
-  console.log('state:', state, 'min:', min, 'mix:', max);
-
   const filter = ({ item }) => {
     const { 难度值 } = JSON.parse(item.questionContent);
     if (难度值 === undefined) {
-      console.log(item.questionContent);
+      // console.log(item.questionContent);
     }
 
     if (item.questionNo >= min && item.questionNo <= max) {
-      console.log(item.questionNo, '难度值:', 难度值, true);
+      // console.log(item.questionNo, '难度值:', 难度值, true);
       return true;
     }
 
@@ -151,19 +165,18 @@ function FMFM(props) {
         const status = level.no === questionNo ? 'info' : null;
         return (
           <SuggestItem checked={checked} status={status}>
-            {level.no === questionNo && <span>＊</span>}
-            <b>现有能力</b>：{optContent}
-            {next && (
-              <div>
-                <b>发展目标</b>：{next.optionContent}
-              </div>
-            )}
+            <Desc level={level} questionNo={questionNo} optContent={optContent} next={next} />
           </SuggestItem>
         );
       },
-      getValues: ({ no, questionContent }) => {
-        const { title, ...others } = JSON.parse(questionContent);
-        return { no, desc: title, comment: others };
+      getValues: ({ no, optContent,questionContent, score, answerOptions }) => {
+        const { questionNo } = JSON.parse(questionContent);
+
+        const next = nextTarget({ score, answerOptions });
+        
+        const desc = renderToString(<Desc level={level} questionNo={questionNo} optContent={optContent} next={next} />);
+
+        return { no, desc };
       },
     },
   };

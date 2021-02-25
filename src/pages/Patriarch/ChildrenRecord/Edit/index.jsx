@@ -32,7 +32,8 @@ import CitySelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/CitySel
 import ProfessionSelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/ProfessionSelect';
 import MedicalHistorySelect from '@/pages/Patriarch/ChildrenRecord/Edit/components/MedicalHistorySelect';
 
-import { getParentSectionAll } from '@/pages/Function/ColumnLocation/service';
+import { getCheckAll, getParentSectionAll } from '@/pages/Function/ColumnLocation/service';
+
 import { fileUpload } from '@/services/common';
 
 const FormMoreItemLayout = {
@@ -115,9 +116,11 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
   const [otherBirthPlaceShow, setOtherBirthPlaceShow] = useState([]); // 其他出生是否显示输入框
 
   const [pregnancyWeeksList, setPregnancyWeeksList] = useState([]); // 出生孕周
+  const [dayList, setDayList] = useState([]); // 出生孕周-天
   const [birthWeightList, setBirthWeightList] = useState([]); // 出生体重
   const [fetusNumList, setFetusNumList] = useState([]); // 胎数
   const [baseInfoDangerTypeList, setBaseInfoDangerTypeList] = useState([]); // 高危因素
+  const [childbirthTypeList, setChildbirthTypeList] = useState([]); // 分娩方式
 
   const [patientAllergyConnectList, setPatientAllergyConnectList] = useState([]); // 过敏史
   const [patientFamilyDiseaseHistoryList, setPatientFamilyDiseaseHistoryList] = useState([]); // 家族史
@@ -228,6 +231,8 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
       otherBirthPlace: values.otherBirthPlace,
       birthPlaceDesc: values.birthPlaceDesc,
       pregnancyWeeksId: values.pregnancyWeeksId,
+      pregnancyDaysId: values.pregnancyDaysId,
+      childbirthWayInfoId: values.childbirthWayInfoId,
     });
 
     // 高危因素
@@ -445,6 +450,8 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               otherBirthPlace: values.patientBirthRecordVo.otherBirthPlace,
               birthPlaceDesc: values.patientBirthRecordVo.birthPlaceDesc,
               pregnancyWeeksId: values.patientBirthRecordVo.pregnancyWeeksId,
+              pregnancyDaysId: values.patientBirthRecordVo.pregnancyDaysId,
+              childbirthWayInfoId: values.patientBirthRecordVo.childbirthWayInfoId,
             }
           : {};
         if (patientBirthRecordBo && patientBirthRecordBo.birthPlaceType) {
@@ -532,6 +539,16 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
         setPageLoading(false);
       },
     });
+  };
+
+  const queryCheckAll = async () => {
+    let res = await getCheckAll();
+    res = res.map((item) => {
+      item.label = item.content;
+      item.value = item.id;
+      return item;
+    });
+    setChildbirthTypeList(res.filter((item) => item.type === 13)); // 分娩方式
   };
 
   const queryEnums = async () => {
@@ -622,6 +639,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
     setFetusNumList(res.filter((item) => item.type === 8)); // 胎数
     setBirthWeightList(res.filter((item) => item.type === 2)); // 出生体重
     setPregnancyWeeksList(res.filter((item) => item.type === 1)); // 出生孕周
+    setDayList(res.filter((item) => item.type === 23)); // 出生孕周-天
     setPatientAllergyConnectList(res.filter((item) => item.type === 5)); // 过敏史
     setPatientFamilyDiseaseHistoryList(res.filter((item) => item.type === 6)); // 家族史
     setPatientDiseaseList(res.filter((item) => item.type === 7)); // 病症
@@ -681,6 +699,7 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
   };
 
   useEffect(() => {
+    queryCheckAll();
     queryParentSectionAll();
     queryEnums();
     if (!id) {
@@ -1517,19 +1536,27 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
               </Row>
               <Row>
                 <Col span={24}>
-                  <Form.Item
-                    labelCol={{ span: 4 }}
-                    wrapperCol={{ span: 12 }}
-                    label="出生孕周"
-                    name="pregnancyWeeksId"
-                  >
-                    <Select disabled={DISABLED} placeholder="请选择">
-                      {pregnancyWeeksList.map((item) => (
-                        <Option key={item.id} value={item.id}>
-                          {item.name}
-                        </Option>
-                      ))}
-                    </Select>
+                  <Form.Item style={{ marginBottom: 0 }} labelCol={{ span: 4 }} label="出生孕周">
+                    <div style={{ display: 'flex' }}>
+                      <Form.Item name="pregnancyWeeksId">
+                        <Select disabled={DISABLED} placeholder="请选择">
+                          {pregnancyWeeksList.map((item) => (
+                            <Option key={item.id} value={item.id}>
+                              {item.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item name="pregnancyDaysId">
+                        <Select suffixIcon={'天'} disabled={DISABLED} placeholder="请选择">
+                          {dayList.map((item) => (
+                            <Option key={item.id} value={item.id}>
+                              {item.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    </div>
                   </Form.Item>
                 </Col>
               </Row>
@@ -1572,7 +1599,18 @@ const BaseInfo = ({ submitting, dispatch, location }) => {
             </Col>
             <Col span={12}>
               <Row gutter={16}>
-                <Col span={24}>{getBirthRecordDangerInfoBosList()}</Col>
+                <Col span={24}>
+                  {getBirthRecordDangerInfoBosList()}
+                  <Form.Item labelCol={{ span: 6 }} label="分娩方式" name="childbirthWayInfoId">
+                    <Radio.Group disabled={DISABLED}>
+                      {childbirthTypeList.map((item) => (
+                        <Radio key={item.id} value={item.id}>
+                          {item.content}
+                        </Radio>
+                      ))}
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
               </Row>
             </Col>
           </Row>

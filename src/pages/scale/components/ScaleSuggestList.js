@@ -67,6 +67,7 @@ function ScaleSuggestList({
                             <ScaleSuggestDetail
                               showPlan={showPlan}
                               suggest={suggest}
+                              index={index}
                               value={value}
                               onChange={onChange}
                             />

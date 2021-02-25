@@ -5,11 +5,12 @@
  * For details, please see
  * https://pro.ant.design/docs/deploy
  */
-
+// const server = 'http://127.0.0.1:9966';
 const server = 'http://cr.ts-health.cn';
 const server2 = 'http://training.cr.ts-health.cn';
 //  http://127.0.0.1:5001
 // http://cq.guofw.cn:8080
+// http://127.0.0.1:5001 http://cr.ts-health.cn
 
 export default {
   //

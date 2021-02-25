@@ -140,7 +140,12 @@ const Carousel = () => {
         columns={columns}
       />
       <Modal title="轮播图" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-        <Form form={form}>
+        <Form
+          form={form}
+          initialValues={{
+            enable: false,
+          }}
+        >
           <Form.Item label="名称" name="name" rules={[{ required: true, message: '请输入名称' }]}>
             <Input />
           </Form.Item>

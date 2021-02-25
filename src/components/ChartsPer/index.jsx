@@ -42,12 +42,8 @@ const ChartsPer = ({ graphData, gender }) => {
   return (
     <Card>
       <Row>
-        <Col span={12}>
-          <canvas id="myCanvas1" width="900" height="1200" style={{ width: '100%' }}></canvas>
-        </Col>
-        <Col span={12}>
-          <canvas id="myCanvas2" width="900" height="1200" style={{ width: '100%' }}></canvas>
-        </Col>
+        <canvas id="myCanvas1" width="1000" height="1200"></canvas>
+        <canvas id="myCanvas2" width="1000" height="1200"></canvas>
       </Row>
     </Card>
   );

@@ -1,7 +1,7 @@
 import muBan from './myCanvas';
 export default (myCanvas, height, weight) => {
-	var color = '#007FFF';
-	var color_ = "#000000"; 
+  var color = '#007FFF';
+  var color_ = "#000000";
   var font = '12px Arial';
   var font2 = '30px Microsoft YaHei';
   var a = [
@@ -288,9 +288,33 @@ export default (myCanvas, height, weight) => {
   m.line(ctx, 36, color, 2, arr_w_0, 16, 2, 2, 2, false, false, '0');
   m.line(ctx, 36, color, 1, arr_w_1, 16, 2, 2, 2, false, false, '+1');
   m.line(ctx, 36, color, 2, arr_w_2, 16, 2, 2, 2, false, false, '+2');
-	m.line(ctx, 36, color, 1, arr_w_3, 16, 2, 2, 2, false, true, '+3');
-	
-	height && m.line(ctx,36,color_,1,height,13,45,5,2,true,false,null);	//身高
-	weight && m.line(ctx,36,color_,1,weight,16,2,2,2,true,false,null);		//体重
+  m.line(ctx, 36, color, 1, arr_w_3, 16, 2, 2, 2, false, true, '+3');
+
+  height && m.line(ctx, 36, color_, 1, height, 13, 45, 5, 2, true, false, null); //身高
+  weight && m.line(ctx, 36, color_, 1, weight, 16, 2, 2, 2, true, false, null); //体重
+
+  //左上角实时显示数值
+  c.addEventListener("mousemove", function(e) {
+    var cRect = c.getBoundingClientRect();
+    var canvasX = Math.round(e.clientX - cRect.left);
+    var canvasY = Math.round(e.clientY - cRect.top);
+    //      ctx.clearRect(0, 0, c.width, c.height);  
+    ctx.clearRect(0, 0, 300, 25); //清空制定区域
+    var Xx = "--";
+    if (canvasX > 100 && canvasX <= 100 + (35 * 18)) {
+      Xx = (canvasX - 100) * 2 / 35;
+    }
+    var Yy = "--";
+    var Yy2 = "--";
+    if (canvasY > 100 && canvasY <= 100 + (60 * 17)) {
+      Yy = 110 - (canvasY - 100) * 5 / 60;
+      Yy2 = 34 - (canvasY - 100) * 2 / 60;
+    }
+
+    var age = typeof Xx === 'number' ? Xx.toFixed(1) : Xx;
+    var height = typeof Yy === 'number' ? Yy.toFixed(1) : Yy;
+    var weight = typeof Yy2 === 'number' ? Yy2.toFixed(1) : Yy2;
+    ctx.fillText("年龄:" + age + "个月，身高:" + height + "cm，体重:" + weight + "kg", 10, 20);
+  });
 
 };

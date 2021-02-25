@@ -30,7 +30,7 @@ const MedicineCheckCard = () => {
     });
     const res = await getCheckAll();
     setLoading(false);
-    const one = [8, 9, 10, 11, 12, 13, 14]; // 只有一级
+    const one = [8, 9, 10, 11, 12, 13, 14, 15]; // 只有一级
     if (common && res) {
       const commonArr = Object.values(common);
       const newCommon = commonArr

@@ -42,7 +42,7 @@ export const queryCommonAllEnums = async () => {
 };
 // 从所有枚举里面获取type类型的枚举
 export const getSingleEnums = (key, all) => {
-  console.log('key',key);
+  console.log('key', key);
   return all
     .filter((item) => item.key === key)
     .map((item) => item.value)[0]
@@ -100,7 +100,7 @@ export const getAuth = (key) => {
 export const initSocket = (clientId, callback) => {
   const token = localStorage.getItem('token');
   if (!token) return;
-  let socket = io.connect('http://117.78.38.243:8081', {
+  let socket = io.connect('http://websocket.training.cr.ts-health.cn:8081', {
     transports: ['websocket', 'xhr-polling', 'jsonp-polling'],
     path: '/api/message',
     query: {

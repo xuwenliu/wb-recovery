@@ -17,6 +17,7 @@ import { getSpecialAllCaseCode } from '@/pages/Rehabilitation/PersonalPlan/servi
 import bingli from '@/assets/img/bingli.png';
 import { getQrCode } from '@/services/common';
 import { initSocket } from '@/utils/utils';
+import { split } from 'lodash';
 
 const layout = {
   labelCol: {
@@ -49,7 +50,8 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
     }
   };
 
-  const caseCodeVSelectChange = async (code) => {
+  const caseCodeVSelectChange = async (codeName) => {
+    const code = codeName.split('-')[0];
     const sub = await getPhysiquePatientInfo({ code });
     const res = await getPatientInfoSingle({ patientId: sub.patientId });
     setBaseInfo({ ...res, ...sub });
@@ -86,6 +88,11 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
     }
   }, []);
 
+  let code_name = '';
+  if (baseInfo && baseInfo.caseCodeV && baseInfo.name) {
+    code_name = `${baseInfo?.caseCodeV}-${baseInfo?.name}`;
+  }
+
   return (
     <Card
       title={
@@ -99,12 +106,13 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
         <Col span={18}>
           <Form className={styles.baseShow} {...layout}>
             <Row>
-              <Col span={6}>
-                <Form.Item label="病历编号">
+              <Col span={12}>
+                <Form.Item label="病历编号" labelCol={{ span: 5 }}>
                   <Select
                     placeholder="请选择"
-                    value={baseInfo?.caseCodeV}
+                    value={code_name}
                     showSearch
+                    virtual={false}
                     onChange={caseCodeVSelectChange}
                   >
                     {allCode?.map((item) => (
@@ -115,11 +123,10 @@ const BaseInfoShow = ({ onPatientIdChange, onAllInfoChange, newUrl }) => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={6}>
-                <Form.Item label="就诊编号">{baseInfo?.visitingCodeV}</Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item label="研究编号">{baseInfo?.projectName}</Form.Item>
+              <Col span={12}>
+                <Form.Item labelCol={{ span: 5 }} label="就诊编号">
+                  {baseInfo?.visitingCodeV}
+                </Form.Item>
               </Col>
             </Row>
             <Row>

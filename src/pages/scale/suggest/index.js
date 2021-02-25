@@ -3,6 +3,8 @@ import { connect } from 'dva';
 import Header from '@/components/AppHeader';
 import Button from '@material-ui/core/Button';
 import Alert from '@/components/Alert';
+import { ActivityIndicator } from 'antd-mobile';
+
 import CheckDialog from './components/CheckDialog';
 import { getCmponent } from './components';
 
@@ -11,13 +13,13 @@ function Page(props) {
     match: {
       params: { answer },
     },
-    scaleSuggest: { data = {}, model, plans },
+    scaleSuggest: { data = [], model, plans },
     dispatch,
   } = props;
 
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = useState(() => {
-    return data;
+    return data || [];
   });
 
   const changeValue = values => {
@@ -32,16 +34,6 @@ function Page(props) {
     }
 
     setItems(value);
-  };
-
-  const getUI = () => {
-    if (model === undefined) {
-      return null;
-    }
-
-    const UI = getCmponent(model.scaleName);
-
-    return UI === undefined ? null : UI;
   };
 
   const fetch = () => {
@@ -66,6 +58,38 @@ function Page(props) {
     setOpen(false);
   };
 
+  const getUI = () => {
+    const UI = getCmponent(model.scaleCode);
+
+    if (UI) {
+      return (
+        <>
+          <UI
+            changeValue={changeValue}
+            model={model}
+            items={items}
+            fetchPlan={fetchPlan}
+            plans={plans}
+          />
+          <CheckDialog
+            items={Object.values(items)}
+            open={open}
+            submit={submit}
+            onClose={() => {
+              setOpen(false);
+            }}
+          />
+        </>
+      );
+    }
+
+    return (
+      <Alert style={{ marginTop: 15 }} severity="info">
+        该量表未有训练目标的功能
+      </Alert>
+    );
+  };
+
   useEffect(() => {
     fetch();
     return () => {
@@ -79,8 +103,6 @@ function Page(props) {
   useEffect(() => {
     setItems(data);
   }, [Object.keys(data).length]);
-
-  const UI = getUI();
 
   return (
     <div>
@@ -104,34 +126,25 @@ function Page(props) {
           确定
         </Button>
       </Header>
-
-      {UI ? (
-        <UI
-          changeValue={changeValue}
-          model={model}
-          items={items}
-          fetchPlan={fetchPlan}
-          plans={plans}
-        />
+      {model === undefined ? (
+        <div
+          style={{
+            margin: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <ActivityIndicator animating size="large" />
+        </div>
       ) : (
-        <Alert style={{ marginTop: 15 }} severity="info">
-          该量表未有训练目标的功能
-        </Alert>
+        <>{getUI()}</>
       )}
-
-      <CheckDialog
-        items={Object.values(items)}
-        open={open}
-        submit={submit}
-        onClose={() => {
-          setOpen(false);
-        }}
-      />
     </div>
   );
 }
 
-export default connect(({ scaleSuggest, loading }) => ({
+export default connect(({ scaleSuggest }) => ({
   scaleSuggest,
-  loading: loading.models.scaleSuggest,
 }))(Page);

@@ -12,6 +12,7 @@ export function buildAnswer(scale, testeeInfo, values) {
     
     const item = {
       questionNo: question.questionNo,
+      questionInfo:question.questionInfo,
       questionType: question.questionType,
       questionData: question.questionData,
       questionContent: question.questionContent,

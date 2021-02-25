@@ -27,8 +27,10 @@ const MedicalRecordList = ({ patientId }) => {
       body: {
         patientId,
         problemId: params.problemInfo, // 就诊内容
-        startTime: params.createTime ? moment(params.createTime[0]).valueOf() : null,
-        endTime: params.createTime ? moment(params.createTime[1]).valueOf() : null,
+        startTime: params.createTime
+          ? moment(params.createTime[0]).valueOf()
+          : moment().subtract(1, 'months').valueOf(),
+        endTime: params.createTime ? moment(params.createTime[1]).valueOf() : moment().valueOf(),
       },
     });
     if (res) {
@@ -56,6 +58,9 @@ const MedicalRecordList = ({ patientId }) => {
       title: '就诊时间',
       dataIndex: 'createTime',
       valueType: 'dateRange',
+      fieldProps: {
+        defaultValue: [moment().subtract(1, 'months'), moment()],
+      },
       render: (_, record) => {
         return moment(record.createTime).format('YYYY-MM-DD');
       },

@@ -173,7 +173,7 @@ export async function getScaleCompose({ scaleId }) {
  * object
  */
 export async function fetchObject({ text, number }) {
-  let url = '/api/object?page=0&limit=10';
+  let url = '/api/object?page=0&size=20';
 
   if (number) {
     url += `&number=${number}`;
@@ -301,5 +301,16 @@ export async function listType() {
   const url = '/api/scale/type';
   return request(url, {
     method: 'GET',
+  });
+}
+
+export async function findTopReport({ userNumber, codes }) {
+  const url = `/api/scale/compose/user/${userNumber}/topReport`;
+  return request(url, {
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8',
+    },
+    method: 'POST',
+    body: JSON.stringify(codes),
   });
 }

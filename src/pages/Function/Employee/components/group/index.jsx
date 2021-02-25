@@ -1,16 +1,13 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, Checkbox } from 'antd';
+import { Button, Modal, message, Input, Form, Popconfirm, Tooltip, Select, TreeSelect } from 'antd';
 import React, { useState, useEffect, useRef } from 'react';
 import ProTable from '@ant-design/pro-table';
-import {
-  getGroupList,
-  getGroupDepartments,
-  getGroupEmployees,
-} from '@/pages/Function/Employee/service';
+import { getGroupList, getDeptTree } from '@/pages/Function/Employee/service';
 
 import { getCommonEnums } from '@/services/common';
 import { connect } from 'umi';
 const FormItem = Form.Item;
+const { TreeNode } = TreeSelect;
 import { getAuth } from '@/utils/utils';
 
 let updateId = '';
@@ -43,9 +40,7 @@ const Group = (props) => {
   const actionRef = useRef();
   const [form] = Form.useForm();
   const [visible, setVisible] = useState(false);
-  const [deptList, setDeptList] = useState([]); //一级部门
-  const [subDeptList, setSubDeptList] = useState([]); // 子部门
-  const [employeeList, setEmployeeList] = useState([]); // 部门下的员工
+  const [employeeList, setEmployeeList] = useState([]); // 所有部门及其员工树
   const [groupTypeList, setGroupTypeList] = useState([]); // 评估类型
 
   //获取评估类型
@@ -58,65 +53,19 @@ const Group = (props) => {
     }
   };
 
-  // 查询一级部门
-  const queryDeptList = async () => {
-    const res = await getGroupDepartments({ parentId: 0 });
+  // 查询所有员工
+  const queryEmployeeAllList = async () => {
+    const res = await getDeptTree();
+    console.log('res', res);
     if (res) {
-      setDeptList(res);
+      setEmployeeList(res);
     }
-  };
-
-  // 查询子部门
-  const querySubDept = async (parentId) => {
-    const res = await getGroupDepartments({ parentId });
-    if (res) {
-      setSubDeptList(res);
-    }
-  };
-
-  // 查询子部门下的员工
-  const querySubDeptEmployees = async (params) => {
-    const res = await getGroupEmployees(params);
-    if (res) {
-      const data = res.map((item) => {
-        item.label = item.name;
-        item.value = item.id;
-        return item;
-      });
-      setEmployeeList(data);
-    }
-  };
-
-  // 通过一级部门获取子部门
-  const handleDeptChange = (id) => {
-    querySubDept(id);
-    form.setFields([
-      {
-        name: 'subId',
-        value: '',
-      },
-      {
-        name: 'permissionIds',
-        value: [],
-      },
-    ]);
-  };
-
-  // 通过子部门获取员工
-  const handleSubDeptChange = (deptId) => {
-    querySubDeptEmployees({ deptId });
-    form.setFields([
-      {
-        name: 'permissionIds',
-        value: [],
-      },
-    ]);
   };
 
   useEffect(() => {
     if (props.tab == 4) {
       queryGroupType();
-      queryDeptList(); // 一级部门和二级部门
+      queryEmployeeAllList();
       actionRef?.current?.reload();
     }
   }, [props.tab]);
@@ -149,13 +98,13 @@ const Group = (props) => {
         id: row.id,
       },
       callback: (data) => {
+        console.log('data', data);
         if (data) {
-          const values = data.employees?.map((item) => {
+          const values = (data.employees || []).map((item) => {
             item.label = item.name;
             item.value = item.id;
             return item;
           });
-          setEmployeeList(values);
           data.employeeIds = values.map((item) => item.value);
           form.setFieldsValue(data);
           setVisible(true);
@@ -167,7 +116,6 @@ const Group = (props) => {
   // 取消
   const handleCancel = () => {
     setVisible(false);
-    setEmployeeList([]);
     form.resetFields();
     updateId = '';
   };
@@ -249,6 +197,24 @@ const Group = (props) => {
         ),
     },
   ];
+
+  const getTreeNode = () => {
+    return employeeList?.map((one) => (
+      <TreeNode key={one.id} checkable={false} disableCheckbox title={one.name}>
+        {one.children?.map((two) => (
+          <TreeNode key={two.id} checkable={false} disableCheckbox title={two.name}>
+            {two.employeeVos?.map((three) => (
+              <TreeNode key={three.id} value={three.id} title={three.name}></TreeNode>
+            ))}
+          </TreeNode>
+        ))}
+        {/* 有可能一级部门下有员工 */}
+        {one.employeeVos?.map((two) => (
+          <TreeNode key={two.id} value={two.id} title={two.name}></TreeNode>
+        ))}
+      </TreeNode>
+    ));
+  };
   return (
     <>
       <ProTable
@@ -259,7 +225,13 @@ const Group = (props) => {
         }}
         toolBarRender={() => [
           auth?.canEdit && (
-            <Button key="add" type="primary" onClick={() => setVisible(true)}>
+            <Button
+              key="add"
+              type="primary"
+              onClick={() => {
+                setVisible(true);
+              }}
+            >
               <PlusOutlined /> 新增
             </Button>
           ),
@@ -337,46 +309,6 @@ const Group = (props) => {
               ))}
             </Select>
           </FormItem>
-          <div style={{ display: 'flex' }}>
-            <FormItem
-              style={{ flex: 1 }}
-              label="设置权限"
-              name="oneId"
-              rules={[
-                {
-                  required: true,
-                  message: '请选择一级部门',
-                },
-              ]}
-            >
-              <Select onChange={handleDeptChange} placeholder="请选择一级部门">
-                {deptList.map((item) => (
-                  <Select.Option key={item.id} value={item.id}>
-                    {item.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </FormItem>
-            <FormItem
-              style={{ flex: 1 }}
-              name="subId"
-              // rules={[
-              //   {
-              //     required: true,
-              //     message: '请选择子部门',
-              //   },
-              // ]}
-            >
-              <Select onChange={handleSubDeptChange} placeholder="请选择子部门">
-                {subDeptList.map((item) => (
-                  <Select.Option key={item.id} value={item.id}>
-                    {item.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </FormItem>
-          </div>
-
           <FormItem
             {...formItemLayout}
             label="选择成员"
@@ -388,7 +320,17 @@ const Group = (props) => {
               },
             ]}
           >
-            <Checkbox.Group options={employeeList} />
+            <TreeSelect
+              showSearch={false}
+              style={{ width: '100%' }}
+              dropdownStyle={{ maxHeight: 300, overflow: 'auto' }}
+              placeholder="请选择成员"
+              allowClear
+              multiple
+              treeCheckable
+            >
+              {getTreeNode()}
+            </TreeSelect>
           </FormItem>
         </Form>
       </Modal>

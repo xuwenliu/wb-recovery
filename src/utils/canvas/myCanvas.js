@@ -1,4 +1,4 @@
-var muBan = function (HB, VB, STH, STV) {
+var muBan = function(HB, VB, STH, STV) {
   this.HB = HB;
   this.VB = VB;
   this.STH = STH;
@@ -12,7 +12,7 @@ var muBan = function (HB, VB, STH, STV) {
    * h_num1 粗线数量（横线）
    * h_num2 细线数量
    */
-  this.box = function (ctx, color, linewidth1, linewidth2, v_num1, v_num2, h_num1, h_num2) {
+  this.box = function(ctx, color, linewidth1, linewidth2, v_num1, v_num2, h_num1, h_num2) {
     v_num1--;
     h_num1--;
     ///////粗线
@@ -81,7 +81,7 @@ var muBan = function (HB, VB, STH, STV) {
    * txt_arr_r  右边显示的文字数组
    * v_num1   总共多少格，便于显示右方的文字
    * */
-  this.txt = function (
+  this.txt = function(
     ctx,
     color,
     font,
@@ -126,7 +126,7 @@ var muBan = function (HB, VB, STH, STV) {
   /**
    *v_num1  限制显示的宽度
    * */
-  this.title = function (ctx, color, font, title, v_num1) {
+  this.title = function(ctx, color, font, title, v_num1) {
     ctx.fillStyle = color;
     ctx.font = font;
     ctx.fillText(title, this.HB + this.STH, this.STV / 2, (v_num1 - 3) * this.HB); //左 上
@@ -146,7 +146,7 @@ var muBan = function (HB, VB, STH, STV) {
    * is_dash  是否画虚线
    * sign		标识
    * */
-  this.line = function (
+  this.line = function(
     ctx,
     wh,
     color,
@@ -166,7 +166,7 @@ var muBan = function (HB, VB, STH, STV) {
     if (arr[0][0] == 0) {
       ctx.moveTo(this.STH, y1 * this.VB + this.STV);
       if (is_arc) {
-        ctx.arc(this.STH, y1 * this.VB + this.STV, 1.5, 0, 2 * Math.PI);
+        ctx.arc(this.STH, y1 * this.VB + this.STV, 2.5, 0, 2 * Math.PI);
       }
     } else {
       if (wh == 218) {
@@ -177,7 +177,9 @@ var muBan = function (HB, VB, STH, STV) {
         x3 = arr[0][0];
       }
       ctx.moveTo((x3 * this.HB) / per_h + this.STH, y1 * this.VB + this.STV);
-      ctx.arc((x3 * this.HB) / per_h + this.STH, y1 * this.VB + this.STV, 1.5, 0, 2 * Math.PI);
+      if (is_arc) {
+        ctx.arc(x3 * this.HB / per_h + this.STH, y1 * this.VB + this.STV, 2.5, 0, 2 * Math.PI);
+      }
     }
 
     for (var j = 1, len = arr.length; j < len; j++) {
@@ -196,7 +198,7 @@ var muBan = function (HB, VB, STH, STV) {
       y2 = y1 * this.VB + this.STV;
       ctx.lineTo(x2, y2);
       if (is_arc) {
-        ctx.arc(x2, y2, 1.5, 0, 2 * Math.PI);
+        ctx.arc(x2, y2, 2.5, 0, 2 * Math.PI);
       }
     }
     //			console.log(is_dash);

@@ -42,8 +42,7 @@ function Page({
   // loading,
   submiting,
 }) {
-
-  const { getFieldDecorator , getFieldError } = form;
+  const { getFieldDecorator, getFieldError } = form;
 
   const classes = useStyles();
 
@@ -74,7 +73,7 @@ function Page({
   const { run: handleSearch } = useDebounceFn((number) => {
     dispatch({
       type: 'scaleComposeQuick/fetchObject',
-      payload: { text:number },
+      payload: { text: number },
     });
   }, 500);
 
@@ -127,7 +126,6 @@ function Page({
   };
 
   const getSubScaleInfo = () => {
-
     const info = { items: [...subScaleNames] };
     info.alert = getFieldError('subScales');
     // alert
@@ -163,7 +161,8 @@ function Page({
 
   const subScaleInfo = getSubScaleInfo();
 
-  console.log('object:',object);
+  // console.log('object:',object);
+  // console.log('subScaleInfo:', subScaleInfo)
 
   return (
     <>
@@ -228,15 +227,16 @@ function Page({
                 rules: [{ required: true, message: '符合条件的子量表不可为空' }],
               })(<SubScale choiceType={scale.choiceType} data={subScaleInfo.items} />)}
 
-              {subScaleInfo.alert ? (
+              {!subScaleInfo.items.length > 0 ? (
                 <Alert style={{ margin: '10px' }} severity="info">
-                  {subScaleInfo.alert}
+                  {/* {subScaleInfo.alert} */}符合条件的子量表不可为空
                 </Alert>
               ) : null}
 
               <div style={{ margin: 20, marginTop: 40 }}>
                 <Button
                   variant="contained"
+                  disabled={!subScaleInfo.items.length > 0}
                   color="primary"
                   onClick={handleSubmit}
                   loading={submiting}

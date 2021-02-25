@@ -87,6 +87,7 @@ function AEPS(props) {
     render: ({ type, scale, ds, checked, questionNo, questionContent, optContent, score }) => {
       const { title } = JSON.parse(optContent);
       const { check } = JSON.parse(questionContent);
+  
       const display = ref => {
         if (plans) {
           const html = plans[ref];
@@ -149,20 +150,21 @@ function AEPS(props) {
     },
   };
 
+  /**
+   * key 為子量表名稱
+   */
   const define = {
-    '0-3岁': FUN,
-    '3-6岁': FUN,
+    'AEPS婴幼儿社会功能评估（0-3岁）': FUN,
+    'AEPS学龄前期认知能力评估（3-6岁）': FUN,
   };
 
   useEffect(() => {
-    console.log('**** init once ****');
+    console.log('**** init once **** ',model.answers.length);
     const result = getExample();
     setExample(result.example);
 
-    console.log('example:', result.example);
-
     fetchPlan(result.refs);
-    // console.log('plans size:', result.refs.length);
+
   }, [model.answers.length]);
 
   // console.log('AEPS render....items:', items);

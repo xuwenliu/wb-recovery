@@ -1,8 +1,11 @@
 /* eslint-disable no-param-reassign */
 import React, { useState, useEffect } from 'react';
-import { Card, Result, Spin } from 'antd';
+import { Card, Result, Spin, Empty } from 'antd';
 import TabScaleAnswer from '@/components/Scale/TabScaleAnswer';
 import { useRequest } from '@umijs/hooks';
+import { parse } from 'date-fns';
+import { getAgeByBirthday } from '@/pages/scale/util/age';
+
 import {
   searchScale,
   getIncompleteAnswer,
@@ -15,7 +18,7 @@ import TesteeInfoForm from './TesteeInfoForm';
 const TYPE = '发育能力类评定量表.发育筛查类';
 
 function TeachingEvaluation({ user = {} }) {
-  const [scales, setScales] = useState({ content: [] });
+  const [scales, setScales] = useState([]);
   const [answers, setAnswers] = useState();
   const [finish, setFinish] = useState();
 
@@ -32,16 +35,41 @@ function TeachingEvaluation({ user = {} }) {
       return false;
     });
 
+    // eslint-disable-next-line consistent-return
     return answer ? answer.scale : list[0].answers[0].scale;
   };
 
+  /**
+   * 帶出量表清單（依照年齡限制）
+   */
   const { loading: loadingScale, run: fetchScale } = useRequest(searchScale, {
     manual: true,
     onSuccess: (result) => {
-      setScales(result);
+      const date = parse(user.birthDay, 'yyyy-MM-dd', new Date());
+      const age = getAgeByBirthday(date);
+
+      setScales(
+        result.content.filter((i) => {
+          const { limits } = i;
+
+          if (limits && limits.YEAR) {
+            const min = limits.YEAR.limit.MIN * 1;
+            const max = limits.YEAR.limit.MAX * 1;
+            
+            if (age >= min && age <= max) {
+              return true;
+            }
+          }
+
+          return false;
+        }),
+      );
     },
   });
 
+  /**
+   * 帶出答題紀錄（最新的一筆未完成的答題）
+   */
   const { loading: loadingFetchIncompleteAnswer, run: fetchIncompleteAnswer } = useRequest(
     getIncompleteAnswer,
     {
@@ -86,7 +114,6 @@ function TeachingEvaluation({ user = {} }) {
           }
         });
         answers.current = getAnswerCurrent(answers.list);
-        console.log('change answer currect:', answers.current);
         setAnswers({ ...answers });
         // fetchIncompleteAnswer({ compose: result.compose, number: user.visitingCodeV });
       }
@@ -112,8 +139,6 @@ function TeachingEvaluation({ user = {} }) {
         />
       );
     }
-
-    console.log('AnswerStateCheck render....', answers.current);
 
     return (
       <Spin spinning={loadingSubmit}>
@@ -172,7 +197,8 @@ function TeachingEvaluation({ user = {} }) {
 
   return (
     <Card loading={loadingScale}>
-      {scales.content.map(({ id, scaleName }) => (
+      {scales.length === 0 && <Empty description={<span>没有条件符合的量表</span>} />}
+      {scales.map(({ id, scaleName }) => (
         <Card.Grid
           key={id}
           style={{

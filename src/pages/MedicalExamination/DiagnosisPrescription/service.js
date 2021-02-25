@@ -43,3 +43,17 @@ export async function getLastVisiting(params) {
   });
 }
 
+// 患者家庭成员列表
+export async function getFamilyMember(params) {
+  return request('/api/resource/visiting/familyMember', {
+    params,
+  });
+}
+
+// 门诊复查消息推送
+export async function messagePush(data) {
+  return request('/api/resource/visiting/messagePush', {
+    method: 'POST',
+    data,
+  });
+}

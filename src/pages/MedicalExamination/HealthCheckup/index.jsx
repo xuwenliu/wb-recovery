@@ -71,7 +71,7 @@ const HealthCheckup = ({ dispatch, submitting }) => {
   // 查询病历编号下拉
   const queryPhysiqueAllCaseCode = async () => {
     const res = await getPhysiqueAllCaseCode();
-    if(res && res.length){
+    if (res && res.length) {
       setAllCode(res);
     }
   };
@@ -99,7 +99,8 @@ const HealthCheckup = ({ dispatch, submitting }) => {
   };
 
   // 切换病例编号
-  const caseCodeVSelectChange = async (code) => {
+  const caseCodeVSelectChange = async (codeName) => {
+    const code = codeName.split('-')[0];
     const sub = await getPhysiquePatientInfo({ code });
     setBaseInfo(sub);
     actionRef.current?.reload();
@@ -126,6 +127,7 @@ const HealthCheckup = ({ dispatch, submitting }) => {
         payload: postData,
         callback: () => {
           actionRef.current?.reload();
+          queryPhysiqueGraphData();
           message.success('操作成功');
         },
       });
@@ -186,6 +188,26 @@ const HealthCheckup = ({ dispatch, submitting }) => {
     queryQrCode();
   }, []);
 
+  const handleVisitingTimeChange = (value) => {
+    if (!baseInfo?.birthDay) return;
+    let dateStart = moment(baseInfo?.birthDay);
+    let dateEnd = moment(value);
+    let timeValues = [];
+    while (dateEnd > dateStart || dateStart.format('M') === dateEnd.format('M')) {
+      timeValues.push(dateStart.format('YYYY-MM'));
+      dateStart.add(1, 'month');
+    }
+    setBaseInfo({
+      ...baseInfo,
+      betweenBirthTime: timeValues.length,
+    });
+  };
+
+  let code_name = '';
+  if (baseInfo && baseInfo.caseCodeV && baseInfo.name) {
+    code_name = `${baseInfo?.caseCodeV}-${baseInfo?.name}`;
+  }
+
   return (
     <PageContainer>
       <Card>
@@ -193,9 +215,14 @@ const HealthCheckup = ({ dispatch, submitting }) => {
           <Col span={18}>
             <Form className="base-show" form={form} {...layout}>
               <Row>
-                <Col span={6}>
-                  <Form.Item label="病历编号">
-                    <Select value={baseInfo?.caseCodeV} showSearch onChange={caseCodeVSelectChange}>
+                <Col span={12}>
+                  <Form.Item label="病历编号" labelCol={{ span: 5 }}>
+                    <Select
+                      virtual={false}
+                      value={code_name}
+                      showSearch
+                      onChange={caseCodeVSelectChange}
+                    >
                       {allCode.map((item) => (
                         <Select.Option key={item} value={item}>
                           {item}
@@ -204,11 +231,10 @@ const HealthCheckup = ({ dispatch, submitting }) => {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col span={6}>
-                  <Form.Item label="就诊编号">{baseInfo?.visitingCodeV}</Form.Item>
-                </Col>
-                <Col span={6}>
-                  <Form.Item label="研究编号">{baseInfo?.projectName}</Form.Item>
+                <Col span={12}>
+                  <Form.Item labelCol={{ span: 5 }} label="就诊编号">
+                    {baseInfo?.visitingCodeV}
+                  </Form.Item>
                 </Col>
               </Row>
 
@@ -238,7 +264,7 @@ const HealthCheckup = ({ dispatch, submitting }) => {
                 <Col span={6}>
                   <Form.Item label="就诊日期" name="visitingTime" initialValue={moment()}>
                     {/* {moment().format('YYYY-MM-DD')} */}
-                    <DatePicker />
+                    <DatePicker onChange={handleVisitingTimeChange} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>

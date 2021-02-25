@@ -3,8 +3,8 @@ import { createForm } from 'rc-form';
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 import Alert from '@/components/Alert';
-import Paper from '@material-ui/core/Paper';
-import { useTheme } from '@material-ui/core/styles';
+// import Paper from '@material-ui/core/Paper';
+// import { useTheme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
 import ScaleToolbar from '@/pages/scale/components/ScaleToolbar';
@@ -28,11 +28,11 @@ function ScaleAnswer(props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answerValues, setAnswerValues] = useState({});
 
-  const changeStep = nextStep => {
+  const changeStep = (nextStep) => {
     setCurrentStep(nextStep);
   };
 
-  const skipStep = nextStep => {
+  const skipStep = (nextStep) => {
     setCurrentStep(nextStep);
     if (onChange) {
       onChange({
@@ -103,7 +103,7 @@ function ScaleAnswer(props) {
 
             {getFieldDecorator(`${question.questionNo}`, {
               initialValue: answerValues[`${question.questionNo}`] || '',
-              onChange: e => {
+              onChange: (e) => {
                 if (e.target) {
                   changeAnswer(question.questionNo, e.target.value);
                 } else {
@@ -116,7 +116,7 @@ function ScaleAnswer(props) {
                 questionType={questionType}
                 scaleOptions={scaleOptions}
                 RenderOptionContent={RenderOptionContent}
-              />
+              />,
             )}
           </FormControl>
         </div>
@@ -133,9 +133,18 @@ function ScaleAnswer(props) {
 
   return (
     <div>
-      <Paper style={{ paddingBottom: '10px', margin: 10 }} elevation={3}>
+      {/* <Paper style={{ paddingBottom: '10px', margin: 10}}>
         {questions()}
-      </Paper>
+      </Paper> */}
+      <div
+        style={{
+          paddingBottom: '10px',
+          margin: 10,
+          backgroundColor: 'white',
+        }}
+      >
+        {questions()}
+      </div>
       <ScaleToolbar
         form={form}
         submit={submit}

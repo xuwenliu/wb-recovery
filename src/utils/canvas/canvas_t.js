@@ -20,7 +20,7 @@ var M = function () {
           //					arr.push(...data[i].children);
           arr.push.apply(arr, data[i].children);
           arr2[i] = [data[i].name, Object.keys(data[i].children).length];
-        } else if (data[i].name == content) {
+        } else if (content.indexOf(data[i].name) > -1) {
           var a = data[i].children;
           var a_count = Object.keys(a).length;
           for (var j = 0; j < a_count; j++) {

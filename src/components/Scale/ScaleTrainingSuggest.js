@@ -15,6 +15,9 @@ function ScaleTrainingSuggest({ user = {} }) {
   const [suggests, setSuggests] = useState();
   const [checkSuggests, setCheckSuggests] = useState([]);
 
+  /**
+   * 帶出有目標的報告
+   */
   const querySimpleSuggest = async (id) => {
     setSuggests(await getSimpleSuggest({ id }));
   };

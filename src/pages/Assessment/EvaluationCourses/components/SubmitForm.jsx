@@ -4,11 +4,12 @@ import { getAllClass } from '@/pages/Educational/Curriculum/service';
 import { connect } from 'umi';
 import { getEvaluationSingle } from '../service';
 import { getAuth } from '@/utils/utils';
+import Target from '@/components/Scale/Target';
 
-function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatch }) {
+function SubmitForm({ list = [], guide, patientId, scaleType, name, submitting, dispatch }) {
+  console.log('guide', guide);
   console.log('list', list);
   const [form] = Form.useForm();
-  const [targetData, setTargetData] = useState([]);
   const [classList, setClassList] = useState([]);
 
   const queryAllClass = async () => {
@@ -27,36 +28,19 @@ function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatc
       patientId,
       scaleType,
     });
-    if (list.length != 0) {
-      let data = [];
-      let obj = {
-        reason: res.reason,
-        situation: res.situation,
-        classIds: res.classIds,
-      };
-      list.forEach((item) => {
-        if (item.name === name) {
-          data = item.children.map((sub) => {
-            obj[sub.name] = [];
-            sub.children.map((three) => {
-              three.label = three.name;
-              three.value = three.name;
-              if (three.score * 1 < 3) {
-                obj[sub.name].push(three.name);
-              }
-              if (res.targets?.includes(three.name)) {
-                obj[sub.name].push(three.name);
-              }
-              obj[sub.name] = [...new Set(obj[sub.name])];
-              return three;
-            });
-            return sub;
-          });
-        }
-      });
-      form.setFieldsValue(obj); // 小于3分的选中
-      setTargetData(data);
+    let targets = [];
+    if (res.targetVos) {
+      if (res.targetVos[0]?.targets) {
+        targets = res.targetVos[0].targets;
+      }
     }
+    let obj = {
+      reason: res.reason,
+      situation: res.situation,
+      classIds: res.classIds,
+      targets,
+    };
+    form.setFieldsValue(obj);
   };
 
   useEffect(() => {
@@ -65,23 +49,21 @@ function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatc
   }, [list, patientId]);
 
   const onFinish = (values) => {
-    let removeClassIds = { ...values };
-    const target = [];
-    delete removeClassIds.classIds;
-    console.log(removeClassIds);
-    Object.values(removeClassIds).forEach((item) => {
-      if (item instanceof Array) {
-        target.push(...item);
-      }
-    });
     const postData = {
       patientId,
       scaleType,
-      target,
-      reason: values.reason,
-      situation: values.situation,
-      classIds: values.classIds,
+      ...values,
+      targetJson: JSON.stringify([
+        {
+          name,
+          reportDate: guide.reportDate,
+          id: guide.id,
+          scale: guide.scaleName,
+          targets: values.targets || [],
+        },
+      ]),
     };
+    delete postData.targets;
     dispatch({
       type: 'assessmentAndEvaluationCourses/saveEvaluationEffects',
       payload: postData,
@@ -105,13 +87,23 @@ function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatc
       <Form.Item label="原因推断" name="reason">
         <Input.TextArea rows={4} placeholder="生理、心理、社会功能；教学环境" />
       </Form.Item>
-      <Form.Item label="发展目标" wrapperCol={{ offset: 2 }}>
-        {targetData?.map((item, index) => (
-          <Form.Item key={index} label={item.name} name={item.name}>
-            <Checkbox.Group options={item.children}></Checkbox.Group>
+      {
+        // 雙溪
+        guide && guide.code === 'S0062' && list.length > 0 && (
+          <Form.Item name="targets" label="发展目标" wrapperCol={{ offset: 2 }}>
+            <Target tree={name} guide={guide} report={list} />
           </Form.Item>
-        ))}
-      </Form.Item>
+        )
+      }
+      {
+        // 早期疗育
+        guide && guide.code === 'S0075' && list.length > 0 && (
+          <Form.Item name="targets" label="发展目标" wrapperCol={{ offset: 2 }}>
+            <Target tree={name} guide={guide} report={list} />
+          </Form.Item>
+        )
+      }
+
       <Form.Item wrapperCol={{ offset: 2 }} label="课程选择" name="classIds">
         <Checkbox.Group options={classList}></Checkbox.Group>
       </Form.Item>
@@ -128,7 +120,14 @@ function SubmitForm({ list = [], patientId, scaleType, name, submitting, dispatc
           <Button onClick={cancel} className="mr8">
             清空
           </Button>
-          {/* <Button type="primary">打印</Button> */}
+          <Button
+            type="primary"
+            onClick={() => {
+              window.print();
+            }}
+          >
+            打印
+          </Button>
         </Form.Item>
       )}
     </Form>

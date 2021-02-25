@@ -15,6 +15,7 @@ import Divider from '@material-ui/core/Divider';
 import { uniqueId } from 'lodash/util';
 
 import TesteeInfo from '@/pages/scale/components/TesteeInfo';
+import ScaleFooter from '@/pages/scale/components/ScaleFooter';
 import { defaultBlock } from '@/utils/publicStyles';
 
 const useStyles = makeStyles({
@@ -31,7 +32,7 @@ const useStyles = makeStyles({
 function Page(props) {
   const classes = useStyles();
 
-  const { reports, user, testeeInfo, answers } = props;
+  const { builder, reportDate, reports, user, testeeInfo, answers } = props;
 
   const getItems = () => {
     const result = {
@@ -67,6 +68,24 @@ function Page(props) {
     return result;
   };
 
+  const getExplain = (explain) => {
+    if (explain === '正常') {
+      return (
+        <div>
+          <p style={{ margin: '10px' }}>您的孩子通过此阶段检核，但仍需继续随访。</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <p style={{ margin: '10px' }}>
+          您的孩子本次检核未通过，建议用发育学方面的量表进行再次评估，进一步明确相关能力的发展情况
+        </p>
+      </div>
+    );
+  };
+
   const items = getItems();
 
   const report = getReport();
@@ -87,10 +106,7 @@ function Page(props) {
           <Typography className={classes.heading}>报告结果</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelDetails className={classes.root}>
-          <div>
-            <p style={{ margin: '10px' }}>{report.scoreExplain.join()}</p>
-            <p style={{ margin: '10px' }}>具體情況請諮詢專家</p>
-          </div>
+          {getExplain(report.scoreExplain.join())}
         </ExpansionPanelDetails>
       </ExpansionPanel>
 
@@ -131,6 +147,11 @@ function Page(props) {
           </ExpansionPanelDetails>
         </ExpansionPanel>
       )}
+      <ExpansionPanel defaultExpanded>
+        <ExpansionPanelDetails className={classes.root}>
+          <ScaleFooter builder={builder} reportDate={reportDate} />
+        </ExpansionPanelDetails>
+      </ExpansionPanel>
     </div>
   );
 }

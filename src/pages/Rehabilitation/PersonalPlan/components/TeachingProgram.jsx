@@ -26,6 +26,8 @@ import { getSpecialPackages, getAllClassOfPackage } from '../service';
 import { getEmployeeAllList } from '@/pages/Function/Employee/service';
 import { manage, getGuide } from '@/pages/scale/service/compose';
 
+import PersonalTrainingTarget from '@/components/Scale/PersonalTrainingTarget';
+
 const getQuestion = (map, no) => {
   const q = map[no];
 
@@ -183,7 +185,8 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
         item.teachingPlan = item.teachingPlan
           ? BraftEditor.createEditorState(item.teachingPlan)
           : '';
-        item.checkedKeys = item.targets;
+        // item.checkedKeys = item.targets;
+        item.targets = [];
         return item;
       });
       form.setFields([
@@ -211,7 +214,8 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
         item.teachingPlan = item.teachingPlan
           ? BraftEditor.createEditorState(item.teachingPlan)
           : '';
-        item.checkedKeys = item.targets;
+        // item.checkedKeys = item.targets;
+        item.targets = [];
         return item;
       });
       form.setFields([
@@ -232,7 +236,6 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
   };
 
   useEffect(() => {
-    querySpecialPage();
     queryAllClassAdd();
     querySpecialPackages();
     queryEmployeeAllList();
@@ -331,7 +334,7 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
   };
 
   // 提交
-  const handleSubmit = (subIndex, name) => {
+  const handleSubmit = async (subIndex, name) => {
     let values = form.getFieldValue(name)[subIndex];
     const postData = {
       startTime: moment(values.time[0]).valueOf(),
@@ -370,6 +373,7 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
               </Button>
             ),
           ]}
+          params={{ patientId }}
           request={(params, sorter, filter) => querySpecialPage(params)}
           columns={columns}
         />
@@ -494,8 +498,15 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
                           >
                             <Input.TextArea rows={4}></Input.TextArea>
                           </Form.Item>
-                          <Form.Item label="教学目标">
-                            <Tree
+                          <Form.Item
+                            label="教学目标"
+                            colon={false}
+                            {...field}
+                            name={[field.name, 'targets']}
+                            fieldKey={[field.fieldKey, 'targets']}
+                          >
+                            <PersonalTrainingTarget user={user} />
+                            {/* <Tree
                               checkable
                               treeData={list}
                               defaultExpandedKeys={
@@ -507,7 +518,7 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
                               checkedKeys={
                                 form.getFieldValue('classOfPackageVos')[subIndex]?.targets
                               }
-                            />
+                            /> */}
                           </Form.Item>
                           <Form.Item
                             label="编辑教案"
@@ -635,8 +646,15 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
                             <Input.TextArea rows={4}></Input.TextArea>
                           </Form.Item>
 
-                          <Form.Item label="教学目标">
-                            <Tree
+                          <Form.Item
+                            label="教学目标"
+                            colon={false}
+                            {...subField}
+                            name={[subField.name, 'targets']}
+                            fieldKey={[subField.fieldKey, 'targets']}
+                          >
+                            <PersonalTrainingTarget user={user} />
+                            {/* <Tree
                               checkable
                               treeData={list}
                               defaultExpandedKeys={
@@ -648,7 +666,7 @@ const TeachingProgram = ({ patientId, user = {}, submitting, dispatch, tabChange
                               checkedKeys={
                                 form.getFieldValue('classOfPackageVos2')[subIndex]?.targets
                               }
-                            />
+                            /> */}
                           </Form.Item>
 
                           <Form.Item

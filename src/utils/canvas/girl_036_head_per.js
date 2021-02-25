@@ -402,4 +402,26 @@ export default (myCanvas, head) => {
   m.line(ctx, 36, color, 2, arr_h_97, 11, 32, 2, 2, false, false, '99');
 
   head && m.line(ctx, 36, color_, 2, head, 11, 32, 2, 2, true, false, null); //头围
+
+  //左上角实时显示数值
+  c.addEventListener("mousemove", function(e) {
+    var cRect = c.getBoundingClientRect();
+    var canvasX = Math.round(e.clientX - cRect.left);
+    var canvasY = Math.round(e.clientY - cRect.top);
+    //      ctx.clearRect(0, 0, c.width, c.height);  
+    ctx.clearRect(0, 0, 300, 25); //清空制定区域
+    var Xx = "--";
+    if (canvasX > 100 && canvasX <= 100 + (35 * 18)) {
+      Xx = (canvasX - 100) * 2 / 35;
+    }
+    var Yy = "--";
+    if (canvasY > 100 && canvasY <= 100 + (60 * 12)) {
+      Yy = 54 - (canvasY - 100) * 2 / 60;
+    }
+    var age = typeof Xx === 'number' ? Xx.toFixed(1) : Xx;
+    var weight = typeof Yy === 'number' ? Yy.toFixed(1) : Yy;
+    ctx.fillText("年龄:" + age + "个月，头围:" + weight + "cm", 10, 20);
+  });
+
+
 };

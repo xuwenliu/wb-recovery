@@ -6,7 +6,6 @@ import BaseInfoShow from '@/components/BaseInfoShow';
 
 import ScaleTrainingSuggest from '@/components/Scale/ScaleTrainingSuggest';
 import TeachingEvaluation from '@/components/Scale/TeachingEvaluation';
-// import ResultAnalysisTable from '@/components/Scale/ResultAnalysisTable';
 
 import Result from './components/Result';
 import Recipe from './components/Recipe';

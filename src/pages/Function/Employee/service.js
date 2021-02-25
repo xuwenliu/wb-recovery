@@ -34,6 +34,10 @@ export async function updateDept(data) {
   });
 }
 
+export async function getDeptTree() {
+  return request('/api/resource/dept/tree');
+}
+
 // 人员管理
 export async function createEmployee(data) {
   return request('/api/resource/employee/create', {

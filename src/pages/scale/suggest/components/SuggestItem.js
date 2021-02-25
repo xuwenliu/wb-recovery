@@ -58,8 +58,8 @@ function SuggestItem({ status, checked, children }) {
     <div className={classes.paper} style={getStyle()}>
       <div style={{ textAlign: 'left' }}>
         <div style={{ verticalAlign: 'middle', display: 'inline-block' }}>{children}</div>
-        <div style={{ paddingLeft: '5px', verticalAlign: 'middle', display: 'inline-block' }}>
-          {checked && <CheckIcon />}
+        <div style={{ paddingLeft: '5px', verticalAlign: 'middle', display: 'inline-block', float: 'right'}}>
+          {checked && <CheckIcon color="secondary"/>}
         </div>
       </div>
     </div>

@@ -13,6 +13,7 @@ const InitialJudgeSelect = ({
   rules,
   timestamp,
   disabled = false,
+  limitValueList = [],
 }) => {
   const [checkList1, setCheckList1] = useState([]);
   const [checkList2, setCheckList2] = useState([]);
@@ -136,7 +137,7 @@ const InitialJudgeSelect = ({
               align="baseline"
             >
               <Form.Item
-                style={{ width: '20%', marginRight: 8, marginBottom: 0 }}
+                style={{ width: '18%', marginRight: 8, marginBottom: 0 }}
                 shouldUpdate={(prevValues, curValues) => prevValues[name] !== curValues[name]}
               >
                 {() => (
@@ -159,7 +160,7 @@ const InitialJudgeSelect = ({
               </Form.Item>
 
               <Form.Item
-                style={{ width: '20%', marginRight: 8, marginBottom: 0 }}
+                style={{ width: '18%', marginRight: 8, marginBottom: 0 }}
                 shouldUpdate={(prevValues, curValues) => prevValues[name] !== curValues[name]}
               >
                 {() => (
@@ -180,7 +181,7 @@ const InitialJudgeSelect = ({
               </Form.Item>
 
               <Form.Item
-                style={{ width: '20%', marginRight: 8, marginBottom: 0 }}
+                style={{ width: '18%', marginRight: 8, marginBottom: 0 }}
                 shouldUpdate={(prevValues, curValues) => prevValues[name] !== curValues[name]}
               >
                 {() => (
@@ -201,7 +202,7 @@ const InitialJudgeSelect = ({
               </Form.Item>
 
               <Form.Item
-                style={{ width: '20%', marginRight: 8, marginBottom: 0 }}
+                style={{ width: '18%', marginRight: 8, marginBottom: 0 }}
                 shouldUpdate={(prevValues, curValues) => prevValues[name] !== curValues[name]}
               >
                 {() => (
@@ -220,6 +221,28 @@ const InitialJudgeSelect = ({
                   </Form.Item>
                 )}
               </Form.Item>
+
+              <Form.Item
+                style={{ width: '18%', marginRight: 8, marginBottom: 0 }}
+                shouldUpdate={(prevValues, curValues) => prevValues[name] !== curValues[name]}
+              >
+                {() => (
+                  <Form.Item
+                    {...field}
+                    name={[field.name, postFields[4]]}
+                    fieldKey={[field.fieldKey, postFields[4]]}
+                  >
+                    <Select disabled={disabled}>
+                      {limitValueList.map((item) => (
+                        <Select.Option key={item.id} value={item.id}>
+                          {item.content}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
+              </Form.Item>
+
               {form.getFieldValue(name).length > 1 && !disabled && (
                 <MinusCircleOutlined className="reduce" onClick={() => remove(field.name)} />
               )}

@@ -31,6 +31,7 @@ function SingleSelect({ onChange, scaleOptions, RenderOptionContent, config = {}
           style={{
             marginTop: '8px',
             marginBottom: '8px',
+            paddingRight: '8px',
             border: '1px solid rgb(237,237,237)',
             borderRadius: '5px',
             cursor: 'pointer',

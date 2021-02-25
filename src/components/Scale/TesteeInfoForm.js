@@ -22,7 +22,7 @@ const tailLayout = {
 function TesteeInfoForm({ compose, user, submit }) {
   const [form] = Form.useForm();
   const { birthDay } = { ...user };
-  
+
   const onFinish = (values) => {
     submit({ compose, testeeInfo: [values] });
   };
@@ -38,7 +38,7 @@ function TesteeInfoForm({ compose, user, submit }) {
     <Form {...layout} form={form} onFinish={onFinish}>
       <Form.Item
         shouldUpdate
-        label="年龄"
+        label="评估年龄"
         name="YEAR"
         rules={[
           {
@@ -51,7 +51,7 @@ function TesteeInfoForm({ compose, user, submit }) {
       </Form.Item>
       <Form.Item {...tailLayout} style={{ paddingTop: '10px' }}>
         <Button type="primary" htmlType="submit">
-          确定
+          开始评估
         </Button>
       </Form.Item>
     </Form>

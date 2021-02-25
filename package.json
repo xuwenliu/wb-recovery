@@ -68,7 +68,7 @@
     "copy-to-clipboard": "^3.3.1",
     "date-fns": "^2.16.1",
     "dva": "^2.4.0",
-    "list-to-tree": "^2.2.3",
+    "list-to-tree": "^2.2.4",
     "lodash": "^4.17.11",
     "lodash-decorators": "^6.0.0",
     "lodash.isequal": "^4.5.0",

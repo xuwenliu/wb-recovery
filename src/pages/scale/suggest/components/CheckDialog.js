@@ -10,7 +10,7 @@ function CheckDialog(props) {
     const { items, open, onClose, submit } = props;
   
     return (
-      <Dialog open={open} onClose={onClose}>
+      <Dialog open={open} onClose={onClose} >
         <DialogTitle>评估清单</DialogTitle>
         <DialogContent>
           <ScaleSuggestList items={items} />
